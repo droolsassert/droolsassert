@@ -1,53 +1,61 @@
-JUnit rule for declarative drools tests
+JUnit `TestRule` for declarative drools tests.  
 
-<pre>
-@DroolsSession(resources = {
-		"classpath*:/org/droolsassert/rules.drl",
-		"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
-		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
-		ignoreRules = { "before", "after" })
-public class DroolsAssertTest {
+Specify any combination of rules you want to test in single session using `@DroolsSession`, `logResources` to see what was actually included.  
 
-	@Rule
-	public DroolsAssert da = new DroolsAssert();
+Specify rule names which are expected to be triggered for each use case using `@AssertRules` in addition to assertions inside test method.
 
-	@Test
-	@AssertRules("atomic int rule")
-	public void testInt() {
-		da.insertAndFire(new AtomicInteger());
-		assertEquals(1, da.getObject(AtomicInteger.class).get());
+	@DroolsSession(resources = {
+			"classpath*:/org/droolsassert/rules.drl",
+			"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
+			"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
+			ignoreRules = { "before", "after" })
+	public class DroolsAssertTest {
+
+		@Rule
+		public DroolsAssert da = new DroolsAssert();
+
+		@Test
+		@AssertRules("atomic int rule")
+		public void testInt() {
+			da.insertAndFire(new AtomicInteger());
+			assertEquals(1, da.getObject(AtomicInteger.class).get());
+		}
+
+		@Test
+		@AssertRules({ "atomic int rule", "atomic long rule" })
+		public void testLong() {
+			da.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+			da.assertFactsCount(3);
+			assertEquals(2, da.getObjects(AtomicLong.class).size());
+		}
+
+		@Test
+		@AssertRules(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
+		public void testActivationCount() {
+			da.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+			assertEquals(2, da.getObjects(AtomicLong.class).size());
+		}
+
+		@Test
+		@AssertRules
+		public void testNoRulesWereTriggered() {
+			da.assertFactsCount(0);
+			assertEquals(0, da.getObjects(AtomicLong.class).size());
+		}
 	}
 
-	@Test
-	@AssertRules({ "atomic int rule", "atomic long rule" })
-	public void testLong() {
-		da.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
-		da.assertFactsCount(3);
-		assertEquals(2, da.getObjects(AtomicLong.class).size());
-	}
+Rule under the test <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/rules.drl">rules.drl</a>
 
-	@Test
-	@AssertRules(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
-	public void testActivationCount() {
-		da.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
-		assertEquals(2, da.getObjects(AtomicLong.class).size());
-	}
+**Maven dependency**
 
-	@Test
-	@AssertRules
-	public void testNoRulesWereTriggered() {
-		da.assertFactsCount(0);
-		assertEquals(0, da.getObjects(AtomicLong.class).size());
-	}
-}
-</pre>
+    <dependency>
+        <groupId>org.droolsassert</groupId>
+        <artifactId>droolsassert</artifactId>
+        <version>1.0.2</version>
+        <scope>test</scope>
+    </dependency>
 
-for a rule file <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/rules.drl">rules.drl</a>
+**Version compatibility**  
+For Drools 7.x use version 1.0.2 and higher  
+For Drools 6.x use version 1.0.1  
 
-<pre>
-<dependency>
-	<groupId>org.droolsassert</groupId>
-	<artifactId>droolsassert</artifactId>
-	<version>1.0.0</version>
-</dependency>
-</pre>
