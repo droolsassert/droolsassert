@@ -42,7 +42,7 @@ public class DroolsAssertTest {
 }
 </pre>
 
-for a rule file <a href="https://github.com/madamovych/droolsassert/blob/master/src/test/resources/org/droolsassert/rules.drl">rules.drl</a>
+for a rule file <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/rules.drl">rules.drl</a>
 
 <pre>
 <dependency>
