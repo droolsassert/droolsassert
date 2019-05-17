@@ -368,7 +368,7 @@ public class DroolsAssert implements TestRule {
 		@Override
 		public void beforeMatchFired(BeforeMatchFiredEvent event) {
 			String ruleName = event.getMatch().getRule().getName();
-			out.println(format("==> '%s' has been activated by the tuple %s", ruleName, tupleToString(event.getMatch().getObjects())));
+			out.println(format("<-- '%s' has been activated by the tuple %s", ruleName, tupleToString(event.getMatch().getObjects())));
 
 			synchronized (activations) {
 				Integer ruleActivations = activations.get(ruleName);
