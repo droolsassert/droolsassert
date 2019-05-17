@@ -18,9 +18,9 @@
 	</licenses>
 
 	<scm>
-		<connection>scm:git:git://github.com/simpligility/ossrh-demo.git</connection>
-		<developerConnection>scm:git:ssh://github.com:simpligility/ossrh-demo.git</developerConnection>
-		<url>http://github.com/simpligility/ossrh-demo/tree/master</url>
+		<connection>scm:git:git://github.com/droolsassert/droolsassert.git</connection>
+		<developerConnection>scm:git:ssh://github.com:sdroolsassert/droolsassert.git</developerConnection>
+		<url>https://github.com/droolsassert/droolsassert</url>
 	</scm>
 
 	<developers>
