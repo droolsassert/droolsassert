@@ -2,6 +2,7 @@ package org.droolsassert;
 
 import static org.junit.Assert.assertEquals;
 
+import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -43,7 +44,8 @@ public class DroolsAssertTest {
 	@Test
 	@AssertRules
 	public void testNoRulesWereTriggered() {
-		da.assertFactsCount(0);
+		da.insertAndFire(new BigDecimal(0));
+		da.assertFactsCount(1);
 		assertEquals(0, da.getObjects(AtomicLong.class).size());
 	}
 }

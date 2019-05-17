@@ -43,3 +43,11 @@ public class DroolsAssertTest {
 </pre>
 
 for a rule file <a href="https://github.com/madamovych/droolsassert/blob/master/src/test/resources/org/droolsassert/rules.drl">rules.drl</a>
+
+<pre>
+<dependency>
+	<groupId>org.droolsassert</groupId>
+	<artifactId>droolsassert</artifactId>
+	<version>1.0.0</version>
+</dependency>
+</pre>
