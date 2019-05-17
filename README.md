@@ -24,7 +24,8 @@ Specify rule names which are expected to be triggered for each use case using `@
 		@Test
 		@AssertRules({ "atomic int rule", "atomic long rule" })
 		public void testLong() {
-			da.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+			da.insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+			da.fireAllRules();
 			da.assertFactsCount(3);
 			assertEquals(2, da.getObjects(AtomicLong.class).size());
 		}
@@ -46,6 +47,36 @@ Specify rule names which are expected to be triggered for each use case using `@
 	}
 
 Rule under the test <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/rules.drl">rules.drl</a>
+
+**Example output**
+
+	--> inserted: AtomicInteger[value=0]
+	--> fireAllRules
+	<-- 'before' has been activated by the tuple [AtomicInteger]
+	before rules: 0
+	<-- 'atomic int rule' has been activated by the tuple [AtomicInteger]
+	<-- 'after' has been activated by the tuple [AtomicInteger]
+	after rules: 1
+	--> inserted: AtomicInteger[value=0]
+	--> inserted: AtomicLong[value=0]
+	--> inserted: AtomicLong[value=0]
+	--> fireAllRules
+	<-- 'before' has been activated by the tuple [AtomicLong]
+	before rules: 0
+	<-- 'before' has been activated by the tuple [AtomicLong]
+	before rules: 0
+	<-- 'before' has been activated by the tuple [AtomicInteger]
+	before rules: 0
+	<-- 'atomic int rule' has been activated by the tuple [AtomicInteger]
+	<-- 'atomic long rule' has been activated by the tuple [AtomicLong]
+	<-- 'atomic long rule' has been activated by the tuple [AtomicLong]
+	<-- 'after' has been activated by the tuple [AtomicLong]
+	after rules: 1
+	<-- 'after' has been activated by the tuple [AtomicLong]
+	after rules: 1
+	<-- 'after' has been activated by the tuple [AtomicInteger]
+	after rules: 1
+
 
 **Maven dependency**
 
