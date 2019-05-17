@@ -29,7 +29,8 @@ public class DroolsAssertTest {
 	@Test
 	@AssertRules({ "atomic int rule", "atomic long rule" })
 	public void testLong() {
-		da.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+		da.insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+		da.fireAllRules();
 		da.assertFactsCount(3);
 		assertEquals(2, da.getObjects(AtomicLong.class).size());
 	}
