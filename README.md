@@ -57,6 +57,7 @@ Rule under the test <a href="https://github.com/droolsassert/droolsassert/blob/m
     </dependency>
 
 **Version compatibility**  
+
 For Drools 7.x use version 1.0.2 and higher  
 For Drools 6.x use version 1.0.1  
 
