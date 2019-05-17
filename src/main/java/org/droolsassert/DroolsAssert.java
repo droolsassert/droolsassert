@@ -14,7 +14,6 @@ import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
-import static org.drools.core.impl.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -22,6 +21,7 @@ import static org.junit.Assert.fail;
 import static org.junit.runners.model.MultipleFailureException.assertEmpty;
 import static org.kie.api.builder.Message.Level.ERROR;
 import static org.kie.api.builder.Message.Level.WARNING;
+import static org.kie.internal.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
 import static org.kie.internal.io.ResourceFactory.newUrlResource;
 
 import java.io.IOException;
@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.drools.core.common.DefaultAgenda;
+import org.drools.core.time.SessionPseudoClock;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -52,13 +53,14 @@ import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.KieSessionConfiguration;
 import org.kie.api.runtime.rule.FactHandle;
-import org.kie.api.time.SessionPseudoClock;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
- * For declarative drools unit tests.
+ * JUnit {@link TestRule} for declarative drools tests.
+ * 
+ * @see <a href=https://github.com/droolsassert/droolsassert>Documentation on GitHub</a>
  */
 public class DroolsAssert implements TestRule {
 
