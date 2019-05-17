@@ -14,6 +14,7 @@ import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+import static org.drools.core.impl.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -21,7 +22,6 @@ import static org.junit.Assert.fail;
 import static org.junit.runners.model.MultipleFailureException.assertEmpty;
 import static org.kie.api.builder.Message.Level.ERROR;
 import static org.kie.api.builder.Message.Level.WARNING;
-import static org.kie.internal.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
 import static org.kie.internal.io.ResourceFactory.newUrlResource;
 
 import java.io.IOException;
