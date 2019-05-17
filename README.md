@@ -39,7 +39,8 @@ Specify rule names which are expected to be triggered for each use case using `@
 		@Test
 		@AssertRules
 		public void testNoRulesWereTriggered() {
-			da.assertFactsCount(0);
+			da.insertAndFire(new BigDecimal(0));
+			da.assertFactsCount(1);
 			assertEquals(0, da.getObjects(AtomicLong.class).size());
 		}
 	}
