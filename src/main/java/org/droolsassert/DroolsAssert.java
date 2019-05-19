@@ -169,10 +169,10 @@ public class DroolsAssert implements TestRule {
 		else if (!extra.isEmpty())
 			fail(format("unexpected: %s", extra));
 
-		Map<String, Integer> expected = new HashMap<>(expectedCount);
-		for (Map.Entry<String, Integer> actual : activations.entrySet())
-			if (expected.get(actual.getKey()) != null && !expected.get(actual.getKey()).equals(actual.getValue()))
-				fail(format("'%s' should be activated %s time(s) but actially it was activated %s time(s)", actual.getKey(), expected.get(actual.getKey()), actual.getValue()));
+		for (Map.Entry<String, Integer> actual : activations.entrySet()) {
+			if (expectedCount.get(actual.getKey()) != null && !expectedCount.get(actual.getKey()).equals(actual.getValue()))
+				fail(format("'%s' should be activated %s time(s) but actially it was activated %s time(s)", actual.getKey(), expectedCount.get(actual.getKey()), actual.getValue()));
+		}
 	}
 
 	/**
@@ -213,20 +213,22 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Asserts object presence in drools knowledge base.
 	 */
-	public void assertExists(Object objectToMatch) {
-		for (Object obj : session.getObjects())
-			if (obj == objectToMatch)
+	public void assertExists(Object object) {
+		for (Object obj : session.getObjects()) {
+			if (obj == object)
 				return;
-		fail("Object was not found in the session " + factToString(objectToMatch));
+		}
+		fail("Object was not found in the session " + factToString(object));
 	}
 
 	/**
 	 * Asserts object was retracted from knowledge base.
 	 */
 	public void assertRetracted(Object retracted) {
-		for (Object obj : session.getObjects())
+		for (Object obj : session.getObjects()) {
 			if (obj == retracted)
 				fail("Object was not retracted from the session " + factToString(retracted));
+		}
 	}
 
 	/**
@@ -286,7 +288,7 @@ public class DroolsAssert implements TestRule {
 	public void printFacts() {
 		List<Object> sortedFacts = new LinkedList<>(session.getObjects());
 		sort(sortedFacts, (o1, o2) -> facts.get(o1).compareTo(facts.get(o2)));
-		out.println(format("Facts (%s): ", session.getFactCount()));
+		out.println(format("Facts (%s):", session.getFactCount()));
 		for (Object fact : sortedFacts)
 			out.println(factToString(fact));
 	}
@@ -357,14 +359,14 @@ public class DroolsAssert implements TestRule {
 	}
 
 	private String[] firstNonEmpty(String[]... params) {
-		for (String[] param : params)
+		for (String[] param : params) {
 			if (param.length != 0)
 				return param;
+		}
 		return new String[0];
 	}
 
 	private class LoggingAgendaEventListener extends DefaultAgendaEventListener {
-
 		@Override
 		public void beforeMatchFired(BeforeMatchFiredEvent event) {
 			String ruleName = event.getMatch().getRule().getName();
