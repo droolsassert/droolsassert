@@ -83,7 +83,7 @@ Rule under the test <a href="https://github.com/droolsassert/droolsassert/blob/m
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
         <scope>test</scope>
     </dependency>
 
