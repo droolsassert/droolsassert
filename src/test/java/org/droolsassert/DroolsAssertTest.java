@@ -47,6 +47,6 @@ public class DroolsAssertTest {
 	public void testNoRulesWereTriggered() {
 		drools.insertAndFire(new BigDecimal(0));
 		drools.assertFactsCount(1);
-		assertEquals(0, drools.getObjects(AtomicLong.class).size());
+		assertEquals(0, drools.getObject(BigDecimal.class).intValue());
 	}
 }
