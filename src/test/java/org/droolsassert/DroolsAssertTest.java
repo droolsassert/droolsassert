@@ -17,36 +17,36 @@ import org.junit.Test;
 public class DroolsAssertTest {
 
 	@Rule
-	public DroolsAssert da = new DroolsAssert();
+	public DroolsAssert drools = new DroolsAssert();
 
 	@Test
 	@AssertRules("atomic int rule")
 	public void testInt() {
-		da.insertAndFire(new AtomicInteger());
-		assertEquals(1, da.getObject(AtomicInteger.class).get());
+		drools.insertAndFire(new AtomicInteger());
+		assertEquals(1, drools.getObject(AtomicInteger.class).get());
 	}
 
 	@Test
 	@AssertRules({ "atomic int rule", "atomic long rule" })
 	public void testLong() {
-		da.insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
-		da.fireAllRules();
-		da.assertFactsCount(3);
-		assertEquals(2, da.getObjects(AtomicLong.class).size());
+		drools.insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+		drools.fireAllRules();
+		drools.assertFactsCount(3);
+		assertEquals(2, drools.getObjects(AtomicLong.class).size());
 	}
 
 	@Test
 	@AssertRules(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
 	public void testActivationCount() {
-		da.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
-		assertEquals(2, da.getObjects(AtomicLong.class).size());
+		drools.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+		assertEquals(2, drools.getObjects(AtomicLong.class).size());
 	}
 
 	@Test
 	@AssertRules
 	public void testNoRulesWereTriggered() {
-		da.insertAndFire(new BigDecimal(0));
-		da.assertFactsCount(1);
-		assertEquals(0, da.getObjects(AtomicLong.class).size());
+		drools.insertAndFire(new BigDecimal(0));
+		drools.assertFactsCount(1);
+		assertEquals(0, drools.getObjects(AtomicLong.class).size());
 	}
 }
