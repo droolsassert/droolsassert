@@ -2,7 +2,6 @@ package org.droolsassert;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
-import static java.lang.System.err;
 import static java.lang.System.lineSeparator;
 import static java.lang.System.out;
 import static java.util.Arrays.asList;
@@ -20,8 +19,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.runners.model.MultipleFailureException.assertEmpty;
-import static org.kie.api.builder.Message.Level.ERROR;
-import static org.kie.api.builder.Message.Level.WARNING;
 import static org.kie.internal.io.ResourceFactory.newUrlResource;
 
 import java.io.IOException;
@@ -42,7 +39,6 @@ import org.drools.core.time.SessionPseudoClock;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.kie.api.builder.Results;
 import org.kie.api.command.Command;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
@@ -102,12 +98,6 @@ public class DroolsAssert implements TestRule {
 					out.println(resource);
 				kieHelper.addResource(newUrlResource(resource.getURL()));
 			}
-
-			Results results = kieHelper.verify();
-			if (results.hasMessages(WARNING))
-				err.println(results.getMessages(WARNING).toString());
-			if (results.hasMessages(ERROR))
-				fail(results.getMessages(ERROR).toString());
 
 			Map<String, String> properties = defaultSessionProperties();
 			properties.putAll(toMap(false, droolsSessionMeta.properties()));
