@@ -77,6 +77,26 @@ Rule under the test <a href="https://github.com/droolsassert/droolsassert/blob/m
 	<-- 'after' has been activated by the tuple [AtomicInteger]
 	after rules: 1
 
+**Example failure**
+
+	java.lang.AssertionError: expected: [some other rule] unexpected: [atomic int rule]
+		at org.junit.Assert.fail(Assert.java:88)
+		at org.droolsassert.DroolsAssert.assertActivations(DroolsAssert.java:156)
+		at org.droolsassert.DroolsAssert.awaitForActivations(DroolsAssert.java:186)
+		at org.droolsassert.DroolsAssert.awaitForActivations(DroolsAssert.java:176)
+		at org.droolsassert.DroolsAssert.evaluate(DroolsAssert.java:316)
+		at org.droolsassert.DroolsAssert$1.evaluate(DroolsAssert.java:298)
+		at org.junit.rules.RunRules.evaluate(RunRules.java:20)
+		...
+	
+	java.lang.AssertionError: expected:<2> but was:<1>
+		at org.junit.Assert.fail(Assert.java:88)
+		at org.junit.Assert.failNotEquals(Assert.java:834)
+		at org.junit.Assert.assertEquals(Assert.java:645)
+		at org.junit.Assert.assertEquals(Assert.java:631)
+		at org.droolsassert.DroolsAssertTest.testInt(DroolsAssertTest.java:26)
+		...
+
 **Version compatibility**  
 
 For Drools 7.x use version 1.7.x  
