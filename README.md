@@ -211,13 +211,13 @@ For Drools 6.x use version 1.6.x
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.7.1</version>
+        <version>1.7.3</version>
         <scope>test</scope>
     </dependency>
 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.6.1</version>
+        <version>1.6.3</version>
         <scope>test</scope>
     </dependency>
