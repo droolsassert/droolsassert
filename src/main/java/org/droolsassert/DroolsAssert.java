@@ -138,6 +138,8 @@ public class DroolsAssert implements TestRule {
 
 	public void advanceTime(long amount, TimeUnit unit) {
 		clock.advanceTime(amount, unit);
+		// https://issues.jboss.org/browse/DROOLS-2240
+		session.fireAllRules();
 	}
 
 	/**
