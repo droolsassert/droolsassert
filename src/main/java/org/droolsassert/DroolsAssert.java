@@ -60,7 +60,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
  */
 public class DroolsAssert implements TestRule {
 
-	protected DroolsSession droolsSessionMeta;
+	protected static DroolsSession droolsSessionMeta;
 	protected AssertRules assertRulesMeta;
 	private static List<Resource> resources;
 	protected KieSession session;
@@ -85,10 +85,10 @@ public class DroolsAssert implements TestRule {
 		session.addEventListener(new LoggingWorkingMemoryEventListener());
 	}
 
-	protected KieSession newSession() {
+	protected KieSession newSession(DroolsSession droolsSessionMeta) {
 		try {
 			KieHelper kieHelper = new KieHelper();
-			for (Resource resource : resources())
+			for (Resource resource : resources(droolsSessionMeta))
 				kieHelper.addResource(newUrlResource(resource.getURL()));
 
 			Map<String, String> properties = defaultSessionProperties();
@@ -103,8 +103,8 @@ public class DroolsAssert implements TestRule {
 		}
 	}
 
-	private List<Resource> resources() throws IOException {
-		if (resources != null)
+	private List<Resource> resources(DroolsSession droolsSessionMeta) throws IOException {
+		if (resources != null && DroolsAssert.droolsSessionMeta == droolsSessionMeta)
 			return resources;
 
 		resources = new ArrayList<>();
@@ -116,6 +116,7 @@ public class DroolsAssert implements TestRule {
 		if (droolsSessionMeta.logResources())
 			resources.forEach(resource -> out.println(resource));
 
+		DroolsAssert.droolsSessionMeta = droolsSessionMeta;
 		return resources;
 	}
 
@@ -300,8 +301,7 @@ public class DroolsAssert implements TestRule {
 		if (assertRulesMeta == null)
 			return base;
 
-		droolsSessionMeta = description.getTestClass().getAnnotation(DroolsSession.class);
-		init(newSession());
+		init(newSession(description.getTestClass().getAnnotation(DroolsSession.class)));
 
 		return new Statement() {
 			@Override
