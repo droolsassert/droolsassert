@@ -201,12 +201,10 @@ Specify rule names which are expected to be triggered for each use case using `@
 	--> retracted: LogicalEventsTest.CallInProgress[callerNumber=11111,calleeNumber=22222]
 	--> retracted: LogicalEventsTest.CallDropped[number=11111,reason=call timed out]
 
-**Version compatibility**  
-
-For Drools 7.x use version 1.7.x  
-For Drools 6.x use version 1.6.x  
 
 **Latest maven builds**
+
+For Drools 7.x  
 
     <dependency>
         <groupId>org.droolsassert</groupId>
@@ -214,6 +212,8 @@ For Drools 6.x use version 1.6.x
         <version>1.7.3</version>
         <scope>test</scope>
     </dependency>
+
+For Drools 6.x  
 
     <dependency>
         <groupId>org.droolsassert</groupId>
