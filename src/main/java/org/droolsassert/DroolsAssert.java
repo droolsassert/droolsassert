@@ -62,6 +62,7 @@ public class DroolsAssert implements TestRule {
 
 	protected DroolsSession droolsSessionMeta;
 	protected AssertRules assertRulesMeta;
+	private static List<Resource> resources;
 	protected KieSession session;
 	protected DefaultAgenda agenda;
 	protected SessionPseudoClock clock;
@@ -86,18 +87,9 @@ public class DroolsAssert implements TestRule {
 
 	protected KieSession newSession() {
 		try {
-			List<Resource> resources = new ArrayList<>();
-			PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-			for (String resourceNameFilter : firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources()))
-				resources.addAll(asList(resolver.getResources(resourceNameFilter)));
-			assertTrue("No rules found", resources.size() > 0);
-
 			KieHelper kieHelper = new KieHelper();
-			for (Resource resource : resources) {
-				if (droolsSessionMeta.logResources())
-					out.println(resource);
+			for (Resource resource : resources())
 				kieHelper.addResource(newUrlResource(resource.getURL()));
-			}
 
 			Map<String, String> properties = defaultSessionProperties();
 			properties.putAll(toMap(false, droolsSessionMeta.properties()));
@@ -109,6 +101,22 @@ public class DroolsAssert implements TestRule {
 		} catch (IOException e) {
 			throw new IllegalStateException("Cannot create new session", e);
 		}
+	}
+
+	private List<Resource> resources() throws IOException {
+		if (resources != null)
+			return resources;
+
+		resources = new ArrayList<>();
+		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+		for (String resourceNameFilter : firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources()))
+			resources.addAll(asList(resolver.getResources(resourceNameFilter)));
+		assertTrue("No rules found", resources.size() > 0);
+
+		if (droolsSessionMeta.logResources())
+			resources.forEach(resource -> out.println(resource));
+
+		return resources;
 	}
 
 	public KieSession getSession() {
@@ -160,8 +168,9 @@ public class DroolsAssert implements TestRule {
 			fail(format("unexpected: %s", extra));
 
 		for (Map.Entry<String, Integer> actual : activations.entrySet()) {
-			if (expectedCount.get(actual.getKey()) != null && !expectedCount.get(actual.getKey()).equals(actual.getValue()))
-				fail(format("'%s' should be activated %s time(s) but actially it was activated %s time(s)", actual.getKey(), expectedCount.get(actual.getKey()), actual.getValue()));
+			Integer expected = expectedCount.get(actual.getKey());
+			if (expected != null && !expected.equals(actual.getValue()))
+				fail(format("'%s' should be activated %s time(s) but actually it was activated %s time(s)", actual.getKey(), expected, actual.getValue()));
 		}
 	}
 

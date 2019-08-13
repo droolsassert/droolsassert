@@ -13,7 +13,8 @@ import org.junit.Test;
 		"classpath*:/org/droolsassert/rules.drl",
 		"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
 		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
-		ignoreRules = { "before", "after" })
+		ignoreRules = { "before", "after" },
+		logResources = true)
 public class DroolsAssertTest {
 
 	@Rule
