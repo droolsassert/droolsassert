@@ -100,7 +100,7 @@ Specify rule names which are expected to be triggered for each use case using `@
 
 ---
 
-**Logical events test** for <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/temporalReasoning.drl">the rule</a>
+**Logical events test** for <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/logicalEvents.drl">the rule</a>
 
 	@DroolsSession("classpath:/org/droolsassert/logicalEvents.drl")
 	public class LogicalEventsTest {
