@@ -4,6 +4,8 @@ Specify any combination of rules you want to test in single session using `@Droo
 
 Specify rule names which are expected to be triggered for each use case using `@AssertRules` in addition to assertions inside test method.
 
+**Dummy assertions example** for <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/rules.drl">rules.drl</a>
+
 	@DroolsSession(resources = {
 			"classpath*:/org/droolsassert/rules.drl",
 			"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
@@ -46,8 +48,6 @@ Specify rule names which are expected to be triggered for each use case using `@
 			assertEquals(0, drools.getObject(BigDecimal.class).intValue());
 		}
 	}
-
-Rule under the test <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/rules.drl">rules.drl</a>
 
 **Example output**
 
@@ -97,6 +97,109 @@ Rule under the test <a href="https://github.com/droolsassert/droolsassert/blob/m
 		at org.junit.Assert.assertEquals(Assert.java:631)
 		at org.droolsassert.DroolsAssertTest.testInt(DroolsAssertTest.java:26)
 		...
+
+---
+
+**Logical events test** for <a href="https://github.com/droolsassert/droolsassert/blob/master/src/test/resources/org/droolsassert/temporalReasoning.drl">the rule</a>
+
+	@DroolsSession("classpath:/org/droolsassert/logicalEvents.drl")
+	public class LogicalEventsTest {
+	
+		@Rule
+		public DroolsAssert drools = new DroolsAssert();
+	
+		@Before
+		public void beforeClass() {
+			drools.setGlobal("stdout", System.out);
+		}
+	
+		@Test
+		@AssertRules({
+				"input call",
+				"drop dial-up if callee is talking",
+				"drop the call if caller is talking more than permitted time",
+				"call in progress dropped",
+				"input call dropped"
+		})
+		public void testDeclineAnyInputCallsIfCalleeIsTalking() {
+			Dialing caller1Dial = new Dialing("11111", "22222");
+			drools.insertAndFire(caller1Dial);
+			drools.assertRetracted(caller1Dial);
+			CallInProgress call = drools.getObject(CallInProgress.class);
+			assertEquals("11111", call.callerNumber);
+	
+			drools.advanceTime(5, MINUTES);
+			Dialing caller3Dial = new Dialing("33333", "22222");
+			drools.insertAndFire(caller3Dial);
+			drools.assertExists(caller3Dial);
+	
+			drools.advanceTime(5, SECONDS);
+			drools.assertExists(call);
+			drools.assertExists(caller3Dial);
+	
+			drools.advanceTime(5, SECONDS);
+			drools.assertExists(call);
+			drools.assertRetracted(caller3Dial);
+	
+			drools.advanceTime(1, HOURS);
+			drools.assertRetracted(call);
+			drools.assertRetracted(caller3Dial);
+	
+			drools.assertAllRetracted();
+		}
+	
+		public static class Dialing {
+			public String callerNumber;
+			public String calleeNumber;
+	
+			public Dialing(String callerNumber, String calleeNumber) {
+				this.callerNumber = callerNumber;
+				this.calleeNumber = calleeNumber;
+			}
+		}
+	
+		public static class CallInProgress {
+			public String callerNumber;
+			public String calleeNumber;
+	
+			public CallInProgress(String callerNumber, String calleeNumber) {
+				this.callerNumber = callerNumber;
+				this.calleeNumber = calleeNumber;
+			}
+		}
+	
+		public static class CallDropped {
+			public String number;
+			public String reason;
+	
+			public CallDropped(String number, String reason) {
+				this.number = number;
+				this.reason = reason;
+			}
+		}
+	}
+
+**Output**
+
+	--> inserted: LogicalEventsTest.Dialing[callerNumber=11111,calleeNumber=22222]
+	--> fireAllRules
+	<-- 'input call' has been activated by the tuple [Dialing]
+	--> inserted: LogicalEventsTest.CallInProgress[callerNumber=11111,calleeNumber=22222]
+	--> retracted: LogicalEventsTest.Dialing[callerNumber=11111,calleeNumber=22222]
+	--> inserted: LogicalEventsTest.Dialing[callerNumber=33333,calleeNumber=22222]
+	--> fireAllRules
+	<-- 'drop dial-up if callee is talking' has been activated by the tuple [Dialing, CallInProgress]
+	--> inserted: LogicalEventsTest.CallDropped[number=33333,reason=callee is busy]
+	<-- 'input call dropped' has been activated by the tuple [CallDropped, Dialing]
+	Dial-up 33333 dropped due to callee is busy
+	--> retracted: LogicalEventsTest.Dialing[callerNumber=33333,calleeNumber=22222]
+	--> retracted: LogicalEventsTest.CallDropped[number=33333,reason=callee is busy]
+	<-- 'drop the call if caller is talking more than permitted time' has been activated by the tuple [CallInProgress]
+	--> inserted: LogicalEventsTest.CallDropped[number=11111,reason=call timed out]
+	<-- 'call in progress dropped' has been activated by the tuple [CallDropped, CallInProgress]
+	Call 11111 dropped due to call timed out
+	--> retracted: LogicalEventsTest.CallInProgress[callerNumber=11111,calleeNumber=22222]
+	--> retracted: LogicalEventsTest.CallDropped[number=11111,reason=call timed out]
 
 **Version compatibility**  
 

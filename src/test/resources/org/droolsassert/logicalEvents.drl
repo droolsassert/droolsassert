@@ -1,0 +1,62 @@
+package org.droolsassert;
+
+global java.io.PrintStream stdout;
+
+import org.droolsassert.LogicalEventsTest.Dialing;
+import org.droolsassert.LogicalEventsTest.CallInProgress;
+import org.droolsassert.LogicalEventsTest.CallDropped;
+
+rule 'input call'
+	dialect 'mvel'
+    when
+        $dial: Dialing()
+        not $callInProgress : CallInProgress(this.callerNumber == $dial.calleeNumber)
+        not $callInProgress : CallInProgress(this.calleeNumber == $dial.calleeNumber)
+    then
+    	insert (new CallInProgress($dial.callerNumber, $dial.calleeNumber))
+    	retract ($dial)
+end
+
+rule 'drop dial-up if callee is talking'
+	dialect 'mvel'
+	timer (int: 7s)
+    when
+        $dial: Dialing()
+        ($callInProgress : CallInProgress(this.callerNumber == $dial.calleeNumber)
+        	or $callInProgress : CallInProgress(this.calleeNumber == $dial.calleeNumber))
+    then
+    	insert (new CallDropped($dial.callerNumber, 'callee is busy'))
+end
+
+rule 'drop the call if caller is talking more than permitted time'
+	dialect 'mvel'
+	timer (int: 1h)
+    when
+        $callInProgress : CallInProgress()
+    then
+    	insert (new CallDropped($callInProgress.callerNumber, 'call timed out'))
+end
+
+rule 'call in progress dropped'
+	dialect 'mvel'
+    when
+        $callDropped: CallDropped()
+        ($callInProgress : CallInProgress(this.callerNumber == $callDropped.number)
+        	or $callInProgress : CallInProgress(this.calleeNumber == $callDropped.number))
+    then
+    	stdout.println('Call ' + $callInProgress.callerNumber + ' dropped due to ' + $callDropped.reason)
+    	retract ($callInProgress)
+    	retract ($callDropped)
+end
+
+rule 'input call dropped'
+	dialect 'mvel'
+    when
+        $callDropped: CallDropped()
+        ($dial : Dialing(this.callerNumber == $callDropped.number)
+        	or $dial : Dialing(this.calleeNumber == $callDropped.number))
+    then
+    	stdout.println('Dial-up ' + $dial.callerNumber + ' dropped due to ' + $callDropped.reason)
+    	retract ($dial)
+    	retract ($callDropped)
+end
