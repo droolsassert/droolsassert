@@ -3,36 +3,36 @@ package org.droolsassert;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicInteger;
 
-rule "before"
-    dialect "mvel"
+rule 'before'
+    dialect 'mvel'
     salience 1
     when
         $object: Object()
     then
-        System.out.println("before rules: " + $object);
+        System.out.println('before rules: ' + $object)
 end
 
-rule "atomic int rule"
-    dialect "mvel"
+rule 'atomic int rule'
+    dialect 'mvel'
     when
         $atomicInteger: AtomicInteger()
     then
-        $atomicInteger.incrementAndGet();
+        $atomicInteger.incrementAndGet()
 end
 
-rule "atomic long rule"
-    dialect "mvel"
+rule 'atomic long rule'
+    dialect 'mvel'
     when
         $atomicLong: AtomicLong()
     then
-        $atomicLong.incrementAndGet();
+        $atomicLong.incrementAndGet()
 end
 
-rule "after"
-    dialect "mvel"
+rule 'after'
+    dialect 'mvel'
     salience -1
     when
         $object: Object()
     then
-        System.out.println("after rules: " + $object);
+        System.out.println('after rules: ' + $object)
 end
