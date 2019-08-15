@@ -6,7 +6,7 @@ Specify rule names which are expected to be triggered for each use case using `@
 
 **Examples**
 [Dummy assertions](https://github.com/droolsassert/droolsassert/wiki/Dummy-assertions)  
-[Logical events test](https://github.com/droolsassert/droolsassert/wiki/Logical-events)
+[Logical events](https://github.com/droolsassert/droolsassert/wiki/Logical-events)
 
 **Latest maven builds**
 
