@@ -4,7 +4,8 @@ Specify any combination of rules you want to test in single session using `@Droo
 
 Specify rule names which are expected to be triggered for each use case using `@AssertRules` in addition to assertions inside test method.
 
-**Examples**
+**Examples**    
+
 [Dummy assertions](https://github.com/droolsassert/droolsassert/wiki/Dummy-assertions)  
 [Logical events](https://github.com/droolsassert/droolsassert/wiki/Logical-events)
 
