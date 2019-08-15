@@ -16,7 +16,7 @@ public class LogicalEventsTest {
 	public DroolsAssert drools = new DroolsAssert();
 
 	@Before
-	public void beforeClass() {
+	public void before() {
 		drools.setGlobal("stdout", System.out);
 	}
 
@@ -28,7 +28,7 @@ public class LogicalEventsTest {
 			"call in progress dropped",
 			"input call dropped"
 	})
-	public void testDeclineAnyInputCallsIfCalleeIsTalking() {
+	public void testCallsConnectAndDisconnectLogic() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		drools.insertAndFire(caller1Dial);
 		drools.assertRetracted(caller1Dial);
