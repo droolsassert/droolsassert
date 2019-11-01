@@ -1,0 +1,20 @@
+package org.droolsassert;
+
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
+
+rule 'atomic int rule'
+    dialect 'mvel'
+    when
+        $atomicInteger: AtomicInteger()
+    then
+        $atomicInteger.incrementAndGet()
+end
+
+rule 'complex name test ${with}(and)[or]'
+    dialect 'mvel'
+    when
+        $atomicLong: AtomicLong()
+    then
+        $atomicLong.incrementAndGet()
+end

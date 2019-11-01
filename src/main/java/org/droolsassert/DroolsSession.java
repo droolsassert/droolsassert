@@ -27,7 +27,8 @@ public @interface DroolsSession {
 	String[] properties() default {};
 
 	/**
-	 * Ignore these rules patterns while assertion
+	 * Ignore rules matching patterns while assertion.<br>
+	 * Rules themselves will be executed
 	 */
 	String[] ignoreRules() default {};
 
