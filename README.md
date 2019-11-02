@@ -1,8 +1,18 @@
-## The audience
+## Goal
+
+Relieve Drools Junit testing 
+
+## Audience
 
 If you find yourself writing too much boilerplate code to initialize drools sessions rather than writing actual test scenarios    
 or it is rather hard to understand rules triggering order and cause-effect dependencies between the rules in your session,  
 this library may help you spend less time debugging, make tests neat and support easier.  
+
+## Approach
+
+Use same approach as for java code with unit and integration tests Unit test is about taking minimum piece of code and test all possible usecases defining specification. With integration tests your goal is not all possible usecases but integration of several units that work together. Do the same with rules. Segregate rules by business meaning and purpose. Simplest 'unit under the test' could be file with single or [high cohension](https://stackoverflow.com/questions/10830135/what-is-high-cohesion-and-how-to-use-it-make-it) set of rules and what is required for it to work (if any), like common dsl definition file and decision table. For integration test you could take meaningful subset or all rules of the system. 
+
+With this approach you'll have many isolated unit tests which will not be impacted and will not require support when you add new rules because you'll have isolated set of business rules with subset of input data to test respective business scenarios. And you'll have few integration tests with limited amount of common input data to reproduce and test 'common scenarios'. Adding new rules to integration test will require to update test output and will reflect how new rules impact common data flow.
 
 ## Usage
 
@@ -10,11 +20,11 @@ Specify any combination of rules you want to test in single session using `@Droo
 Spring ant-like PathMatchingResourcePatternResolver gives you robust tool to include functionality you want to test together or segregate.  
 
 	@DroolsSession(resources = {
-			"classpath*:/org/droolsassert/rules.drl",
-			"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
-			"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
-			ignoreRules = { "before", "after" },
-			logResources = true)
+		"classpath*:/org/droolsassert/rules.drl",
+		"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
+		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
+		ignoreRules = { "before", "after" },
+		logResources = true)
 
 Declare the rule for the test
 
