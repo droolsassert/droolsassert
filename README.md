@@ -42,7 +42,7 @@ For Drools 7.x
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.7.4</version>
+        <version>1.7.5</version>
         <scope>test</scope>
     </dependency>
 
@@ -51,6 +51,6 @@ For Drools 6.x
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.6.4</version>
+        <version>1.6.5</version>
         <scope>test</scope>
     </dependency>

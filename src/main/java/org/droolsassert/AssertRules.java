@@ -15,7 +15,7 @@ public @interface AssertRules {
 	String[] value() default {};
 
 	/**
-	 * Rules expeted to be triggered
+	 * Rules expected to be triggered
 	 */
 	String[] expected() default {};
 
@@ -25,7 +25,8 @@ public @interface AssertRules {
 	String[] expectedCount() default {};
 
 	/**
-	 * Ignore rules for the test
+	 * Ignore rules matching patterns while assertion.<br>
+	 * Rules themselves will be executed
 	 */
 	String[] ignore() default {};
 }
