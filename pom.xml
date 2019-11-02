@@ -2,13 +2,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.droolsassert</groupId>
 	<artifactId>droolsassert</artifactId>
-	<version>1.7.5-SNAPSHOT</version>
+	<version>1.7.5</version>
 
 	<name>DroolsAssert</name>
 	<description>
         To simplify drools JUnit testing
     </description>
-	<url>http://www.sonatype.com</url>
+	<url>https://github.com/droolsassert/droolsassert</url>
 
 	<licenses>
 		<license>
