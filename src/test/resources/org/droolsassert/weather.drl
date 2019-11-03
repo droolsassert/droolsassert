@@ -1,0 +1,23 @@
+package org.droolsassert;
+
+import org.droolsassert.SpringIntegrationTest.Weather;
+import org.droolsassert.SpringIntegrationTest.WeatherResponse;
+
+global java.lang.String weatherUrl
+global org.springframework.web.client.RestTemplate restTemplate
+
+rule 'Check weather'
+	timer (int: 0 1h)
+    when
+    	// timer based rule
+    then
+        WeatherResponse weatherResponse = restTemplate.getForObject(weatherUrl, WeatherResponse.class);
+        insert(weatherResponse.main);
+end
+
+rule 'Humidity is high'
+    when
+        $weather: Weather(humidity > 80)
+    then
+        System.out.println("Humidity is " + $weather.humidity + "%");
+end
