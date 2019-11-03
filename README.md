@@ -22,9 +22,7 @@ Spring ant-like PathMatchingResourcePatternResolver gives you robust tool to inc
 	@DroolsSession(resources = {
 		"classpath*:/org/droolsassert/rules.drl",
 		"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
-		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
-		ignoreRules = { "before", "after" },
-		logResources = true)
+		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" })
 
 Declare the rule for the test
 
@@ -44,6 +42,7 @@ Test which rules were triggered in declarative way with `@AssertRules` annotatio
 
 [Dummy assertions](https://github.com/droolsassert/droolsassert/wiki/Dummy-assertions)  
 [Logical events](https://github.com/droolsassert/droolsassert/wiki/Logical-events)
+[Spring integration test](https://github.com/droolsassert/droolsassert/wiki/Spring-integration-test)
 
 ## Latest maven builds
 
