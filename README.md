@@ -1,6 +1,6 @@
 ## Goal
 
-Relieve Drools Junit testing 
+Relieve Drools JUnit testing 
 
 ## Audience
 
@@ -22,7 +22,8 @@ Spring ant-like PathMatchingResourcePatternResolver gives you robust tool to inc
 	@DroolsSession(resources = {
 		"classpath*:/org/droolsassert/rules.drl",
 		"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
-		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" })
+		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
+		logResources = true)
 
 Declare the rule for the test
 
