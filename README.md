@@ -41,8 +41,8 @@ Test which rules were triggered in declarative way with `@AssertRules` annotatio
 ## Examples
 
 [Dummy assertions](https://github.com/droolsassert/droolsassert/wiki/Dummy-assertions)  
-[Logical events](https://github.com/droolsassert/droolsassert/wiki/Logical-events)
-[Spring integration test](https://github.com/droolsassert/droolsassert/wiki/Spring-integration-test)
+[Logical events](https://github.com/droolsassert/droolsassert/wiki/Logical-events)  
+[Spring integration test](https://github.com/droolsassert/droolsassert/wiki/Spring-integration-test)  
 
 ## Latest maven builds
 
