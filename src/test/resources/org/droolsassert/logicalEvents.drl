@@ -10,8 +10,8 @@ rule 'input call'
 	dialect 'mvel'
     when
         $dial: Dialing()
-        not $callInProgress : CallInProgress(this.callerNumber == $dial.calleeNumber)
-        not $callInProgress : CallInProgress(this.calleeNumber == $dial.calleeNumber)
+        not CallInProgress(this.callerNumber == $dial.calleeNumber)
+        not CallInProgress(this.calleeNumber == $dial.calleeNumber)
     then
     	insert (new CallInProgress($dial.callerNumber, $dial.calleeNumber))
     	retract ($dial)
@@ -22,8 +22,8 @@ rule 'drop dial-up if callee is talking'
 	timer (int: 7s)
     when
         $dial: Dialing()
-        ($callInProgress : CallInProgress(this.callerNumber == $dial.calleeNumber)
-        	or $callInProgress : CallInProgress(this.calleeNumber == $dial.calleeNumber))
+        (CallInProgress(this.callerNumber == $dial.calleeNumber)
+        	or CallInProgress(this.calleeNumber == $dial.calleeNumber))
     then
     	insert (new CallDropped($dial.callerNumber, 'callee is busy'))
 end
