@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.droolsassert</groupId>
 	<artifactId>droolsassert</artifactId>
-	<version>1.7.9</version>
+	<version>1.7.10-SNAPSHOT</version>
 
 	<name>DroolsAssert</name>
 	<description>
