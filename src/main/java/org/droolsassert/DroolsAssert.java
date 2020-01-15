@@ -56,6 +56,8 @@ import org.kie.api.runtime.rule.FactHandle;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 
 /**
  * JUnit {@link TestRule} for declarative drools tests.
@@ -63,6 +65,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
  * @see <a href=https://github.com/droolsassert/droolsassert>Documentation on GitHub</a>
  */
 public class DroolsAssert implements TestRule {
+	private static PathMatcher pathMatcher = new AntPathMatcher();
 	private static PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
@@ -252,7 +255,7 @@ public class DroolsAssert implements TestRule {
 	 * Define rules to be ignored while any assertions.
 	 */
 	public void ignoreActivations(String... rulePatterns) {
-		ignored.addAll(asList(rulePatterns).stream().map(s -> s.replaceAll("\\*", ".*?").replaceAll("_", ".")).collect(toSet()));
+		ignored.addAll(asList(rulePatterns));
 	}
 	
 	/**
@@ -338,7 +341,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected boolean isEligibleForAssertion(String rule) {
-		return !ignored.stream().filter(regex -> rule.matches(regex)).findFirst().isPresent();
+		return !ignored.stream().filter(pattern -> pathMatcher.match(pattern, rule)).findFirst().isPresent();
 	}
 	
 	protected String factToString(Object fact) {
