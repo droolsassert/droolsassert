@@ -56,7 +56,7 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@AssertRules({ "input call" })
+	@AssertRules("input call")
 	public void testAssertActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 	}
