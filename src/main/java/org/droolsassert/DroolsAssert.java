@@ -250,7 +250,7 @@ public class DroolsAssert implements TestRule {
 	public void assertNoScheduledActivations() {
 		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
 		awaitForAllScheduledActivations();
-		List<String> diff = getNewActivations(activationsSnapshot);
+		List<String> diff = getNewActivations(activationsSnapshot).stream().filter(this::isEligibleForAssertion).collect(toList());
 		assertTrue(format("Unexpected scheduled activations %s", diff), diff.isEmpty());
 	}
 	
