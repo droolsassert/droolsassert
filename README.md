@@ -4,9 +4,9 @@ Relieve Drools JUnit testing
 
 ## Audience
 
-If you find yourself writing too much boilerplate code to initialize drools sessions rather than writing actual test scenarios    
+If you find yourself writing too much boilerplate code and it is hard to write neat and clear scenario specification for your rule    
 or it is rather hard to understand rules triggering order and cause-effect dependencies between the rules in your session,  
-this library may help you spend less time debugging, make tests neat and support easier.  
+this library will help you to build robust testing approach, make code cleaner and support easier.  
 
 ## Approach
 
@@ -54,7 +54,7 @@ For Drools 7.x
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.7.9</version>
+        <version>1.7.11</version>
         <scope>test</scope>
     </dependency>
 
@@ -63,6 +63,6 @@ For Drools 6.x
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.6.9</version>
+        <version>1.6.11</version>
         <scope>test</scope>
     </dependency>
