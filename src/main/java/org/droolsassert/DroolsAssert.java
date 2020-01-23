@@ -1,14 +1,16 @@
 package org.droolsassert;
 
 import static java.lang.Integer.parseInt;
+import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
 import static java.lang.System.lineSeparator;
 import static java.lang.System.out;
 import static java.util.Arrays.asList;
 import static java.util.Collections.sort;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.apache.commons.lang3.StringUtils.join;
@@ -29,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +78,7 @@ public class DroolsAssert implements TestRule {
 	protected KieSession session;
 	protected DefaultAgenda agenda;
 	protected SessionPseudoClock clock;
-	protected Map<String, Integer> activations = new HashMap<>();
+	protected Map<String, Integer> activations = new LinkedHashMap<>();
 	protected Set<String> ignored = new HashSet<>();
 	protected Map<Object, Integer> facts = new IdentityHashMap<>();
 	
@@ -127,6 +130,12 @@ public class DroolsAssert implements TestRule {
 		return session;
 	}
 	
+	/**
+	 * Returns an object of the specified class.
+	 *
+	 * @throws AssertionError
+	 *             if object was not found or there are more than one instance of the class
+	 */
 	@SuppressWarnings("unchecked")
 	public <T> T getObject(Class<T> clazz) {
 		Collection<T> objects = getObjects(clazz);
@@ -135,11 +144,17 @@ public class DroolsAssert implements TestRule {
 		return (T) objects.toArray()[0];
 	}
 	
+	/**
+	 * Returns all objects of the class if found
+	 */
 	@SuppressWarnings("unchecked")
 	public <T> Collection<T> getObjects(Class<T> clazz) {
 		return (Collection<T>) session.getObjects(obj -> clazz.isInstance(obj));
 	}
 	
+	/**
+	 * Move clock around possibly triggering any scheduled rules
+	 */
 	public void advanceTime(long amount, TimeUnit unit) {
 		clock.advanceTime(amount, unit);
 		// https://issues.jboss.org/browse/DROOLS-2240
@@ -148,6 +163,8 @@ public class DroolsAssert implements TestRule {
 	
 	/**
 	 * Asserts the only rules listed have been activated no more no less.
+	 *
+	 * @throws AssertionError
 	 */
 	public void assertActivations(String... expected) {
 		Map<String, Integer> expectedMap = new HashMap<>();
@@ -159,19 +176,21 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Asserts the only rules listed have been activated no more no less.<br>
 	 * Accepts the number of activations to assert.
+	 * 
+	 * @throws AssertionError
 	 */
 	public void assertActivations(Map<String, Integer> expectedCount) {
-		Collection<String> missing = subtract(expectedCount.keySet(), activations.keySet()).stream()
-				.filter(this::isEligibleForAssertion).collect(toSet());
-		Collection<String> extra = subtract(activations.keySet(), expectedCount.keySet()).stream()
-				.filter(this::isEligibleForAssertion).collect(toSet());
+		List<String> missing = subtract(expectedCount.keySet(), activations.keySet()).stream()
+				.filter(this::isEligibleForAssertion).collect(toList());
+		List<String> extra = subtract(activations.keySet(), expectedCount.keySet()).stream()
+				.filter(this::isEligibleForAssertion).collect(toList());
 		
 		if (!missing.isEmpty() && !extra.isEmpty())
-			fail(format("expected: %s unexpected: %s", missing, extra));
+			fail(format("Expected: %s unexpected: %s", missing, extra));
 		else if (!missing.isEmpty())
-			fail(format("expected: %s", missing));
+			fail(format("Expected: %s", missing));
 		else if (!extra.isEmpty())
-			fail(format("unexpected: %s", extra));
+			fail(format("Unexpected: %s", extra));
 		
 		for (Entry<String, Integer> actual : activations.entrySet()) {
 			Integer expected = expectedCount.get(actual.getKey());
@@ -181,42 +200,71 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Asserts the only rules listed will be activated no more no less.<br>
-	 * Waits for scheduled rules if any.
+	 * Await for (trigger) all listed or any upcoming scheduled activation.<br>
+	 * It is imperative that all other activations which were part of the same agenda were also triggered, see below.
+	 * <p>
+	 * <i>Drools Developer's Cookbook (c):</i><br>
+	 * People quite often misunderstand how Drools works internally. So, let's try to clarify how rules are "executed" really. Each time an object is inserted/updated/retracted in the working memory, or the facts are update/retracted within the rules, the rules are re-evaluated with the new working
+	 * memory state. If a rule matches, it generates an Activation object. This Activation object is stored inside the Agenda until the fireAllRules() method is invoked. These objects are also evaluated when the WorkingMemory state changes to be possibly cancelled. Finally, when the fireAllRules()
+	 * method is invoked the Agenda is cleared, executing the associated rule consequence of each Activation object.
+	 * 
+	 * @throws AssertionError
+	 *             if expected activation(s) will not be triggered within a day
 	 */
-	public void awaitForActivations(String... expected) {
-		Map<String, Integer> expectedMap = new HashMap<>();
-		for (String rule : expected)
-			expectedMap.put(rule, null);
-		awaitForActivations(expectedMap);
+	public void awaitForScheduledActivations(String... rulesToWait) {
+		awaitForScheduledActivations(DAYS.toSeconds(1), SECONDS, rulesToWait);
 	}
 	
 	/**
-	 * Asserts the only rules listed will be activated no more no less.<br>
-	 * Waits for scheduled rules if any.<br>
-	 * Accepts the number of activations to assert.
+	 * Iterate through count of time units (you chose length and precision) until all listed or any upcoming scheduled activation will be triggered.
+	 * 
+	 * @throws AssertionError
+	 *             if expected activation(s) will not be triggered within time period
 	 */
-	public void awaitForActivations(Map<String, Integer> expectedCount) {
-		awaitForScheduledActivations();
-		assertActivations(expectedCount);
+	public void awaitForScheduledActivations(long maxCount, TimeUnit units, String... rulesToWait) {
+		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
+		List<String> rules = asList(rulesToWait);
+		for (int i = 0; i < maxCount; i++) {
+			advanceTime(1, units);
+			if (rules.isEmpty() && !getNewActivations(activationsSnapshot).isEmpty()
+					|| !rules.isEmpty() && getNewActivations(activationsSnapshot).containsAll(rules))
+				return;
+		}
+		fail(format("Expected %s", rules.isEmpty() ? "scheduled activations" : subtract(rules, getNewActivations(activationsSnapshot))));
 	}
 	
 	/**
-	 * Await for any scheduled activations.
+	 * Await for (trigger) all possible scheduled activations
 	 */
-	public void awaitForScheduledActivations() {
-		if (agenda.getActivations().length != 0)
-			out.println("awaiting for scheduled activations");
-		while (agenda.getActivations().length != 0)
-			advanceTime(50, MILLISECONDS);
+	public void awaitForAllScheduledActivations() {
+		clock.advanceTime(MAX_VALUE, MILLISECONDS);
+		session.fireAllRules();
+		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
 	}
 	
+	/**
+	 * Assert no activations will be triggered in future assuming no new facts
+	 * 
+	 * @throws AssertionError
+	 */
 	public void assertNoScheduledActivations() {
-		assertTrue("There are some scheduled activations.", agenda.getActivations().length == 0);
+		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
+		awaitForAllScheduledActivations();
+		List<String> diff = getNewActivations(activationsSnapshot);
+		assertTrue(format("Unexpected scheduled activations %s", diff), diff.isEmpty());
+	}
+	
+	protected final List<String> getNewActivations(Map<String, Integer> activationsSnapshot) {
+		return activations.entrySet().stream()
+				.filter(e -> !activationsSnapshot.containsKey(e.getKey()) || !activationsSnapshot.get(e.getKey()).equals(e.getValue()))
+				.map(Entry::getKey)
+				.collect(toList());
 	}
 	
 	/**
 	 * Asserts object presence in drools knowledge base.
+	 * 
+	 * @throws AssertionError
 	 */
 	public void assertExists(Object object) {
 		for (Object obj : session.getObjects()) {
@@ -228,6 +276,8 @@ public class DroolsAssert implements TestRule {
 	
 	/**
 	 * Asserts object was retracted from knowledge base.
+	 * 
+	 * @throws AssertionError
 	 */
 	public void assertRetracted(Object retracted) {
 		for (Object obj : session.getObjects()) {
@@ -238,6 +288,8 @@ public class DroolsAssert implements TestRule {
 	
 	/**
 	 * Asserts all objects were retracted from knowledge base.
+	 * 
+	 * @throws AssertionError
 	 */
 	public void assertAllRetracted() {
 		List<Object> facts = new LinkedList<>(session.getObjects());
@@ -246,6 +298,8 @@ public class DroolsAssert implements TestRule {
 	
 	/**
 	 * Asserts exact count of facts in knowledge base.
+	 * 
+	 * @throws AssertionError
 	 */
 	public void assertFactsCount(long factsCount) {
 		assertEquals(factsCount, session.getFactCount());
@@ -265,10 +319,16 @@ public class DroolsAssert implements TestRule {
 		session.setGlobal(identifier, value);
 	}
 	
+	/**
+	 * @see KieSession#execute(Command)
+	 */
 	public <T> T execute(Command<T> command) {
 		return session.execute(command);
 	}
 	
+	/**
+	 * @see KieSession#insert(Object)
+	 */
 	public List<FactHandle> insert(Object... objects) {
 		List<FactHandle> factHandles = new LinkedList<>();
 		for (Object object : objects)
@@ -276,11 +336,20 @@ public class DroolsAssert implements TestRule {
 		return factHandles;
 	}
 	
+	/**
+	 * @see KieSession#fireAllRules()
+	 */
 	public int fireAllRules() {
 		out.println("--> fireAllRules");
 		return session.fireAllRules();
 	}
 	
+	/**
+	 * Insert all objects listed and fire all rules at the end
+	 * 
+	 * @see KieSession#insert(Object)
+	 * @see KieSession#fireAllRules()
+	 */
 	public List<FactHandle> insertAndFire(Object... objects) {
 		List<FactHandle> result = new LinkedList<>();
 		for (Object object : objects) {
@@ -290,6 +359,9 @@ public class DroolsAssert implements TestRule {
 		return result;
 	}
 	
+	/**
+	 * Print all facts in insertion order
+	 */
 	public void printFacts() {
 		List<Object> sortedFacts = new LinkedList<>(session.getObjects());
 		sort(sortedFacts, (o1, o2) -> facts.get(o1).compareTo(facts.get(o2)));
@@ -325,10 +397,12 @@ public class DroolsAssert implements TestRule {
 		try {
 			ignoreActivations(droolsSessionMeta.ignoreRules());
 			ignoreActivations(assertRulesMeta.ignore());
+			if (assertRulesMeta.checkScheduled())
+				awaitForAllScheduledActivations();
 			if (assertRulesMeta.expectedCount().length != 0)
-				awaitForActivations(toMap(true, assertRulesMeta.expectedCount()));
+				assertActivations(toMap(true, assertRulesMeta.expectedCount()));
 			else
-				awaitForActivations(firstNonEmpty(assertRulesMeta.value(), assertRulesMeta.expected()));
+				assertActivations(firstNonEmpty(assertRulesMeta.value(), assertRulesMeta.expected()));
 		} catch (Throwable th) {
 			errors.add(0, th);
 		}
@@ -357,7 +431,7 @@ public class DroolsAssert implements TestRule {
 		if (params.length % 2 != 0)
 			throw new IllegalStateException();
 		
-		Map<String, T> map = new HashMap<>();
+		Map<String, T> map = new LinkedHashMap<>();
 		for (int i = 0; i < params.length; i = i + 2)
 			map.put(params[i], (T) (convertToInt ? parseInt(params[i + 1]) : params[i + 1]));
 		return map;
