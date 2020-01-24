@@ -9,6 +9,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
+
 @DroolsSession("classpath:/org/droolsassert/logicalEvents.drl")
 public class LogicalEventsTest {
 	
@@ -41,8 +43,7 @@ public class LogicalEventsTest {
 		drools.assertExists(caller3Dial);
 		
 		drools.advanceTime(5, SECONDS);
-		drools.assertExists(call);
-		drools.assertExists(caller3Dial);
+		drools.assertExists(call, caller3Dial);
 		
 		drools.advanceTime(5, SECONDS);
 		drools.assertExists(call);
@@ -94,7 +95,7 @@ public class LogicalEventsTest {
 		CallInProgress call = drools.getObject(CallInProgress.class);
 		assertEquals("11111", call.callerNumber);
 		
-		drools.awaitForScheduledActivations("drop the call if caller is talking more than permitted time");
+		drools.awaitFor("drop the call if caller is talking more than permitted time");
 		drools.assertNoScheduledActivations();
 		drools.assertAllRetracted();
 		
@@ -116,26 +117,29 @@ public class LogicalEventsTest {
 			"call in progress dropped",
 			"input call dropped"
 	})
-	public void testCallsConnectAndDisconnectLogicWithoutNumbers() {
+	public void testCallsConnectAndDisconnectLogicStickToEvents() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		drools.insertAndFire(caller1Dial);
+		drools.assertActivated("input call");
 		drools.assertRetracted(caller1Dial);
 		CallInProgress call = drools.getObject(CallInProgress.class);
 		assertEquals("11111", call.callerNumber);
 		
 		Dialing caller3Dial = new Dialing("33333", "22222");
 		drools.insertAndFire(caller3Dial);
-		drools.assertExists(call);
-		drools.assertExists(caller3Dial);
+		drools.assertActivated();
+		drools.assertExists(call, caller3Dial);
 		
-		drools.awaitForScheduledActivations("drop dial-up if callee is talking");
+		drools.awaitFor("drop dial-up if callee is talking");
+		drools.assertActivated("drop dial-up if callee is talking", "input call dropped");
 		drools.assertExists(call);
 		drools.assertRetracted(caller3Dial);
 		
-		drools.awaitForScheduledActivations("drop the call if caller is talking more than permitted time");
-		drools.assertRetracted(call);
+		drools.awaitFor("drop the call if caller is talking more than permitted time");
+		drools.assertActivated(ImmutableMap.of("drop the call if caller is talking more than permitted time", 1, "call in progress dropped", 1));
 		drools.assertRetracted(caller3Dial);
 		
+		drools.assertNoScheduledActivations();
 		drools.assertAllRetracted();
 	}
 	

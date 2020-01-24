@@ -14,19 +14,20 @@ import org.junit.Test;
 		"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
 		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
 		ignoreRules = { "before", "after" },
+		keeFactsHistory = false,
 		logResources = true)
 public class DroolsAssertTest {
-
+	
 	@Rule
 	public DroolsAssert drools = new DroolsAssert();
-
+	
 	@Test
 	@AssertRules("atomic int rule")
 	public void testInt() {
 		drools.insertAndFire(new AtomicInteger());
 		assertEquals(1, drools.getObject(AtomicInteger.class).get());
 	}
-
+	
 	@Test
 	@AssertRules({ "atomic int rule", "atomic long rule" })
 	public void testLong() {
@@ -35,14 +36,14 @@ public class DroolsAssertTest {
 		drools.assertFactsCount(3);
 		assertEquals(2, drools.getObjects(AtomicLong.class).size());
 	}
-
+	
 	@Test
 	@AssertRules(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
 	public void testActivationCount() {
 		drools.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
 		assertEquals(2, drools.getObjects(AtomicLong.class).size());
 	}
-
+	
 	@Test
 	@AssertRules
 	public void testNoRulesWereTriggered() {
