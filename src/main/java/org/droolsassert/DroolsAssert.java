@@ -1,5 +1,6 @@
 package org.droolsassert;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Integer.parseInt;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
@@ -121,7 +122,7 @@ public class DroolsAssert implements TestRule {
 		List<Resource> resources = new ArrayList<>();
 		for (String resourceNameFilter : firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources()))
 			resources.addAll(asList(resourceResolver.getResources(resourceNameFilter)));
-		assertTrue("No resources found", resources.size() > 0);
+		checkArgument(resources.size() > 0, "No resources found");
 		
 		if (droolsSessionMeta.logResources())
 			resources.forEach(resource -> out.println(resource));
@@ -141,8 +142,8 @@ public class DroolsAssert implements TestRule {
 	@SuppressWarnings("unchecked")
 	public <T> T getObject(Class<T> clazz) {
 		Collection<T> objects = getObjects(clazz);
-		assertFalse("No object of type found " + clazz.getSimpleName(), objects.isEmpty());
-		assertFalse("Non-unique object of type found " + clazz.getSimpleName(), objects.size() > 1);
+		assertFalse(format("No object of type %s found", clazz.getSimpleName()), objects.isEmpty());
+		assertFalse(format("Non-unique object of type %s found", clazz.getSimpleName()), objects.size() > 1);
 		return (T) objects.toArray()[0];
 	}
 	
@@ -504,9 +505,7 @@ public class DroolsAssert implements TestRule {
 	
 	@SuppressWarnings("unchecked")
 	private <T> Map<String, T> toMap(boolean convertToInt, String... params) {
-		if (params.length % 2 != 0)
-			throw new IllegalStateException();
-		
+		checkArgument(params.length % 2 == 0, "Cannot create a map out of odd number of parameters");
 		Map<String, T> map = new LinkedHashMap<>();
 		for (int i = 0; i < params.length; i = i + 2)
 			map.put(params[i], (T) (convertToInt ? parseInt(params[i + 1]) : params[i + 1]));

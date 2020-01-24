@@ -1,6 +1,7 @@
 package org.droolsassert;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,8 +48,33 @@ public class DroolsAssertTest {
 	@Test
 	@AssertRules
 	public void testNoRulesWereTriggered() {
-		drools.insertAndFire(new BigDecimal(0));
+		drools.insertAndFire("string");
 		drools.assertFactsCount(1);
+		assertEquals("string", drools.getObject(String.class));
+		drools.printFacts();
+	}
+	
+	@Test(expected = AssertionError.class)
+	@AssertRules
+	public void testNoObjectFound() {
 		assertEquals(0, drools.getObject(BigDecimal.class).intValue());
+	}
+	
+	@Test(expected = AssertionError.class)
+	@AssertRules("atomic long rule")
+	public void testNoUniqueObjectFound() {
+		drools.insertAndFire(new AtomicLong(), new AtomicLong());
+		assertEquals(2, drools.getObject(AtomicLong.class));
+	}
+	
+	@Test
+	public void testSessionCreationSkipped() {
+		assertNull(drools.getSession());
+	}
+	
+	@Test
+	@AssertRules
+	public void testPrintFactsSkippedWhenHistoryIsDisabled() {
+		drools.printFacts();
 	}
 }
