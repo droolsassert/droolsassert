@@ -3,9 +3,9 @@ package org.droolsassert;
 import static java.lang.Integer.parseInt;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
-import static java.lang.System.lineSeparator;
 import static java.lang.System.out;
 import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
 import static java.util.Collections.sort;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -13,6 +13,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
+import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
@@ -79,8 +80,9 @@ public class DroolsAssert implements TestRule {
 	protected DefaultAgenda agenda;
 	protected SessionPseudoClock clock;
 	protected Map<String, Integer> activations = new LinkedHashMap<>();
+	protected Map<String, Integer> activationsSnapshot = new LinkedHashMap<>();
 	protected Set<String> ignored = new HashSet<>();
-	protected Map<Object, Integer> facts = new IdentityHashMap<>();
+	protected Map<Object, Integer> factsHistory = new IdentityHashMap<>();
 	
 	protected void init(KieSession session) {
 		this.session = session;
@@ -115,7 +117,7 @@ public class DroolsAssert implements TestRule {
 		}
 	}
 	
-	private List<Resource> getResources(DroolsSession droolsSessionMeta) throws IOException {
+	protected final List<Resource> getResources(DroolsSession droolsSessionMeta) throws IOException {
 		List<Resource> resources = new ArrayList<>();
 		for (String resourceNameFilter : firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources()))
 			resources.addAll(asList(resourceResolver.getResources(resourceNameFilter)));
@@ -164,36 +166,70 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Asserts the only rules listed have been activated no more no less.
 	 *
+	 * @see #assertAllActivations(Map)
 	 * @throws AssertionError
 	 */
-	public void assertActivations(String... expected) {
-		Map<String, Integer> expectedMap = new HashMap<>();
+	public void assertAllActivations(String... expected) {
+		Map<String, Integer> expectedMap = new LinkedHashMap<>();
 		for (String rule : expected)
 			expectedMap.put(rule, null);
-		assertActivations(expectedMap);
+		assertAllActivations(expectedMap);
 	}
 	
 	/**
 	 * Asserts the only rules listed have been activated no more no less.<br>
 	 * Accepts the number of activations to assert.
 	 * 
+	 * @see #assertAllActivations(String...)
 	 * @throws AssertionError
 	 */
-	public void assertActivations(Map<String, Integer> expectedCount) {
-		List<String> missing = subtract(expectedCount.keySet(), activations.keySet()).stream()
+	public void assertAllActivations(Map<String, Integer> expectedCount) {
+		assertActivations(expectedCount, activations);
+	}
+	
+	/**
+	 * Asserts the only rules listed have been activated no more no less <i>since previous check</i>.
+	 *
+	 * @see #assertActivated(Map)
+	 * @see #awaitFor(String...)
+	 * @throws AssertionError
+	 */
+	public void assertActivated(String... expected) {
+		Map<String, Integer> expectedMap = new HashMap<>();
+		for (String rule : expected)
+			expectedMap.put(rule, null);
+		assertActivated(expectedMap);
+	}
+	
+	/**
+	 * Asserts the only rules listed have been activated no more no less <i>since previous check</i>.<br>
+	 * Accepts the number of activations to assert.
+	 *
+	 * @see #assertActivated(String...)
+	 * @see #awaitFor(String...)
+	 * @throws AssertionError
+	 */
+	public void assertActivated(Map<String, Integer> expectedCount) {
+		Map<String, Integer> delta = getNewActivations(activationsSnapshot);
+		activationsSnapshot = new LinkedHashMap<>(activations);
+		assertActivations(expectedCount, delta);
+	}
+	
+	protected final void assertActivations(Map<String, Integer> expectedActivations, Map<String, Integer> actualActiavtions) {
+		List<String> missing = subtract(expectedActivations.keySet(), actualActiavtions.keySet()).stream()
 				.filter(this::isEligibleForAssertion).collect(toList());
-		List<String> extra = subtract(activations.keySet(), expectedCount.keySet()).stream()
+		List<String> extra = subtract(actualActiavtions.keySet(), expectedActivations.keySet()).stream()
 				.filter(this::isEligibleForAssertion).collect(toList());
 		
 		if (!missing.isEmpty() && !extra.isEmpty())
-			fail(format("Expected: %s unexpected: %s", missing, extra));
+			fail(formatUnexpectedCollection("Activation", "not triggered", missing) + LF + formatUnexpectedCollection("Activation", "triggered", extra));
 		else if (!missing.isEmpty())
-			fail(format("Expected: %s", missing));
+			fail(formatUnexpectedCollection("Activation", "not triggered", missing));
 		else if (!extra.isEmpty())
-			fail(format("Unexpected: %s", extra));
+			fail(formatUnexpectedCollection("Activation", "triggered", extra));
 		
-		for (Entry<String, Integer> actual : activations.entrySet()) {
-			Integer expected = expectedCount.get(actual.getKey());
+		for (Entry<String, Integer> actual : actualActiavtions.entrySet()) {
+			Integer expected = expectedActivations.get(actual.getKey());
 			if (expected != null && !expected.equals(actual.getValue()))
 				fail(format("'%s' should be activated %s time(s) but actually it was activated %s time(s)", actual.getKey(), expected, actual.getValue()));
 		}
@@ -208,35 +244,46 @@ public class DroolsAssert implements TestRule {
 	 * memory state. If a rule matches, it generates an Activation object. This Activation object is stored inside the Agenda until the fireAllRules() method is invoked. These objects are also evaluated when the WorkingMemory state changes to be possibly cancelled. Finally, when the fireAllRules()
 	 * method is invoked the Agenda is cleared, executing the associated rule consequence of each Activation object.
 	 * 
+	 * @see #awaitFor(long, TimeUnit, String...)
+	 * @see #awaitForAllScheduled()
 	 * @throws AssertionError
 	 *             if expected activation(s) will not be triggered within a day
 	 */
-	public void awaitForScheduledActivations(String... rulesToWait) {
-		awaitForScheduledActivations(DAYS.toSeconds(1), SECONDS, rulesToWait);
+	public void awaitFor(String... rulesToWait) {
+		awaitFor(DAYS.toSeconds(1), SECONDS, rulesToWait);
 	}
 	
 	/**
 	 * Iterate through count of time units (you chose length and precision) until all listed or any upcoming scheduled activation will be triggered.
 	 * 
+	 * @see #awaitFor(String...)
+	 * @see #awaitForAllScheduled()
 	 * @throws AssertionError
 	 *             if expected activation(s) will not be triggered within time period
 	 */
-	public void awaitForScheduledActivations(long maxCount, TimeUnit units, String... rulesToWait) {
+	public void awaitFor(long maxCount, TimeUnit units, String... rulesToWait) {
 		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
 		List<String> rules = asList(rulesToWait);
 		for (int i = 0; i < maxCount; i++) {
 			advanceTime(1, units);
 			if (rules.isEmpty() && !getNewActivations(activationsSnapshot).isEmpty()
-					|| !rules.isEmpty() && getNewActivations(activationsSnapshot).containsAll(rules))
+					|| !rules.isEmpty() && getNewActivations(activationsSnapshot).keySet().containsAll(rules))
 				return;
 		}
-		fail(format("Expected %s", rules.isEmpty() ? "scheduled activations" : subtract(rules, getNewActivations(activationsSnapshot))));
+		
+		fail(rules.isEmpty()
+				? "Expected at least one scheduled activation"
+				: formatUnexpectedCollection("Activations", "not scheduled", subtract(rules, getNewActivations(activationsSnapshot).keySet())));
 	}
 	
 	/**
 	 * Await for (trigger) all possible scheduled activations
+	 * 
+	 * @see #awaitFor(String...)
+	 * @see #awaitFor(long, TimeUnit, String...)
+	 * @see #assertNoScheduledActivations()
 	 */
-	public void awaitForAllScheduledActivations() {
+	public void awaitForAllScheduled() {
 		clock.advanceTime(MAX_VALUE, MILLISECONDS);
 		session.fireAllRules();
 		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
@@ -245,45 +292,65 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Assert no activations will be triggered in future assuming no new facts
 	 * 
+	 * @see #awaitForAllScheduled()
 	 * @throws AssertionError
 	 */
 	public void assertNoScheduledActivations() {
 		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
-		awaitForAllScheduledActivations();
-		List<String> diff = getNewActivations(activationsSnapshot).stream().filter(this::isEligibleForAssertion).collect(toList());
-		assertTrue(format("Unexpected scheduled activations %s", diff), diff.isEmpty());
-	}
-	
-	protected final List<String> getNewActivations(Map<String, Integer> activationsSnapshot) {
-		return activations.entrySet().stream()
-				.filter(e -> !activationsSnapshot.containsKey(e.getKey()) || !activationsSnapshot.get(e.getKey()).equals(e.getValue()))
-				.map(Entry::getKey)
-				.collect(toList());
+		awaitForAllScheduled();
+		List<String> diff = getNewActivations(activationsSnapshot).keySet().stream().filter(this::isEligibleForAssertion).collect(toList());
+		assertTrue(formatUnexpectedCollection("Activation", "scheduled", diff), diff.isEmpty());
 	}
 	
 	/**
-	 * Asserts object presence in drools knowledge base.
-	 * 
-	 * @throws AssertionError
+	 * New activations (delta) since previous check.
 	 */
-	public void assertExists(Object object) {
-		for (Object obj : session.getObjects()) {
-			if (obj == object)
-				return;
+	protected final Map<String, Integer> getNewActivations(Map<String, Integer> activationsSnapshot) {
+		Map<String, Integer> newActivations = new LinkedHashMap<>();
+		for (Entry<String, Integer> activation : activations.entrySet()) {
+			if (!activationsSnapshot.containsKey(activation.getKey()))
+				newActivations.put(activation.getKey(), activation.getValue());
+			else if (activation.getValue() > activationsSnapshot.get(activation.getKey()))
+				newActivations.put(activation.getKey(), activation.getValue() - activationsSnapshot.get(activation.getKey()));
 		}
-		fail("Object was not found in the session " + factToString(object));
+		return newActivations;
 	}
 	
 	/**
-	 * Asserts object was retracted from knowledge base.
+	 * Asserts object(s) presence in drools knowledge base.
 	 * 
 	 * @throws AssertionError
 	 */
-	public void assertRetracted(Object retracted) {
-		for (Object obj : session.getObjects()) {
-			if (obj == retracted)
-				fail("Object was not retracted from the session " + factToString(retracted));
+	public void assertExists(Object... objects) {
+		Map<Object, Void> identityMap = new IdentityHashMap<>();
+		stream(objects).forEach(obj -> identityMap.put(obj, null));
+		
+		if (droolsSessionMeta.keeFactsHistory()) {
+			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
+			assertTrue(formatUnexpectedCollection("Object", "never inserted into the session", unknown), unknown.isEmpty());
 		}
+		
+		session.getObjects().stream().forEach(obj -> identityMap.remove(obj));
+		List<String> retracted = identityMap.keySet().stream().map(this::factToString).collect(toList());
+		assertTrue(formatUnexpectedCollection("Object", "removed from the session", retracted), retracted.isEmpty());
+	}
+	
+	/**
+	 * Asserts object(s) retracted from knowledge base.
+	 * 
+	 * @throws AssertionError
+	 */
+	public void assertRetracted(Object... objects) {
+		Map<Object, Void> identityMap = new IdentityHashMap<>();
+		stream(objects).forEach(obj -> identityMap.put(obj, null));
+		
+		if (droolsSessionMeta.keeFactsHistory()) {
+			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
+			assertTrue(formatUnexpectedCollection("Object", "never inserted into the session", unknown), unknown.isEmpty());
+		}
+		
+		List<String> notRetracted = session.getObjects().stream().filter(obj -> identityMap.containsKey(obj)).map(this::factToString).collect(toList());
+		assertTrue(formatUnexpectedCollection("Object", "not retracted from the session", notRetracted), notRetracted.isEmpty());
 	}
 	
 	/**
@@ -292,8 +359,8 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertAllRetracted() {
-		List<Object> facts = new LinkedList<>(session.getObjects());
-		assertTrue("Objects were not retracted from the session: " + join(facts, lineSeparator()), facts.isEmpty());
+		List<String> facts = session.getObjects().stream().map(this::factToString).collect(toList());
+		assertTrue(formatUnexpectedCollection("Object", "not retracted from the session", facts), facts.isEmpty());
 	}
 	
 	/**
@@ -345,7 +412,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Insert all objects listed and fire all rules at the end
+	 * Insert all objects listed and fire all rules after each
 	 * 
 	 * @see KieSession#insert(Object)
 	 * @see KieSession#fireAllRules()
@@ -360,11 +427,16 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Print all facts in insertion order
+	 * Print retained facts in insertion order
+	 * 
+	 * @see DroolsSession#keeFactsHistory()
 	 */
 	public void printFacts() {
+		if (!droolsSessionMeta.keeFactsHistory())
+			return;
+		
 		List<Object> sortedFacts = new LinkedList<>(session.getObjects());
-		sort(sortedFacts, (o1, o2) -> facts.get(o1).compareTo(facts.get(o2)));
+		sort(sortedFacts, (o1, o2) -> factsHistory.get(o1).compareTo(factsHistory.get(o2)));
 		out.println(format("Facts (%s):", session.getFactCount()));
 		for (Object fact : sortedFacts)
 			out.println(factToString(fact));
@@ -398,11 +470,11 @@ public class DroolsAssert implements TestRule {
 			ignoreActivations(droolsSessionMeta.ignoreRules());
 			ignoreActivations(assertRulesMeta.ignore());
 			if (assertRulesMeta.checkScheduled())
-				awaitForAllScheduledActivations();
+				awaitForAllScheduled();
 			if (assertRulesMeta.expectedCount().length != 0)
-				assertActivations(toMap(true, assertRulesMeta.expectedCount()));
+				assertAllActivations(toMap(true, assertRulesMeta.expectedCount()));
 			else
-				assertActivations(firstNonEmpty(assertRulesMeta.value(), assertRulesMeta.expected()));
+				assertAllActivations(firstNonEmpty(assertRulesMeta.value(), assertRulesMeta.expected()));
 		} catch (Throwable th) {
 			errors.add(0, th);
 		}
@@ -419,11 +491,15 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected String factToString(Object fact) {
-		return reflectionToString(fact, SHORT_PREFIX_STYLE);
+		return fact instanceof String ? (String) fact : reflectionToString(fact, SHORT_PREFIX_STYLE);
 	}
 	
 	protected String tupleToString(List<Object> tuple) {
 		return "" + tuple.stream().map(o -> o.getClass().getSimpleName()).collect(toList());
+	}
+	
+	protected final String formatUnexpectedCollection(String entityName, String message, Collection<String> entities) {
+		return format("%s%s %s:%n%s", entityName, entities.size() == 1 ? " was" : "s were", message, join(entities, LF));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -458,8 +534,8 @@ public class DroolsAssert implements TestRule {
 		@Override
 		public void objectInserted(ObjectInsertedEvent event) {
 			Object fact = event.getObject();
-			if (!facts.containsKey(fact))
-				facts.put(fact, facts.size());
+			if (droolsSessionMeta.keeFactsHistory() && !factsHistory.containsKey(fact))
+				factsHistory.put(fact, factsHistory.size());
 			out.println("--> inserted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
 		}
 		
