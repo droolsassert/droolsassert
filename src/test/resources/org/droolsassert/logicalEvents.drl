@@ -19,7 +19,7 @@ end
 
 rule 'drop dial-up if callee is talking'
 	dialect 'mvel'
-	timer (int: 7s)
+	timer (7001)
     when
         $dial: Dialing()
         (CallInProgress(this.callerNumber == $dial.calleeNumber)

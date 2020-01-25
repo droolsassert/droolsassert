@@ -83,7 +83,7 @@ public class LogicalEventsTest {
 		
 		drools.awaitFor("drop the call if caller is talking more than permitted time");
 		drools.assertActivated(ImmutableMap.of(
-				"drop the call if caller is talking more than permitted time", 1, 
+				"drop the call if caller is talking more than permitted time", 1,
 				"call in progress dropped", 1));
 		drools.assertRetracted(call);
 		
@@ -124,7 +124,7 @@ public class LogicalEventsTest {
 			"call in progress dropped" })
 	public void testAwaitForAnyScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
-		drools.awaitFor();
+		drools.awaitForAny();
 	}
 	
 	@Test(expected = AssertionError.class)
