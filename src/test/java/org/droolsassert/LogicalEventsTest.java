@@ -51,7 +51,6 @@ public class LogicalEventsTest {
 		
 		drools.advanceTime(1, HOURS);
 		drools.assertRetracted(call);
-		drools.assertRetracted(caller3Dial);
 		
 		drools.assertAllRetracted();
 	}
@@ -83,8 +82,10 @@ public class LogicalEventsTest {
 		drools.assertRetracted(caller3Dial);
 		
 		drools.awaitFor("drop the call if caller is talking more than permitted time");
-		drools.assertActivated(ImmutableMap.of("drop the call if caller is talking more than permitted time", 1, "call in progress dropped", 1));
-		drools.assertRetracted(caller3Dial);
+		drools.assertActivated(ImmutableMap.of(
+				"drop the call if caller is talking more than permitted time", 1, 
+				"call in progress dropped", 1));
+		drools.assertRetracted(call);
 		
 		drools.assertNoScheduledActivations();
 		drools.assertAllRetracted();
