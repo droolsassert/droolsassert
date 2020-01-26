@@ -442,7 +442,7 @@ public class DroolsAssert implements TestRule {
 	 * @see KieSession#fireAllRules()
 	 */
 	public int fireAllRules() {
-		out.printf("%s --> fireAllRules%n", formatTime());
+		out.println(formatTime() + " --> fireAllRules");
 		return session.fireAllRules();
 	}
 	
@@ -575,20 +575,20 @@ public class DroolsAssert implements TestRule {
 			if (droolsSessionMeta.keeFactsHistory() && !factsHistory.containsKey(fact))
 				factsHistory.put(fact, factsHistory.size());
 			
-			out.printf("%s --> inserted: %s%n", formatTime(), (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
+			out.println(formatTime() + " --> inserted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
 		}
 		
 		@Override
 		public void objectDeleted(ObjectDeletedEvent event) {
 			Object fact = event.getOldObject();
-			out.printf("%s --> retracted: %s%n", formatTime(), (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
+			out.println(formatTime() + " --> retracted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
 		}
 		
 		@Override
 		public void objectUpdated(ObjectUpdatedEvent event) {
-			out.println(format("%s --> updated: %s", formatTime(), (droolsSessionMeta.logFacts()
+			out.println(formatTime() + " --> updated: " + (droolsSessionMeta.logFacts()
 					? format("%s%nto: %s", factToString(event.getOldObject()), factToString(event.getObject()))
-					: event.getOldObject().getClass().getSimpleName())));
+					: event.getOldObject().getClass().getSimpleName()));
 		}
 	}
 }
