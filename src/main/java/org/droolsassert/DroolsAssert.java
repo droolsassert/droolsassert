@@ -260,7 +260,7 @@ public class DroolsAssert implements TestRule {
 	 * method is invoked the Agenda is cleared, executing the associated rule consequence of each Activation object.
 	 * 
 	 * @see #awaitForAny()
-	 * @see #awaitFor(long, TimeUnit, String...)
+	 * @see #awaitFor(TimeUnit, long, String...)
 	 * @see #triggerAllScheduledActivations()
 	 * @throws AssertionError
 	 *             if expected activation(s) was not be triggered within a day
@@ -328,7 +328,7 @@ public class DroolsAssert implements TestRule {
 	 * Trigger all scheduled activations if any
 	 * 
 	 * @see #awaitFor(String...)
-	 * @see #awaitFor(long, TimeUnit, String...)
+	 * @see #awaitFor(TimeUnit, long, String...)
 	 * @see #assertNoScheduledActivations()
 	 */
 	protected final void triggerAllScheduledActivations() {
