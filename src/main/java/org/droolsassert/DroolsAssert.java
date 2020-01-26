@@ -278,7 +278,7 @@ public class DroolsAssert implements TestRule {
 	 *             if no rule was triggered within a day
 	 */
 	public void awaitForAny() {
-		awaitFor(SECONDS, DAYS.toSeconds(1), new String[0]);
+		awaitFor(SECONDS, DAYS.toSeconds(1));
 	}
 	
 	/**
@@ -356,7 +356,7 @@ public class DroolsAssert implements TestRule {
 	 * 
 	 * @throws AssertionError
 	 */
-	public void assertExists(Object... objects) {
+	public void assertExist(Object... objects) {
 		Map<Object, Void> identityMap = new IdentityHashMap<>();
 		stream(objects).forEach(obj -> identityMap.put(obj, null));
 		
