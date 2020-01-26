@@ -147,13 +147,9 @@ public class LogicalEventsTest {
 	@AssertRules("input call")
 	public void testAssertActivatedFailed() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
-		drools.assertActivated(ImmutableMap.of("input call", 1));
 		drools.insertAndFire(new Dialing("33333", "44444"));
 		drools.insertAndFire(new Dialing("55555", "66666"));
 		drools.assertActivated(ImmutableMap.of("input call", 2));
-		drools.insertAndFire(new Dialing("77777", "88888"));
-		drools.insertAndFire(new Dialing("99999", "01010"));
-		drools.assertActivated(ImmutableMap.of("input call", 1));
 	}
 	
 	@Test
