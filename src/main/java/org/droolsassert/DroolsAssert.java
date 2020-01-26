@@ -1,9 +1,11 @@
 package org.droolsassert;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Integer.parseInt;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
 import static java.lang.System.out;
+import static java.time.LocalTime.MIDNIGHT;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.sort;
@@ -27,6 +29,8 @@ import static org.junit.runners.model.MultipleFailureException.assertEmpty;
 import static org.kie.internal.io.ResourceFactory.newUrlResource;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -69,6 +73,8 @@ import org.springframework.util.PathMatcher;
  * @see <a href=https://github.com/droolsassert/droolsassert>Documentation on GitHub</a>
  */
 public class DroolsAssert implements TestRule {
+	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
+	protected static final DateTimeFormatter HH_MM_SS_SSS = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 	private static PathMatcher pathMatcher = new AntPathMatcher();
 	private static PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
@@ -121,7 +127,7 @@ public class DroolsAssert implements TestRule {
 		List<Resource> resources = new ArrayList<>();
 		for (String resourceNameFilter : firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources()))
 			resources.addAll(asList(resourceResolver.getResources(resourceNameFilter)));
-		assertTrue("No resources found", resources.size() > 0);
+		checkArgument(resources.size() > 0, "No resources found");
 		
 		if (droolsSessionMeta.logResources())
 			resources.forEach(resource -> out.println(resource));
@@ -141,8 +147,8 @@ public class DroolsAssert implements TestRule {
 	@SuppressWarnings("unchecked")
 	public <T> T getObject(Class<T> clazz) {
 		Collection<T> objects = getObjects(clazz);
-		assertFalse("No object of type found " + clazz.getSimpleName(), objects.isEmpty());
-		assertFalse("Non-unique object of type found " + clazz.getSimpleName(), objects.size() > 1);
+		assertFalse(format("No object of type %s found", clazz.getSimpleName()), objects.isEmpty());
+		assertFalse(format("Non-unique object of type %s found", clazz.getSimpleName()), objects.size() > 1);
 		return (T) objects.toArray()[0];
 	}
 	
@@ -155,12 +161,20 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Move clock around possibly triggering any scheduled rules
+	 * Move clock forward and trigger any scheduled rules.<br>
+	 * Use second as a smallest time tick.
 	 */
 	public void advanceTime(long amount, TimeUnit unit) {
-		clock.advanceTime(amount, unit);
-		// https://issues.jboss.org/browse/DROOLS-2240
-		session.fireAllRules();
+		advanceTime(SECONDS, unit.toSeconds(amount));
+	}
+	
+	/**
+	 * Move clock forward and trigger any scheduled rules.<br>
+	 * Use time unit as a smallest time tick, make specified amount of ticks.
+	 */
+	public void advanceTime(TimeUnit unit, long amount) {
+		for (int i = 0; i < amount; i++)
+			tickTime(1, unit);
 	}
 	
 	/**
@@ -236,7 +250,8 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Await for (trigger) all listed or any upcoming scheduled activation.<br>
+	 * Move clock forward until all listed will not triggered, fail if any of the rule was not triggered before threshold.<br>
+	 * Use second as a smallest time tick and a day as a threshold.<br>
 	 * It is imperative that all other activations which were part of the same agenda were also triggered, see below.
 	 * <p>
 	 * <i>Drools Developer's Cookbook (c):</i><br>
@@ -244,28 +259,42 @@ public class DroolsAssert implements TestRule {
 	 * memory state. If a rule matches, it generates an Activation object. This Activation object is stored inside the Agenda until the fireAllRules() method is invoked. These objects are also evaluated when the WorkingMemory state changes to be possibly cancelled. Finally, when the fireAllRules()
 	 * method is invoked the Agenda is cleared, executing the associated rule consequence of each Activation object.
 	 * 
-	 * @see #awaitFor(long, TimeUnit, String...)
-	 * @see #awaitForAllScheduled()
+	 * @see #awaitForAny()
+	 * @see #awaitFor(TimeUnit, long, String...)
+	 * @see #triggerAllScheduledActivations()
 	 * @throws AssertionError
-	 *             if expected activation(s) will not be triggered within a day
+	 *             if expected activation(s) was not be triggered within a day
 	 */
 	public void awaitFor(String... rulesToWait) {
-		awaitFor(DAYS.toSeconds(1), SECONDS, rulesToWait);
+		awaitFor(SECONDS, DAYS.toSeconds(1), rulesToWait);
 	}
 	
 	/**
-	 * Iterate through count of time units (you chose length and precision) until all listed or any upcoming scheduled activation will be triggered.
+	 * Move clock forward until any upcoming scheduled activation will be triggered, fail if no rule was triggered before threshold.<br>
+	 * Use second as a smallest time tick and a day as a threshold.
 	 * 
 	 * @see #awaitFor(String...)
-	 * @see #awaitForAllScheduled()
+	 * @throws AssertionError
+	 *             if no rule was triggered within a day
+	 */
+	public void awaitForAny() {
+		awaitFor(SECONDS, DAYS.toSeconds(1), new String[0]);
+	}
+	
+	/**
+	 * Move clock forward until all listed or any upcoming scheduled activation (if list is empty) will be triggered, fail if any of the rule was not triggered before threshold.<br>
+	 * Use time unit as a smallest time tick, make specified amount of ticks at maximum.
+	 * 
+	 * @see #awaitFor(String...)
+	 * @see #triggerAllScheduledActivations()
 	 * @throws AssertionError
 	 *             if expected activation(s) will not be triggered within time period
 	 */
-	public void awaitFor(long maxCount, TimeUnit units, String... rulesToWait) {
+	public void awaitFor(TimeUnit unit, long maxCount, String... rulesToWait) {
 		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
 		List<String> rules = asList(rulesToWait);
 		for (int i = 0; i < maxCount; i++) {
-			advanceTime(1, units);
+			tickTime(1, unit);
 			if (rules.isEmpty() && !getNewActivations(activationsSnapshot).isEmpty()
 					|| !rules.isEmpty() && getNewActivations(activationsSnapshot).keySet().containsAll(rules))
 				return;
@@ -277,29 +306,35 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Await for (trigger) all possible scheduled activations
-	 * 
-	 * @see #awaitFor(String...)
-	 * @see #awaitFor(long, TimeUnit, String...)
-	 * @see #assertNoScheduledActivations()
-	 */
-	public void awaitForAllScheduled() {
-		clock.advanceTime(MAX_VALUE, MILLISECONDS);
-		session.fireAllRules();
-		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
-	}
-	
-	/**
 	 * Assert no activations will be triggered in future assuming no new facts
 	 * 
-	 * @see #awaitForAllScheduled()
+	 * @see #triggerAllScheduledActivations()
 	 * @throws AssertionError
 	 */
 	public void assertNoScheduledActivations() {
 		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
-		awaitForAllScheduled();
+		triggerAllScheduledActivations();
 		List<String> diff = getNewActivations(activationsSnapshot).keySet().stream().filter(this::isEligibleForAssertion).collect(toList());
 		assertTrue(formatUnexpectedCollection("Activation", "scheduled", diff), diff.isEmpty());
+	}
+	
+	protected final void tickTime(long amount, TimeUnit unit) {
+		clock.advanceTime(amount, unit);
+		// https://issues.jboss.org/browse/DROOLS-2240
+		session.fireAllRules();
+	}
+	
+	/**
+	 * Trigger all scheduled activations if any
+	 * 
+	 * @see #awaitFor(String...)
+	 * @see #awaitFor(TimeUnit, long, String...)
+	 * @see #assertNoScheduledActivations()
+	 */
+	protected final void triggerAllScheduledActivations() {
+		clock.advanceTime(MAX_VALUE, MILLISECONDS);
+		session.fireAllRules();
+		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
 	}
 	
 	/**
@@ -407,7 +442,7 @@ public class DroolsAssert implements TestRule {
 	 * @see KieSession#fireAllRules()
 	 */
 	public int fireAllRules() {
-		out.println("--> fireAllRules");
+		out.println(formatTime() + " --> fireAllRules");
 		return session.fireAllRules();
 	}
 	
@@ -437,7 +472,7 @@ public class DroolsAssert implements TestRule {
 		
 		List<Object> sortedFacts = new LinkedList<>(session.getObjects());
 		sort(sortedFacts, (o1, o2) -> factsHistory.get(o1).compareTo(factsHistory.get(o2)));
-		out.println(format("Facts (%s):", session.getFactCount()));
+		out.println(format("%s Facts (%s):", formatTime(), session.getFactCount()));
 		for (Object fact : sortedFacts)
 			out.println(factToString(fact));
 	}
@@ -470,7 +505,7 @@ public class DroolsAssert implements TestRule {
 			ignoreActivations(droolsSessionMeta.ignoreRules());
 			ignoreActivations(assertRulesMeta.ignore());
 			if (assertRulesMeta.checkScheduled())
-				awaitForAllScheduled();
+				triggerAllScheduledActivations();
 			if (assertRulesMeta.expectedCount().length != 0)
 				assertAllActivations(toMap(true, assertRulesMeta.expectedCount()));
 			else
@@ -502,11 +537,14 @@ public class DroolsAssert implements TestRule {
 		return format("%s%s %s:%n%s", entityName, entities.size() == 1 ? " was" : "s were", message, join(entities, LF));
 	}
 	
+	protected final String formatTime() {
+		return MIDNIGHT.plus(Duration.ofMillis(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()))
+				.format(clock.getCurrentTime() == MAX_VALUE || clock.getCurrentTime() % 1000 == 0 ? HH_MM_SS : HH_MM_SS_SSS);
+	}
+	
 	@SuppressWarnings("unchecked")
 	private <T> Map<String, T> toMap(boolean convertToInt, String... params) {
-		if (params.length % 2 != 0)
-			throw new IllegalStateException();
-		
+		checkArgument(params.length % 2 == 0, "Cannot create a map out of odd number of parameters");
 		Map<String, T> map = new LinkedHashMap<>();
 		for (int i = 0; i < params.length; i = i + 2)
 			map.put(params[i], (T) (convertToInt ? parseInt(params[i + 1]) : params[i + 1]));
@@ -526,7 +564,7 @@ public class DroolsAssert implements TestRule {
 		public void beforeMatchFired(BeforeMatchFiredEvent event) {
 			String ruleName = event.getMatch().getRule().getName();
 			activations.put(ruleName, firstNonNull(activations.get(ruleName), INTEGER_ZERO) + 1);
-			out.println(format("<-- '%s' has been activated by the tuple %s", ruleName, tupleToString(event.getMatch().getObjects())));
+			out.printf("%s <-- '%s' has been activated by the tuple %s%n", formatTime(), ruleName, tupleToString(event.getMatch().getObjects()));
 		}
 	}
 	
@@ -536,18 +574,19 @@ public class DroolsAssert implements TestRule {
 			Object fact = event.getObject();
 			if (droolsSessionMeta.keeFactsHistory() && !factsHistory.containsKey(fact))
 				factsHistory.put(fact, factsHistory.size());
-			out.println("--> inserted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
+			
+			out.println(formatTime() + " --> inserted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
 		}
 		
 		@Override
 		public void objectDeleted(ObjectDeletedEvent event) {
 			Object fact = event.getOldObject();
-			out.println("--> retracted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
+			out.println(formatTime() + " --> retracted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
 		}
 		
 		@Override
 		public void objectUpdated(ObjectUpdatedEvent event) {
-			out.println("--> updated: " + (droolsSessionMeta.logFacts()
+			out.println(formatTime() + " --> updated: " + (droolsSessionMeta.logFacts()
 					? format("%s%nto: %s", factToString(event.getOldObject()), factToString(event.getObject()))
 					: event.getOldObject().getClass().getSimpleName()));
 		}
