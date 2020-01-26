@@ -30,7 +30,7 @@ end
 
 rule 'drop the call if caller is talking more than permitted time'
 	dialect 'mvel'
-	timer (int: 1h)
+	timer (int: 30m)
     when
         $callInProgress : CallInProgress()
     then
