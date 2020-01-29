@@ -1,10 +1,10 @@
 package org.droolsassert;
 
-global java.io.PrintStream stdout;
-
 import org.droolsassert.LogicalEventsTest.Dialing;
 import org.droolsassert.LogicalEventsTest.CallInProgress;
 import org.droolsassert.LogicalEventsTest.CallDropped;
+
+global java.io.PrintStream stdout;
 
 rule 'input call'
 	dialect 'mvel'
