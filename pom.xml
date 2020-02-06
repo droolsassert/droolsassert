@@ -14,8 +14,8 @@
 	<url>https://github.com/droolsassert/droolsassert</url>
 
 	<modules>
-		<module>droolsassert</module>
 		<module>da-utils</module>
+		<module>droolsassert</module>
 	</modules>
 
 	<licenses>
@@ -34,7 +34,7 @@
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>

@@ -8,7 +8,7 @@
 	</parent>
 
 	<artifactId>da-utils</artifactId>
-	<name>da-utils</name>
+	<name>DroolsAssert Utils</name>
 	<description>
 		Collection of utilities
 	</description>
