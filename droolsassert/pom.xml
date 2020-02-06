@@ -10,8 +10,8 @@
 	<artifactId>droolsassert</artifactId>
 	<name>DroolsAssert</name>
 	<description>
-        Drools JUnit testing library
-    </description>
+		Drools JUnit testing library
+	</description>
 
 	<dependencies>
 		<dependency>

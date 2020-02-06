@@ -23,8 +23,8 @@
 			<artifactId>guava</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.drools</groupId>
-			<artifactId>drools-core</artifactId>
+			<groupId>org.kie</groupId>
+			<artifactId>kie-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

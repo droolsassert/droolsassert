@@ -9,8 +9,8 @@
 
 	<name>DroolsAssert BOM</name>
 	<description>
-        Drools JUnit testing library
-    </description>
+		Drools JUnit testing library
+	</description>
 	<url>https://github.com/droolsassert/droolsassert</url>
 
 	<modules>
@@ -65,6 +65,11 @@
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
 				<version>4.12</version>
+			</dependency>
+			<dependency>
+				<groupId>org.kie</groupId>
+				<artifactId>kie-api</artifactId>
+				<version>7.28.0.Final</version>
 			</dependency>
 			<dependency>
 				<groupId>org.drools</groupId>
