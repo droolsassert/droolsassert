@@ -28,6 +28,7 @@ import org.springframework.web.client.RestTemplate;
 @ContextConfiguration(classes = { AppConfig.class })
 @DroolsSession
 public class SpringIntegrationTest2 {
+	
 	@Autowired
 	private KieContainer kieContainer;
 	@Autowired
