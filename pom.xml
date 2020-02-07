@@ -4,7 +4,7 @@
 
 	<groupId>org.droolsassert</groupId>
 	<artifactId>droolsassert-bom</artifactId>
-	<version>1.7.15-SNAPSHOT</version>
+	<version>1.7.17</version>
 	<packaging>pom</packaging>
 
 	<name>DroolsAssert BOM</name>
