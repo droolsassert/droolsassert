@@ -1,0 +1,20 @@
+package org.droolsassert;
+
+import java.lang.Integer;
+import java.lang.Thread;
+
+rule 'sleep method'
+    when
+        $value: Integer()
+    then
+        retract ($value);
+        Thread.sleep($value);
+end
+
+rule 'more than 200'
+    salience 1
+    when
+        $value: Integer(intValue > 200)
+    then
+        Thread.sleep($value);
+end

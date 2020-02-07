@@ -1,6 +1,7 @@
 package org.droolsassert;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.parseInt;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
@@ -45,8 +46,6 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
 
-import org.drools.core.common.DefaultAgenda;
-import org.drools.core.time.SessionPseudoClock;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -60,7 +59,9 @@ import org.kie.api.event.rule.ObjectInsertedEvent;
 import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.KieSessionConfiguration;
+import org.kie.api.runtime.rule.Agenda;
 import org.kie.api.runtime.rule.FactHandle;
+import org.kie.api.time.SessionPseudoClock;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -83,24 +84,26 @@ public class DroolsAssert implements TestRule {
 	protected AssertRules assertRulesMeta;
 	
 	protected KieSession session;
-	protected DefaultAgenda agenda;
+	protected Agenda agenda;
 	protected SessionPseudoClock clock;
 	protected Map<String, Integer> activations = new LinkedHashMap<>();
 	protected Map<String, Integer> activationsSnapshot = new LinkedHashMap<>();
 	protected Set<String> ignored = new HashSet<>();
 	protected Map<Object, Integer> factsHistory = new IdentityHashMap<>();
+	protected RulesChronoAgendaEventListener rulesChrono = rulesChrono();
 	
 	protected void init(KieSession session) {
 		this.session = session;
-		agenda = (DefaultAgenda) session.getAgenda();
+		agenda = session.getAgenda();
 		clock = session.getSessionClock();
 		session.addEventListener(new LoggingAgendaEventListener());
 		session.addEventListener(new LoggingWorkingMemoryEventListener());
+		session.addEventListener(rulesChrono);
 	}
 	
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
 		Map<String, String> properties = defaultSessionProperties();
-		properties.putAll(toMap(false, droolsSessionMeta.properties()));
+		properties.putAll(toMap(false, checkNotNull(droolsSessionMeta, "Missing @DroolsSession on a class").properties()));
 		KieSessionConfiguration config = newKnowledgeSessionConfiguration();
 		for (Map.Entry<String, String> property : properties.entrySet())
 			config.setProperty(property.getKey(), property.getValue());
@@ -278,7 +281,7 @@ public class DroolsAssert implements TestRule {
 	 *             if no rule was triggered within a day
 	 */
 	public void awaitForAny() {
-		awaitFor(SECONDS, DAYS.toSeconds(1), new String[0]);
+		awaitFor(SECONDS, DAYS.toSeconds(1));
 	}
 	
 	/**
@@ -356,7 +359,7 @@ public class DroolsAssert implements TestRule {
 	 * 
 	 * @throws AssertionError
 	 */
-	public void assertExists(Object... objects) {
+	public void assertExist(Object... objects) {
 		Map<Object, Void> identityMap = new IdentityHashMap<>();
 		stream(objects).forEach(obj -> identityMap.put(obj, null));
 		
@@ -477,6 +480,12 @@ public class DroolsAssert implements TestRule {
 			out.println(factToString(fact));
 	}
 	
+	public void printPerformanceStatistic() {
+		out.println(format("%s Performance Statistic, total activations %s:", formatTime(), activations.values().stream().mapToInt(Integer::intValue).sum()));
+		rulesChrono.getPerfStat().values()
+				.forEach(s -> out.printf("%s - min: %.2f avg: %.2f max: %.2f activations: %d%n", s.getDomain(), s.getMinTimeMs(), s.getAvgTimeMs(), s.getMaxTimeMs(), s.getLeapsCount()));
+	}
+	
 	@Override
 	public Statement apply(Statement base, Description description) {
 		droolsSessionMeta = description.getTestClass().getAnnotation(DroolsSession.class);
@@ -513,12 +522,28 @@ public class DroolsAssert implements TestRule {
 		} catch (Throwable th) {
 			errors.add(0, th);
 		}
+		rulesChrono.reset();
 		session.dispose();
 		assertEmpty(errors);
 	}
 	
 	protected Map<String, String> defaultSessionProperties() {
 		return toMap(false, "drools.eventProcessingMode", "stream", "drools.clockType", "pseudo");
+	}
+	
+	protected RulesChronoAgendaEventListener rulesChrono() {
+		return rulesChrono = new RulesChronoAgendaEventListener();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T extends RulesChronoAgendaEventListener> T getRulesChrono() {
+		return (T) rulesChrono;
+	}
+	
+	public void setRulesChrono(RulesChronoAgendaEventListener rulesChrono) {
+		session.removeEventListener(this.rulesChrono);
+		session.addEventListener(rulesChrono);
+		this.rulesChrono = rulesChrono;
 	}
 	
 	protected boolean isEligibleForAssertion(String rule) {

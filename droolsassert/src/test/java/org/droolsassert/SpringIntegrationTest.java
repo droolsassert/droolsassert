@@ -18,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 @ContextConfiguration(classes = { AppConfig.class })
 @DroolsSession("classpath:/org/droolsassert/weather.drl")
 public class SpringIntegrationTest {
+	
 	@Autowired
 	private RestTemplate restTemplate;
 	@Rule

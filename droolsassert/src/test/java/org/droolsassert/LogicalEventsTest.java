@@ -40,13 +40,13 @@ public class LogicalEventsTest {
 		drools.advanceTime(5, MINUTES);
 		Dialing caller3Dial = new Dialing("33333", "22222");
 		drools.insertAndFire(caller3Dial);
-		drools.assertExists(caller3Dial);
+		drools.assertExist(caller3Dial);
 		
 		drools.advanceTime(5, SECONDS);
-		drools.assertExists(call, caller3Dial);
+		drools.assertExist(call, caller3Dial);
 		
 		drools.advanceTime(5, SECONDS);
-		drools.assertExists(call);
+		drools.assertExist(call);
 		drools.assertRetracted(caller3Dial);
 		
 		drools.advanceTime(1, HOURS);
@@ -74,11 +74,11 @@ public class LogicalEventsTest {
 		Dialing caller3Dial = new Dialing("33333", "22222");
 		drools.insertAndFire(caller3Dial);
 		drools.assertActivated();
-		drools.assertExists(call, caller3Dial);
+		drools.assertExist(call, caller3Dial);
 		
 		drools.awaitFor("drop dial-up if callee is talking");
 		drools.assertActivated("drop dial-up if callee is talking", "input call dropped");
-		drools.assertExists(call);
+		drools.assertExist(call);
 		drools.assertRetracted(caller3Dial);
 		
 		drools.awaitFor("drop the call if caller is talking more than permitted time");

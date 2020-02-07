@@ -46,6 +46,7 @@ Test which rules were triggered in declarative way with `@AssertRules` annotatio
 [Spring integration test 1](https://github.com/droolsassert/droolsassert/wiki/3.-Spring-integration-test-1)  
 [Spring integration test 2](https://github.com/droolsassert/droolsassert/wiki/4.-Spring-integration-test-2)  
 [Extend it with your application specific utilities](https://github.com/droolsassert/droolsassert/wiki/5.-Extension-example)  
+[Gather performance statistic](https://github.com/droolsassert/droolsassert/wiki/6.-Performance stats)  
 
 ## Latest maven builds
 
@@ -54,7 +55,7 @@ For Drools 7.x
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.7.14</version>
+        <version>1.7.17</version>
         <scope>test</scope>
     </dependency>
 
@@ -63,6 +64,6 @@ For Drools 6.x
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>1.6.14</version>
+        <version>1.6.17</version>
         <scope>test</scope>
     </dependency>
