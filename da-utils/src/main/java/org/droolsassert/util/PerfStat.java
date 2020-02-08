@@ -85,7 +85,7 @@ public class PerfStat {
 	
 	private ThreadLocal<StopWatch> stopWatch = ThreadLocal.withInitial(() -> new StopWatch());
 	private StatImpl stat;
-	private long lastAggregationTimeMs;
+	private long lastAggregationTimeMs = currentTimeMillis();
 	private long aggregationTimeMs;
 	
 	public PerfStat(String domain) {
