@@ -21,7 +21,6 @@ import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.apache.commons.lang3.math.NumberUtils.INTEGER_ZERO;
-import static org.drools.core.impl.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -50,6 +49,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.kie.api.KieBase;
+import org.kie.api.KieServices;
 import org.kie.api.command.Command;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
@@ -104,7 +104,7 @@ public class DroolsAssert implements TestRule {
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
 		Map<String, String> properties = defaultSessionProperties();
 		properties.putAll(toMap(false, checkNotNull(droolsSessionMeta, "Missing @DroolsSession on a class").properties()));
-		KieSessionConfiguration config = newKnowledgeSessionConfiguration();
+		KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
 		for (Map.Entry<String, String> property : properties.entrySet())
 			config.setProperty(property.getKey(), property.getValue());
 		
