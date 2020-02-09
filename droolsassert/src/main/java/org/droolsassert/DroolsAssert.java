@@ -504,6 +504,9 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected void evaluate(Statement base) throws Throwable {
+		ignoreActivations(droolsSessionMeta.ignoreRules());
+		ignoreActivations(assertRulesMeta.ignore());
+		
 		List<Throwable> errors = new ArrayList<>();
 		try {
 			base.evaluate();
@@ -511,8 +514,6 @@ public class DroolsAssert implements TestRule {
 			errors.add(th);
 		}
 		try {
-			ignoreActivations(droolsSessionMeta.ignoreRules());
-			ignoreActivations(assertRulesMeta.ignore());
 			if (assertRulesMeta.checkScheduled())
 				triggerAllScheduledActivations();
 			if (assertRulesMeta.expectedCount().length != 0)
@@ -522,6 +523,7 @@ public class DroolsAssert implements TestRule {
 		} catch (Throwable th) {
 			errors.add(0, th);
 		}
+		
 		rulesChrono.reset();
 		session.dispose();
 		assertEmpty(errors);
