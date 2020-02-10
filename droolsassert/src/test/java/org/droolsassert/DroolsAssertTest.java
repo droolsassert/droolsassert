@@ -23,14 +23,14 @@ public class DroolsAssertTest {
 	public DroolsAssert drools = new DroolsAssert();
 	
 	@Test
-	@AssertRules("atomic int rule")
+	@TestSession(expected = "atomic int rule")
 	public void testInt() {
 		drools.insertAndFire(new AtomicInteger());
 		assertEquals(1, drools.getObject(AtomicInteger.class).get());
 	}
 	
 	@Test
-	@AssertRules({ "atomic int rule", "atomic long rule" })
+	@TestSession(expected = { "atomic int rule", "atomic long rule" })
 	public void testLong() {
 		drools.insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
 		drools.fireAllRules();
@@ -39,14 +39,14 @@ public class DroolsAssertTest {
 	}
 	
 	@Test
-	@AssertRules(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
+	@TestSession(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
 	public void testActivationCount() {
 		drools.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
 		assertEquals(2, drools.getObjects(AtomicLong.class).size());
 	}
 	
 	@Test
-	@AssertRules
+	@TestSession(expected = {})
 	public void testNoRulesWereTriggered() {
 		drools.insertAndFire("string");
 		drools.assertFactsCount(1);
@@ -55,13 +55,13 @@ public class DroolsAssertTest {
 	}
 	
 	@Test(expected = AssertionError.class)
-	@AssertRules
+	@TestSession
 	public void testNoObjectFound() {
 		assertEquals(0, drools.getObject(BigDecimal.class).intValue());
 	}
 	
 	@Test(expected = AssertionError.class)
-	@AssertRules("atomic long rule")
+	@TestSession(expected = "atomic long rule")
 	public void testNoUniqueObjectFound() {
 		drools.insertAndFire(new AtomicLong(), new AtomicLong());
 		assertEquals(2, drools.getObject(AtomicLong.class));
@@ -73,7 +73,7 @@ public class DroolsAssertTest {
 	}
 	
 	@Test
-	@AssertRules
+	@TestSession
 	public void testPrintFactsSkippedWhenHistoryIsDisabled() {
 		drools.printFacts();
 	}

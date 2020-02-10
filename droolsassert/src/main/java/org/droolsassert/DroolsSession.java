@@ -9,8 +9,8 @@ import java.lang.annotation.Target;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
- * Describes the session being constructed.<br>
- * Life-cycle of the session is single test (method)
+ * Describes the session being constructed for each test.<br>
+ * Life-cycle of the session is limited to the test (method)
  */
 @Retention(RUNTIME)
 @Target(TYPE)

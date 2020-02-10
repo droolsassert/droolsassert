@@ -6,27 +6,28 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a method to be a drools test.<br>
+ * Provides additional options limited to the current test only.<br>
+ * Can be used to declare and assert all rules being triggered during test run.
+ */
 @Retention(RUNTIME)
 @Target(METHOD)
-public @interface AssertRules {
-	/**
-	 * @see #expected()
-	 */
-	String[] value() default {};
+public @interface TestSession {
 	
 	/**
-	 * Rules expected to be triggered
+	 * Rules expected to be triggered. Provide empty list do assert no rules where triggered.
 	 */
-	String[] expected() default {};
+	String[] expected() default { "null" };
 	
 	/**
-	 * Rules activation count is taken into account
+	 * Rules activations count are asserted
 	 */
 	String[] expectedCount() default {};
 	
 	/**
 	 * Ignore rules matching patterns while assertion.<br>
-	 * Rules themselves will be executed
+	 * Rules themselves will be executed.
 	 */
 	String[] ignore() default {};
 	

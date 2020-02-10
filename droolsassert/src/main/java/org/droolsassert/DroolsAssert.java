@@ -81,7 +81,7 @@ public class DroolsAssert implements TestRule {
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
 	protected DroolsSession droolsSessionMeta;
-	protected AssertRules assertRulesMeta;
+	protected TestSession testSessionMeta;
 	
 	protected KieSession session;
 	protected Agenda agenda;
@@ -187,6 +187,8 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertAllActivations(String... expected) {
+		if (expected.length == 1 && "null".equals(expected[0]))
+			return;
 		Map<String, Integer> expectedMap = new LinkedHashMap<>();
 		for (String rule : expected)
 			expectedMap.put(rule, null);
@@ -489,8 +491,8 @@ public class DroolsAssert implements TestRule {
 	@Override
 	public Statement apply(Statement base, Description description) {
 		droolsSessionMeta = description.getTestClass().getAnnotation(DroolsSession.class);
-		assertRulesMeta = description.getAnnotation(AssertRules.class);
-		if (assertRulesMeta == null)
+		testSessionMeta = description.getAnnotation(TestSession.class);
+		if (testSessionMeta == null)
 			return base;
 		
 		init(newSession(droolsSessionMeta));
@@ -505,7 +507,7 @@ public class DroolsAssert implements TestRule {
 	
 	protected void evaluate(Statement base) throws Throwable {
 		ignoreActivations(droolsSessionMeta.ignoreRules());
-		ignoreActivations(assertRulesMeta.ignore());
+		ignoreActivations(testSessionMeta.ignore());
 		
 		List<Throwable> errors = new ArrayList<>();
 		try {
@@ -514,12 +516,12 @@ public class DroolsAssert implements TestRule {
 			errors.add(th);
 		}
 		try {
-			if (assertRulesMeta.checkScheduled())
+			if (testSessionMeta.checkScheduled())
 				triggerAllScheduledActivations();
-			if (assertRulesMeta.expectedCount().length != 0)
-				assertAllActivations(toMap(true, assertRulesMeta.expectedCount()));
+			if (testSessionMeta.expectedCount().length != 0)
+				assertAllActivations(toMap(true, testSessionMeta.expectedCount()));
 			else
-				assertAllActivations(firstNonEmpty(assertRulesMeta.value(), assertRulesMeta.expected()));
+				assertAllActivations(testSessionMeta.expected());
 		} catch (Throwable th) {
 			errors.add(0, th);
 		}
