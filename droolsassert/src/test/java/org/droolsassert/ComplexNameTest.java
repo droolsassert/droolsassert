@@ -15,7 +15,7 @@ public class ComplexNameTest {
 	public DroolsAssert drools = new DroolsAssert();
 	
 	@Test
-	@AssertRules(value = "atomic int rule", ignore = "complex name * ${with}(and)[??]")
+	@TestRules(expected = "atomic int rule", ignore = "complex name * ${with}(and)[??]")
 	public void testInt() {
 		drools.insertAndFire(new AtomicInteger(), new AtomicLong());
 		assertEquals(1, drools.getObject(AtomicInteger.class).get());

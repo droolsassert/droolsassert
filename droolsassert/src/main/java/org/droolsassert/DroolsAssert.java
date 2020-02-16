@@ -21,7 +21,6 @@ import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.apache.commons.lang3.math.NumberUtils.INTEGER_ZERO;
-import static org.drools.core.impl.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -50,6 +49,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.kie.api.KieBase;
+import org.kie.api.KieServices;
 import org.kie.api.command.Command;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
@@ -81,7 +81,7 @@ public class DroolsAssert implements TestRule {
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
 	protected DroolsSession droolsSessionMeta;
-	protected AssertRules assertRulesMeta;
+	protected TestRules testSessionMeta;
 	
 	protected KieSession session;
 	protected Agenda agenda;
@@ -91,6 +91,17 @@ public class DroolsAssert implements TestRule {
 	protected Set<String> ignored = new HashSet<>();
 	protected Map<Object, Integer> factsHistory = new IdentityHashMap<>();
 	protected RulesChronoAgendaEventListener rulesChrono = rulesChrono();
+	
+	public DroolsAssert() {
+	}
+	
+	public DroolsAssert(DroolsSession droolsSessionMeta, TestRules testSessionMeta) {
+		this.droolsSessionMeta = droolsSessionMeta;
+		this.testSessionMeta = testSessionMeta;
+		init(newSession(droolsSessionMeta));
+		ignoreActivations(droolsSessionMeta.ignoreRules());
+		ignoreActivations(testSessionMeta.ignore());
+	}
 	
 	protected void init(KieSession session) {
 		this.session = session;
@@ -104,7 +115,7 @@ public class DroolsAssert implements TestRule {
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
 		Map<String, String> properties = defaultSessionProperties();
 		properties.putAll(toMap(false, checkNotNull(droolsSessionMeta, "Missing @DroolsSession on a class").properties()));
-		KieSessionConfiguration config = newKnowledgeSessionConfiguration();
+		KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
 		for (Map.Entry<String, String> property : properties.entrySet())
 			config.setProperty(property.getKey(), property.getValue());
 		
@@ -187,6 +198,8 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertAllActivations(String... expected) {
+		if (expected.length == 1 && "null".equals(expected[0]))
+			return;
 		Map<String, Integer> expectedMap = new LinkedHashMap<>();
 		for (String rule : expected)
 			expectedMap.put(rule, null);
@@ -334,7 +347,7 @@ public class DroolsAssert implements TestRule {
 	 * @see #awaitFor(TimeUnit, long, String...)
 	 * @see #assertNoScheduledActivations()
 	 */
-	protected final void triggerAllScheduledActivations() {
+	public final void triggerAllScheduledActivations() {
 		clock.advanceTime(MAX_VALUE, MILLISECONDS);
 		session.fireAllRules();
 		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
@@ -363,7 +376,7 @@ public class DroolsAssert implements TestRule {
 		Map<Object, Void> identityMap = new IdentityHashMap<>();
 		stream(objects).forEach(obj -> identityMap.put(obj, null));
 		
-		if (droolsSessionMeta.keeFactsHistory()) {
+		if (droolsSessionMeta.keepFactsHistory()) {
 			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
 			assertTrue(formatUnexpectedCollection("Object", "never inserted into the session", unknown), unknown.isEmpty());
 		}
@@ -382,7 +395,7 @@ public class DroolsAssert implements TestRule {
 		Map<Object, Void> identityMap = new IdentityHashMap<>();
 		stream(objects).forEach(obj -> identityMap.put(obj, null));
 		
-		if (droolsSessionMeta.keeFactsHistory()) {
+		if (droolsSessionMeta.keepFactsHistory()) {
 			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
 			assertTrue(formatUnexpectedCollection("Object", "never inserted into the session", unknown), unknown.isEmpty());
 		}
@@ -467,10 +480,10 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Print retained facts in insertion order
 	 * 
-	 * @see DroolsSession#keeFactsHistory()
+	 * @see DroolsSession#keepFactsHistory()
 	 */
 	public void printFacts() {
-		if (!droolsSessionMeta.keeFactsHistory())
+		if (!droolsSessionMeta.keepFactsHistory())
 			return;
 		
 		List<Object> sortedFacts = new LinkedList<>(session.getObjects());
@@ -489,8 +502,8 @@ public class DroolsAssert implements TestRule {
 	@Override
 	public Statement apply(Statement base, Description description) {
 		droolsSessionMeta = description.getTestClass().getAnnotation(DroolsSession.class);
-		assertRulesMeta = description.getAnnotation(AssertRules.class);
-		if (assertRulesMeta == null)
+		testSessionMeta = description.getAnnotation(TestRules.class);
+		if (testSessionMeta == null)
 			return base;
 		
 		init(newSession(droolsSessionMeta));
@@ -504,6 +517,9 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected void evaluate(Statement base) throws Throwable {
+		ignoreActivations(droolsSessionMeta.ignoreRules());
+		ignoreActivations(testSessionMeta.ignore());
+		
 		List<Throwable> errors = new ArrayList<>();
 		try {
 			base.evaluate();
@@ -511,20 +527,23 @@ public class DroolsAssert implements TestRule {
 			errors.add(th);
 		}
 		try {
-			ignoreActivations(droolsSessionMeta.ignoreRules());
-			ignoreActivations(assertRulesMeta.ignore());
-			if (assertRulesMeta.checkScheduled())
+			if (testSessionMeta.checkScheduled())
 				triggerAllScheduledActivations();
-			if (assertRulesMeta.expectedCount().length != 0)
-				assertAllActivations(toMap(true, assertRulesMeta.expectedCount()));
+			if (testSessionMeta.expectedCount().length != 0)
+				assertAllActivations(toMap(true, testSessionMeta.expectedCount()));
 			else
-				assertAllActivations(firstNonEmpty(assertRulesMeta.value(), assertRulesMeta.expected()));
+				assertAllActivations(testSessionMeta.expected());
 		} catch (Throwable th) {
 			errors.add(0, th);
 		}
+		
+		destroy();
+		assertEmpty(errors);
+	}
+	
+	public void destroy() {
 		rulesChrono.reset();
 		session.dispose();
-		assertEmpty(errors);
 	}
 	
 	protected Map<String, String> defaultSessionProperties() {
@@ -597,7 +616,7 @@ public class DroolsAssert implements TestRule {
 		@Override
 		public void objectInserted(ObjectInsertedEvent event) {
 			Object fact = event.getObject();
-			if (droolsSessionMeta.keeFactsHistory() && !factsHistory.containsKey(fact))
+			if (droolsSessionMeta.keepFactsHistory() && !factsHistory.containsKey(fact))
 				factsHistory.put(fact, factsHistory.size());
 			
 			out.println(formatTime() + " --> inserted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));

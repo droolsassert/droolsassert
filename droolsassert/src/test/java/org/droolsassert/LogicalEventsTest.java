@@ -23,13 +23,7 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@AssertRules({
-			"input call",
-			"drop dial-up if callee is talking",
-			"drop the call if caller is talking more than permitted time",
-			"call in progress dropped",
-			"input call dropped"
-	})
+	@TestRules
 	public void testCallsConnectAndDisconnectLogic() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		drools.insertAndFire(caller1Dial);
@@ -56,13 +50,7 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@AssertRules({
-			"input call",
-			"drop dial-up if callee is talking",
-			"drop the call if caller is talking more than permitted time",
-			"call in progress dropped",
-			"input call dropped"
-	})
+	@TestRules
 	public void testCallsConnectAndDisconnectLogicStickToEvents() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		drools.insertAndFire(caller1Dial);
@@ -92,13 +80,13 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@AssertRules("input call")
+	@TestRules(expected = "input call")
 	public void testAssertActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 	}
 	
 	@Test
-	@AssertRules(expected = {
+	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",
 			"call in progress dropped"
@@ -108,17 +96,14 @@ public class LogicalEventsTest {
 	}
 	
 	@Test(expected = AssertionError.class)
-	@AssertRules({
-			"input call",
-			"drop the call if caller is talking more than permitted time",
-			"call in progress dropped" })
+	@TestRules
 	public void testAssertNoScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.assertNoScheduledActivations();
 	}
 	
 	@Test
-	@AssertRules({
+	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",
 			"call in progress dropped" })
@@ -128,32 +113,28 @@ public class LogicalEventsTest {
 	}
 	
 	@Test(expected = AssertionError.class)
-	@AssertRules({
-			"input call",
-			"drop the call if caller is talking more than permitted time",
-			"call in progress dropped" })
+	@TestRules
 	public void testAwaitScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.awaitFor("blah");
 	}
 	
 	@Test(expected = AssertionError.class)
-	@AssertRules
+	@TestRules
 	public void testAwaitForAnyScheduledActivationsFailed() {
-		drools.awaitFor();
+		drools.awaitForAny();
 	}
 	
 	@Test(expected = AssertionError.class)
-	@AssertRules("input call")
+	@TestRules
 	public void testAssertActivatedFailed() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.insertAndFire(new Dialing("33333", "44444"));
-		drools.insertAndFire(new Dialing("55555", "66666"));
-		drools.assertActivated(ImmutableMap.of("input call", 2));
+		drools.assertActivated(ImmutableMap.of("input call", 1));
 	}
 	
 	@Test
-	@AssertRules({
+	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",
 			"call in progress dropped"
@@ -187,6 +168,9 @@ public class LogicalEventsTest {
 		public String callerNumber;
 		public String calleeNumber;
 		
+		public Dialing() {
+		}
+		
 		public Dialing(String callerNumber, String calleeNumber) {
 			this.callerNumber = callerNumber;
 			this.calleeNumber = calleeNumber;
@@ -196,6 +180,9 @@ public class LogicalEventsTest {
 	public static class CallInProgress {
 		public String callerNumber;
 		public String calleeNumber;
+		
+		public CallInProgress() {
+		}
 		
 		public CallInProgress(String callerNumber, String calleeNumber) {
 			this.callerNumber = callerNumber;

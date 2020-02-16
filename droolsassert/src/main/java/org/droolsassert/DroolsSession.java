@@ -9,8 +9,8 @@ import java.lang.annotation.Target;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
- * Describes the session being constructed.<br>
- * Life-cycle of the session is single test (method)
+ * Describes the session being constructed for each test.<br>
+ * Life-cycle of the session is limited to the test (method)
  */
 @Retention(RUNTIME)
 @Target(TYPE)
@@ -45,7 +45,7 @@ public @interface DroolsSession {
 	 * Keep track of all facts ever inserted into the session.<br>
 	 * This gives you some additional features, like logging retained facts in insertion order and some additional sanity checks while assertions, but you may want to skip this for data-heavy tests.
 	 */
-	boolean keeFactsHistory() default true;
+	boolean keepFactsHistory() default true;
 	
 	/**
 	 * Log facts being inserted/deleted/updated

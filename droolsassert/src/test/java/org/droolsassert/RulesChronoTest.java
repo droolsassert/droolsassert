@@ -19,7 +19,7 @@ public class RulesChronoTest {
 	public DroolsAssert drools = new DroolsAssert();
 	
 	@Test
-	@AssertRules({ "sleep method", "more than 200" })
+	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoListener() {
 		for (int i = 1; i <= 50; i++)
 			drools.insertAndFire(randomFunction(i));
@@ -27,7 +27,7 @@ public class RulesChronoTest {
 	}
 	
 	@Test
-	@AssertRules({ "sleep method", "more than 200" })
+	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoChartRecorder() {
 		drools.setRulesChrono(new RulesChronoChartRecorder(5000));
 		
