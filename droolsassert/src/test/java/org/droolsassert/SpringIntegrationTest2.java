@@ -51,7 +51,7 @@ public class SpringIntegrationTest2 {
 	}
 	
 	@Test
-	@TestSession(expected = { "Check weather", "Humidity is high" })
+	@TestRules(expected = { "Check weather", "Humidity is high" })
 	public void testWeatherInLongon() {
 		drools.advanceTime(1, HOURS);
 		assertEquals(81, drools.getObject(Weather.class).humidity);

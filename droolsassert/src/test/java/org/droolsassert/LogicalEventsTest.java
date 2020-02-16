@@ -23,7 +23,7 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@TestSession
+	@TestRules
 	public void testCallsConnectAndDisconnectLogic() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		drools.insertAndFire(caller1Dial);
@@ -50,7 +50,7 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@TestSession
+	@TestRules
 	public void testCallsConnectAndDisconnectLogicStickToEvents() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		drools.insertAndFire(caller1Dial);
@@ -80,13 +80,13 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@TestSession(expected = "input call")
+	@TestRules(expected = "input call")
 	public void testAssertActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 	}
 	
 	@Test
-	@TestSession(expected = {
+	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",
 			"call in progress dropped"
@@ -96,14 +96,14 @@ public class LogicalEventsTest {
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestSession
+	@TestRules
 	public void testAssertNoScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.assertNoScheduledActivations();
 	}
 	
 	@Test
-	@TestSession(expected = {
+	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",
 			"call in progress dropped" })
@@ -113,20 +113,20 @@ public class LogicalEventsTest {
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestSession
+	@TestRules
 	public void testAwaitScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.awaitFor("blah");
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestSession
+	@TestRules
 	public void testAwaitForAnyScheduledActivationsFailed() {
 		drools.awaitForAny();
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestSession
+	@TestRules
 	public void testAssertActivatedFailed() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.insertAndFire(new Dialing("33333", "44444"));
@@ -134,7 +134,7 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@TestSession(expected = {
+	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",
 			"call in progress dropped"
@@ -168,6 +168,9 @@ public class LogicalEventsTest {
 		public String callerNumber;
 		public String calleeNumber;
 		
+		public Dialing() {
+		}
+		
 		public Dialing(String callerNumber, String calleeNumber) {
 			this.callerNumber = callerNumber;
 			this.calleeNumber = calleeNumber;
@@ -177,6 +180,9 @@ public class LogicalEventsTest {
 	public static class CallInProgress {
 		public String callerNumber;
 		public String calleeNumber;
+		
+		public CallInProgress() {
+		}
 		
 		public CallInProgress(String callerNumber, String calleeNumber) {
 			this.callerNumber = callerNumber;

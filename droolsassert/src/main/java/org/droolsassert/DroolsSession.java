@@ -45,7 +45,7 @@ public @interface DroolsSession {
 	 * Keep track of all facts ever inserted into the session.<br>
 	 * This gives you some additional features, like logging retained facts in insertion order and some additional sanity checks while assertions, but you may want to skip this for data-heavy tests.
 	 */
-	boolean keeFactsHistory() default true;
+	boolean keepFactsHistory() default true;
 	
 	/**
 	 * Log facts being inserted/deleted/updated

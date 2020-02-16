@@ -15,7 +15,7 @@ import org.junit.Test;
 		"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
 		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
 		ignoreRules = { "before", "after" },
-		keeFactsHistory = false,
+		keepFactsHistory = false,
 		logResources = true)
 public class DroolsAssertTest {
 	
@@ -23,14 +23,14 @@ public class DroolsAssertTest {
 	public DroolsAssert drools = new DroolsAssert();
 	
 	@Test
-	@TestSession(expected = "atomic int rule")
+	@TestRules(expected = "atomic int rule")
 	public void testInt() {
 		drools.insertAndFire(new AtomicInteger());
 		assertEquals(1, drools.getObject(AtomicInteger.class).get());
 	}
 	
 	@Test
-	@TestSession(expected = { "atomic int rule", "atomic long rule" })
+	@TestRules(expected = { "atomic int rule", "atomic long rule" })
 	public void testLong() {
 		drools.insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
 		drools.fireAllRules();
@@ -39,29 +39,28 @@ public class DroolsAssertTest {
 	}
 	
 	@Test
-	@TestSession(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
+	@TestRules(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
 	public void testActivationCount() {
 		drools.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
 		assertEquals(2, drools.getObjects(AtomicLong.class).size());
 	}
 	
 	@Test
-	@TestSession(expected = {})
+	@TestRules(expected = {})
 	public void testNoRulesWereTriggered() {
 		drools.insertAndFire("string");
 		drools.assertFactsCount(1);
 		assertEquals("string", drools.getObject(String.class));
-		drools.printFacts();
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestSession
+	@TestRules
 	public void testNoObjectFound() {
 		assertEquals(0, drools.getObject(BigDecimal.class).intValue());
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestSession(expected = "atomic long rule")
+	@TestRules(expected = "atomic long rule")
 	public void testNoUniqueObjectFound() {
 		drools.insertAndFire(new AtomicLong(), new AtomicLong());
 		assertEquals(2, drools.getObject(AtomicLong.class));
@@ -73,7 +72,7 @@ public class DroolsAssertTest {
 	}
 	
 	@Test
-	@TestSession
+	@TestRules
 	public void testPrintFactsSkippedWhenHistoryIsDisabled() {
 		drools.printFacts();
 	}

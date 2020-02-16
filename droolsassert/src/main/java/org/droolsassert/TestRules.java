@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RUNTIME)
 @Target(METHOD)
-public @interface TestSession {
+public @interface TestRules {
 	
 	/**
 	 * Rules expected to be triggered. Provide empty list do assert no rules where triggered.

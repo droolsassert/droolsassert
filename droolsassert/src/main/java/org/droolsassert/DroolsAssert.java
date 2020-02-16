@@ -81,7 +81,7 @@ public class DroolsAssert implements TestRule {
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
 	protected DroolsSession droolsSessionMeta;
-	protected TestSession testSessionMeta;
+	protected TestRules testSessionMeta;
 	
 	protected KieSession session;
 	protected Agenda agenda;
@@ -91,6 +91,17 @@ public class DroolsAssert implements TestRule {
 	protected Set<String> ignored = new HashSet<>();
 	protected Map<Object, Integer> factsHistory = new IdentityHashMap<>();
 	protected RulesChronoAgendaEventListener rulesChrono = rulesChrono();
+	
+	public DroolsAssert() {
+	}
+	
+	public DroolsAssert(DroolsSession droolsSessionMeta, TestRules testSessionMeta) {
+		this.droolsSessionMeta = droolsSessionMeta;
+		this.testSessionMeta = testSessionMeta;
+		init(newSession(droolsSessionMeta));
+		ignoreActivations(droolsSessionMeta.ignoreRules());
+		ignoreActivations(testSessionMeta.ignore());
+	}
 	
 	protected void init(KieSession session) {
 		this.session = session;
@@ -336,7 +347,7 @@ public class DroolsAssert implements TestRule {
 	 * @see #awaitFor(TimeUnit, long, String...)
 	 * @see #assertNoScheduledActivations()
 	 */
-	protected final void triggerAllScheduledActivations() {
+	public final void triggerAllScheduledActivations() {
 		clock.advanceTime(MAX_VALUE, MILLISECONDS);
 		session.fireAllRules();
 		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
@@ -365,7 +376,7 @@ public class DroolsAssert implements TestRule {
 		Map<Object, Void> identityMap = new IdentityHashMap<>();
 		stream(objects).forEach(obj -> identityMap.put(obj, null));
 		
-		if (droolsSessionMeta.keeFactsHistory()) {
+		if (droolsSessionMeta.keepFactsHistory()) {
 			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
 			assertTrue(formatUnexpectedCollection("Object", "never inserted into the session", unknown), unknown.isEmpty());
 		}
@@ -384,7 +395,7 @@ public class DroolsAssert implements TestRule {
 		Map<Object, Void> identityMap = new IdentityHashMap<>();
 		stream(objects).forEach(obj -> identityMap.put(obj, null));
 		
-		if (droolsSessionMeta.keeFactsHistory()) {
+		if (droolsSessionMeta.keepFactsHistory()) {
 			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
 			assertTrue(formatUnexpectedCollection("Object", "never inserted into the session", unknown), unknown.isEmpty());
 		}
@@ -469,10 +480,10 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Print retained facts in insertion order
 	 * 
-	 * @see DroolsSession#keeFactsHistory()
+	 * @see DroolsSession#keepFactsHistory()
 	 */
 	public void printFacts() {
-		if (!droolsSessionMeta.keeFactsHistory())
+		if (!droolsSessionMeta.keepFactsHistory())
 			return;
 		
 		List<Object> sortedFacts = new LinkedList<>(session.getObjects());
@@ -491,7 +502,7 @@ public class DroolsAssert implements TestRule {
 	@Override
 	public Statement apply(Statement base, Description description) {
 		droolsSessionMeta = description.getTestClass().getAnnotation(DroolsSession.class);
-		testSessionMeta = description.getAnnotation(TestSession.class);
+		testSessionMeta = description.getAnnotation(TestRules.class);
 		if (testSessionMeta == null)
 			return base;
 		
@@ -526,9 +537,13 @@ public class DroolsAssert implements TestRule {
 			errors.add(0, th);
 		}
 		
+		destroy();
+		assertEmpty(errors);
+	}
+	
+	public void destroy() {
 		rulesChrono.reset();
 		session.dispose();
-		assertEmpty(errors);
 	}
 	
 	protected Map<String, String> defaultSessionProperties() {
@@ -601,7 +616,7 @@ public class DroolsAssert implements TestRule {
 		@Override
 		public void objectInserted(ObjectInsertedEvent event) {
 			Object fact = event.getObject();
-			if (droolsSessionMeta.keeFactsHistory() && !factsHistory.containsKey(fact))
+			if (droolsSessionMeta.keepFactsHistory() && !factsHistory.containsKey(fact))
 				factsHistory.put(fact, factsHistory.size());
 			
 			out.println(formatTime() + " --> inserted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
