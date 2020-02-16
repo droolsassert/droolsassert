@@ -437,7 +437,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		return new MvelProcessor();
 	}
 	
-	public Class<Object> classOf(String type) {
+	protected final Class<Object> classOf(String type) {
 		return mvelProcessor.evaluate(type + ".class");
 	}
 }
