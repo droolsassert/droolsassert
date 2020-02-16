@@ -49,6 +49,7 @@ Test which rules were triggered in declarative way with `@AssertRules` annotatio
 [Gather performance statistic](https://github.com/droolsassert/droolsassert/wiki/6.-Performance-stats)  
 [Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/8.-Jbehave-integration)  
 [Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/9.-Jbehave-Spring-example)  
+[JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/10.-JUnit-vs-jbehave)  
 
 ## Latest maven builds
 
