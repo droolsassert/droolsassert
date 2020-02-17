@@ -33,7 +33,7 @@ Declare the rule for the test
 Test which rules were triggered in declarative way with `@AssertRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
 
 	@Test
-	@AssertRules("atomic int rule")
+	@TestRules("atomic int rule")
 	public void testInt() {
 		drools.insertAndFire(new AtomicInteger());
 		assertEquals(1, drools.getObject(AtomicInteger.class).get());
