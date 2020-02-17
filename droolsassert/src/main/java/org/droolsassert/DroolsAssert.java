@@ -81,7 +81,7 @@ public class DroolsAssert implements TestRule {
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
 	protected DroolsSession droolsSessionMeta;
-	protected TestRules testSessionMeta;
+	protected TestRules testRulesMeta;
 	
 	protected KieSession session;
 	protected Agenda agenda;
@@ -95,12 +95,12 @@ public class DroolsAssert implements TestRule {
 	public DroolsAssert() {
 	}
 	
-	public DroolsAssert(DroolsSession droolsSessionMeta, TestRules testSessionMeta) {
+	public DroolsAssert(DroolsSession droolsSessionMeta, TestRules testRulesMeta) {
 		this.droolsSessionMeta = droolsSessionMeta;
-		this.testSessionMeta = testSessionMeta;
+		this.testRulesMeta = testRulesMeta;
 		init(newSession(droolsSessionMeta));
 		ignoreActivations(droolsSessionMeta.ignoreRules());
-		ignoreActivations(testSessionMeta.ignore());
+		ignoreActivations(testRulesMeta.ignore());
 	}
 	
 	protected void init(KieSession session) {
@@ -502,8 +502,8 @@ public class DroolsAssert implements TestRule {
 	@Override
 	public Statement apply(Statement base, Description description) {
 		droolsSessionMeta = description.getTestClass().getAnnotation(DroolsSession.class);
-		testSessionMeta = description.getAnnotation(TestRules.class);
-		if (testSessionMeta == null)
+		testRulesMeta = description.getAnnotation(TestRules.class);
+		if (testRulesMeta == null)
 			return base;
 		
 		init(newSession(droolsSessionMeta));
@@ -518,7 +518,7 @@ public class DroolsAssert implements TestRule {
 	
 	protected void evaluate(Statement base) throws Throwable {
 		ignoreActivations(droolsSessionMeta.ignoreRules());
-		ignoreActivations(testSessionMeta.ignore());
+		ignoreActivations(testRulesMeta.ignore());
 		
 		List<Throwable> errors = new ArrayList<>();
 		try {
@@ -527,12 +527,12 @@ public class DroolsAssert implements TestRule {
 			errors.add(th);
 		}
 		try {
-			if (testSessionMeta.checkScheduled())
+			if (testRulesMeta.checkScheduled())
 				triggerAllScheduledActivations();
-			if (testSessionMeta.expectedCount().length != 0)
-				assertAllActivations(toMap(true, testSessionMeta.expectedCount()));
+			if (testRulesMeta.expectedCount().length != 0)
+				assertAllActivations(toMap(true, testRulesMeta.expectedCount()));
 			else
-				assertAllActivations(testSessionMeta.expected());
+				assertAllActivations(testRulesMeta.expected());
 		} catch (Throwable th) {
 			errors.add(0, th);
 		}

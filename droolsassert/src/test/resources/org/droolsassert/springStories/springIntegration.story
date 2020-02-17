@@ -1,8 +1,6 @@
 Logical events story
 
-Given imports 
-    java.util.concurrent.atomic
-    org.droolsassert.SpringIntegrationTest
+Given import org.droolsassert.SpringIntegrationTest
 
 Given drools session classpath:/org/droolsassert/weather.drl
 

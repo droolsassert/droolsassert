@@ -44,10 +44,10 @@ import com.google.common.io.Resources;
 
 public class DroolsAssertSteps<A extends DroolsAssert> {
 	
-	private static PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+	protected static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	
-	protected static final CharMatcher STRINGS_TRIMMED = CharMatcher.anyOf("' \t");
-	protected static final Pattern COUNT_OF_ACTIVATED = compile("'?(?<rule>.*?)'?\\s*,?-?\\s*(?<count>\\d+)");
+	protected static final CharMatcher STRING_CHARS_TO_TRIM = CharMatcher.anyOf("' \t");
+	protected static final Pattern ACTIVATIONS_COUNT = compile("'?(?<rule>.*?)'?\\s*,?-?\\s*(?<count>\\d+)");
 	protected static final String STRINGS_DELIM = "(\r?\n|'\\s*,\\s*')";
 	protected static final String VARIABLES_DELIM = "(\r?\n|\\s*,\\s*)";
 	protected static final String LHS_DELIM = "\\s+((is|as)( an?)?|equals?( to)?)\\s+";
@@ -56,7 +56,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	protected final Set<String> knownMimeTypes = knownMimeTypes();
 	protected DroolsSessionProxy droolsSessionMeta;
-	protected TestRulesProxy testSessionMeta;
+	protected TestRulesProxy testRulesMeta;
 	protected MvelProcessor mvelProcessor = mvelProcessor();
 	protected HashMap<String, Object> globals = new HashMap<>();
 	protected A drools;
@@ -153,17 +153,17 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 */
 	@Given("new session for scenario$sessionMeta")
 	public void givenNewSessionForScenario(String sessionMeta) {
-		testSessionMeta = new TestRulesProxy();
+		testRulesMeta = new TestRulesProxy();
 		List<String> ignore = new ArrayList<>();
 		
-		for (String line : Splitter.onPattern(STRINGS_DELIM).trimResults(STRINGS_TRIMMED).omitEmptyStrings().split(sessionMeta)) {
+		for (String line : Splitter.onPattern(STRINGS_DELIM).trimResults(STRING_CHARS_TO_TRIM).omitEmptyStrings().split(sessionMeta)) {
 			if (line.matches(",?\\s*ignore:? .*"))
 				line = line.replaceFirst(",?\\s*ignore:?\\s+'?", "");
 			if (!line.isEmpty())
 				ignore.add(line);
 		}
 		if (!ignore.isEmpty())
-			testSessionMeta.ignore = ignore.toArray(new String[0]);
+			testRulesMeta.ignore = ignore.toArray(new String[0]);
 		
 		if (drools != null)
 			drools.destroy();
@@ -290,8 +290,8 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	protected Map<String, Integer> evaluateActivationsCount(String activations) {
 		Map<String, Integer> evaluated = new HashMap<>();
-		for (String line : Splitter.onPattern(NL).trimResults(STRINGS_TRIMMED).omitEmptyStrings().split(activations)) {
-			Matcher m = COUNT_OF_ACTIVATED.matcher(line);
+		for (String line : Splitter.onPattern(NL).trimResults(STRING_CHARS_TO_TRIM).omitEmptyStrings().split(activations)) {
+			Matcher m = ACTIVATIONS_COUNT.matcher(line);
 			if (m.matches())
 				evaluated.put(m.group("rule"), parseInt(m.group("count")));
 			else
@@ -320,7 +320,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	}
 	
 	protected String[] splitStrings(String lines) {
-		return toArray(Splitter.onPattern(STRINGS_DELIM).trimResults(STRINGS_TRIMMED).omitEmptyStrings().split(lines), String.class);
+		return toArray(Splitter.onPattern(STRINGS_DELIM).trimResults(STRING_CHARS_TO_TRIM).omitEmptyStrings().split(lines), String.class);
 	}
 	
 	protected Object[] evalVariables(String variables) {
@@ -416,13 +416,13 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	protected <T> T resolveVariableFromSession(String type) {
 		String[] args = type.split(SPACE);
 		if (args.length == 2 && args[1].equals("object"))
-			return drools.getObject(mvelProcessor.evaluate(args[0] + ".class"));
+			return drools.getObject(classOf(args[0]));
 		else if (args.length == 2 && args[1].equals("objects"))
-			return (T) drools.getObjects(mvelProcessor.evaluate(args[0] + ".class"));
+			return (T) drools.getObjects(classOf(args[0]));
 		throw new IllegalArgumentException("Cannot resolve variable from the session using " + type);
 	}
 	
-	protected Object resolveSpringService(String id) {
+	protected Object resolveSpringService(String name) {
 		throw new NotImplementedException("Override ApplicationContextAware and implement");
 	}
 	
@@ -430,14 +430,14 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	protected A droolsAssert() {
 		return (A) new DroolsAssert(
 				(DroolsSession) newProxyInstance(getClass().getClassLoader(), new Class[] { DroolsSession.class }, droolsSessionMeta),
-				(TestRules) newProxyInstance(getClass().getClassLoader(), new Class[] { TestRules.class }, testSessionMeta));
+				(TestRules) newProxyInstance(getClass().getClassLoader(), new Class[] { TestRules.class }, testRulesMeta));
 	}
 	
 	protected MvelProcessor mvelProcessor() {
-		return new MvelProcessor();
+		return new DefaultMvelProcessor();
 	}
 	
-	public Class<Object> classOf(String type) {
-		return mvelProcessor.evaluate(type + ".class");
+	protected final <T> Class<T> classOf(String className) {
+		return mvelProcessor.evaluate(className + ".class");
 	}
 }
