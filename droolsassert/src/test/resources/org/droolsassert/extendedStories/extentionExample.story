@@ -11,7 +11,6 @@ Given global stdout is System.out
 
 !-- test calls connect and disconnect logic stick to events
 Given new session for scenario
-
 Given variable exception is new RuntimeException('Something reported')
 !-- When insert and fire exception
 Given variable caller1Dial as new Dialing('11111', '22222')

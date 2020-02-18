@@ -503,8 +503,6 @@ public class DroolsAssert implements TestRule {
 	public Statement apply(Statement base, Description description) {
 		droolsSessionMeta = description.getTestClass().getAnnotation(DroolsSession.class);
 		testRulesMeta = description.getAnnotation(TestRules.class);
-		if (testRulesMeta == null)
-			return base;
 		
 		init(newSession(droolsSessionMeta));
 		
@@ -518,7 +516,8 @@ public class DroolsAssert implements TestRule {
 	
 	protected void evaluate(Statement base) throws Throwable {
 		ignoreActivations(droolsSessionMeta.ignoreRules());
-		ignoreActivations(testRulesMeta.ignore());
+		if (testRulesMeta != null)
+			ignoreActivations(testRulesMeta.ignore());
 		
 		List<Throwable> errors = new ArrayList<>();
 		try {
@@ -526,15 +525,17 @@ public class DroolsAssert implements TestRule {
 		} catch (Throwable th) {
 			errors.add(th);
 		}
-		try {
-			if (testRulesMeta.checkScheduled())
-				triggerAllScheduledActivations();
-			if (testRulesMeta.expectedCount().length != 0)
-				assertAllActivations(toMap(true, testRulesMeta.expectedCount()));
-			else
-				assertAllActivations(testRulesMeta.expected());
-		} catch (Throwable th) {
-			errors.add(0, th);
+		if (testRulesMeta != null) {
+			try {
+				if (testRulesMeta.checkScheduled())
+					triggerAllScheduledActivations();
+				if (testRulesMeta.expectedCount().length != 0)
+					assertAllActivations(toMap(true, testRulesMeta.expectedCount()));
+				else
+					assertAllActivations(testRulesMeta.expected());
+			} catch (Throwable th) {
+				errors.add(0, th);
+			}
 		}
 		
 		destroy();

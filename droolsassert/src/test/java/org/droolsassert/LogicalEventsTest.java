@@ -23,7 +23,6 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@TestRules
 	public void testCallsConnectAndDisconnectLogic() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		drools.insertAndFire(caller1Dial);
@@ -50,7 +49,6 @@ public class LogicalEventsTest {
 	}
 	
 	@Test
-	@TestRules
 	public void testCallsConnectAndDisconnectLogicStickToEvents() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		drools.insertAndFire(caller1Dial);
@@ -96,7 +94,6 @@ public class LogicalEventsTest {
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestRules
 	public void testAssertNoScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.assertNoScheduledActivations();
@@ -113,20 +110,17 @@ public class LogicalEventsTest {
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestRules
 	public void testAwaitScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.awaitFor("blah");
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestRules
 	public void testAwaitForAnyScheduledActivationsFailed() {
 		drools.awaitForAny();
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestRules
 	public void testAssertActivatedFailed() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.insertAndFire(new Dialing("33333", "44444"));

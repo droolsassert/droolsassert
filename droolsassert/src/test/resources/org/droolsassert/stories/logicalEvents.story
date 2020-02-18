@@ -11,7 +11,6 @@ Given global stdout is System.out
 
 !-- test calls connect and disconnect logic
 Given new session for scenario
-
 Given variable caller1Dial is new Dialing('11111', '22222')
 When insert and fire caller1Dial
 Then retracted caller1Dial
@@ -38,7 +37,6 @@ Then retracted all facts
 
 !-- test calls connect and disconnect logic stick to events
 Given new session for scenario
-
 Given variable caller1Dial as new Dialing('11111', '22222')
 When insert and fire caller1Dial
 Then activated input call

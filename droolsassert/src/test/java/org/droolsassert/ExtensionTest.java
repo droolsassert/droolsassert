@@ -17,7 +17,6 @@ public class ExtensionTest {
 	@Rule
 	public ExtendedDroolsAssert drools = new ExtendedDroolsAssert();
 	
-	@TestRules
 	@Test(expected = RuntimeException.class)
 	public void testInt() throws Exception {
 		drools.insertAndFire(new RuntimeException("Something reported"));

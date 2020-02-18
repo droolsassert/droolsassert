@@ -1,7 +1,6 @@
 package org.droolsassert;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,7 +53,6 @@ public class DroolsAssertTest {
 	}
 	
 	@Test(expected = AssertionError.class)
-	@TestRules
 	public void testNoObjectFound() {
 		assertEquals(0, drools.getObject(BigDecimal.class).intValue());
 	}
@@ -67,12 +65,6 @@ public class DroolsAssertTest {
 	}
 	
 	@Test
-	public void testSessionCreationSkipped() {
-		assertNull(drools.getSession());
-	}
-	
-	@Test
-	@TestRules
 	public void testPrintFactsSkippedWhenHistoryIsDisabled() {
 		drools.printFacts();
 	}
