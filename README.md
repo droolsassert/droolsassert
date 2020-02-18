@@ -33,7 +33,7 @@ Declare the rule for the test
 Test which rules were triggered in declarative way with `@AssertRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
 
 	@Test
-	@AssertRules("atomic int rule")
+	@TestRules(expected = "atomic int rule")
 	public void testInt() {
 		drools.insertAndFire(new AtomicInteger());
 		assertEquals(1, drools.getObject(AtomicInteger.class).get());
@@ -47,9 +47,10 @@ Test which rules were triggered in declarative way with `@AssertRules` annotatio
 [Spring integration test 2](https://github.com/droolsassert/droolsassert/wiki/4.-Spring-integration-test-2)  
 [Extend it with your application specific utilities](https://github.com/droolsassert/droolsassert/wiki/5.-Extension-example)  
 [Gather performance statistic](https://github.com/droolsassert/droolsassert/wiki/6.-Performance-stats)  
-[Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/8.-Jbehave-integration)  
-[Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/9.-Jbehave-Spring-example)  
-[JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/10.-JUnit-vs-jbehave)  
+[Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/8.1-Jbehave-integration)  
+[Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/8.2-Jbehave-Spring-example)  
+[Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/8.3-Jbehave-extention)  
+[JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/8.4-JUnit-vs-jbehave)  
 
 ## Latest maven builds
 
