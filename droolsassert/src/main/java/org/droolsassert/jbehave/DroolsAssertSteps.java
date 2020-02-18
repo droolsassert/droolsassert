@@ -64,7 +64,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	/**
 	 * Reset steps once for session definition
 	 */
-	protected void reset() {
+	protected void resetVariableDefinitions() {
 		if (droolsSessionMeta == null)
 			return;
 		droolsSessionMeta = null;
@@ -86,7 +86,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	@Given("import $imports")
 	@Alias("imports $imports")
 	public void givenImports(String imports) {
-		reset();
+		resetVariableDefinitions();
 		for (String line : Splitter.onPattern(NL).trimResults().omitEmptyStrings().split(imports))
 			mvelProcessor.importPackage(line);
 	}
@@ -108,7 +108,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 */
 	@Given("drools session $sessionMeta")
 	public void givenDroolsSession(String sessionMeta) {
-		reset();
+		resetVariableDefinitions();
 		droolsSessionMeta = new DroolsSessionProxy();
 		List<String> resources = new ArrayList<>();
 		List<String> properties = new ArrayList<>();
@@ -292,10 +292,9 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		Map<String, Integer> evaluated = new HashMap<>();
 		for (String line : Splitter.onPattern(NL).trimResults(STRING_CHARS_TO_TRIM).omitEmptyStrings().split(activations)) {
 			Matcher m = ACTIVATIONS_COUNT.matcher(line);
-			if (m.matches())
-				evaluated.put(m.group("rule"), parseInt(m.group("count")));
-			else
+			if (!m.matches())
 				throw new IllegalArgumentException("Cannot parse count of activations " + line);
+			evaluated.put(m.group("rule"), parseInt(m.group("count")));
 		}
 		return evaluated;
 	}
@@ -417,7 +416,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		String[] args = type.split(SPACE);
 		if (args.length == 2 && args[1].equals("object"))
 			return drools.getObject(classOf(args[0]));
-		else if (args.length == 2 && args[1].equals("objects"))
+		if (args.length == 2 && args[1].equals("objects"))
 			return (T) drools.getObjects(classOf(args[0]));
 		throw new IllegalArgumentException("Cannot resolve variable from the session using " + type);
 	}
