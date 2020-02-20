@@ -38,7 +38,7 @@ public class DroolsAssertTest {
 	}
 	
 	@Test
-	@TestRules(expectedCount = { "atomic long rule", "2" }, ignore = "* int rule")
+	@TestRules(expectedCount = { "2", "atomic long rule" }, ignore = "* int rule")
 	public void testActivationCount() {
 		drools.insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
 		assertEquals(2, drools.getObjects(AtomicLong.class).size());

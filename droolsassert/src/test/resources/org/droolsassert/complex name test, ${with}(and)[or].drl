@@ -11,7 +11,7 @@ rule 'atomic int rule'
         $atomicInteger.incrementAndGet()
 end
 
-rule 'complex name test ${with}(and)[or]'
+rule 'complex / name test, ${with}(and)[or]'
     dialect 'mvel'
     when
         $atomicLong: AtomicLong()

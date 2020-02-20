@@ -70,7 +70,7 @@ public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 	
 	@Override
 	public void beforeMatchFired(BeforeMatchFiredEvent event) {
-		String ruleName = event.getMatch().getRule().getName();
+		String ruleName = escape(event.getMatch().getRule().getName());
 		PerfStat ruleStat = rulesStat.get(ruleName);
 		if (ruleStat == null) {
 			synchronized (rulesStat) {
@@ -83,9 +83,13 @@ public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 		ruleStat.start();
 	}
 	
+	public String escape(String ruleName) {
+		return ruleName.replaceAll(",", "");
+	}
+	
 	@Override
 	public void afterMatchFired(AfterMatchFiredEvent event) {
-		rulesStat.get(event.getMatch().getRule().getName()).stop();
+		rulesStat.get(escape(event.getMatch().getRule().getName())).stop();
 	}
 	
 	public void reset() {

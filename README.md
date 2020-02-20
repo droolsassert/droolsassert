@@ -30,7 +30,7 @@ Declare the rule for the test
 	@Rule
 	public DroolsAssert drools = new DroolsAssert();
 
-Test which rules were triggered in declarative way with `@AssertRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
+Test which rules were triggered in declarative way with `@TestRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
 
 	@Test
 	@TestRules(expected = "atomic int rule")
@@ -57,6 +57,6 @@ Test which rules were triggered in declarative way with `@AssertRules` annotatio
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.0.2</version>
+        <version>2.0.3</version>
         <scope>test</scope>
     </dependency>

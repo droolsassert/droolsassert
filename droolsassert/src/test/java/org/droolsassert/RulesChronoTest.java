@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.TreeMap;
 
 import org.jfree.data.time.TimeSeries;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -19,6 +20,7 @@ public class RulesChronoTest {
 	public DroolsAssert drools = new DroolsAssert();
 	
 	@Test
+	@Ignore
 	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoListener() {
 		for (int i = 1; i <= 50; i++)
@@ -27,6 +29,7 @@ public class RulesChronoTest {
 	}
 	
 	@Test
+	@Ignore
 	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoChartRecorder() {
 		drools.setRulesChrono(new RulesChronoChartRecorder(5000));

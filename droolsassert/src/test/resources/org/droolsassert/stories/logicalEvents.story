@@ -29,7 +29,7 @@ When advance time for 5 seconds
 Then exist call
 Then retracted caller3Dial
 
-When advance time for 1 hours
+When advance time for 1 hour
 Then retracted call
 
 Then retracted all facts
@@ -51,12 +51,13 @@ Then exist call, caller3Dial
 
 When await for 'drop dial-up if callee is talking'
 Then activated 'drop dial-up if callee is talking', 'input call dropped'
+Then exist call
 Then retracted caller3Dial
 
 When await for 'drop the call if caller is talking more than permitted time'
 Then count of activated are
-    drop the call if caller is talking more than permitted time, 1
-    call in progress dropped, 1
+    1 drop the call if caller is talking more than permitted time
+    1 call in progress dropped
 Then retracted call
 
 Then there are no scheduled activations

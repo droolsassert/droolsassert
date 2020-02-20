@@ -1,15 +1,18 @@
 package org.droolsassert.jbehave;
 
 import static com.google.common.base.Charsets.UTF_8;
-import static com.google.common.collect.Iterables.toArray;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.lang.reflect.Proxy.newProxyInstance;
+import static java.util.Arrays.stream;
 import static java.util.regex.Pattern.compile;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.apache.commons.lang3.StringUtils.upperCase;
 import static org.droolsassert.util.JsonUtils.fromJson;
 import static org.droolsassert.util.JsonUtils.fromYaml;
@@ -27,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.droolsassert.DroolsAssert;
 import org.droolsassert.DroolsSession;
 import org.droolsassert.TestRules;
@@ -38,7 +42,6 @@ import org.jbehave.core.annotations.Then;
 import org.jbehave.core.annotations.When;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
 
@@ -46,13 +49,13 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	protected static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	
-	protected static final CharMatcher STRING_CHARS_TO_TRIM = CharMatcher.anyOf("' \t");
-	protected static final Pattern ACTIVATIONS_COUNT = compile("'?(?<rule>.*?)'?\\s*,?-?\\s*(?<count>\\d+)");
-	protected static final String STRINGS_DELIM = "(\r?\n|'\\s*,\\s*')";
+	protected static final Pattern COUNT_OF_STRINGS = compile("(?<count>\\d+)\\s*[ ,:|-]?\\s*(?<rule>.+)");
+	protected static final String STRINGS_DELIM = "(\r?\n|(?<=')\\s*,\\s*(?='[^']*'))";
 	protected static final String VARIABLES_DELIM = "(\r?\n|\\s*,\\s*)";
 	protected static final String LHS_DELIM = "\\s+((is|as)( an?)?|equals?( to)?)\\s+";
 	protected static final String SPACE = "\\s+";
 	protected static final String NL = "\r?\n";
+	protected static final String Q = "'";
 	
 	protected final Set<String> knownMimeTypes = knownMimeTypes();
 	protected DroolsSessionProxy droolsSessionMeta;
@@ -62,7 +65,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	protected A drools;
 	
 	/**
-	 * Reset steps once for session definition
+	 * Reset variables for each session definition
 	 */
 	protected void resetVariableDefinitions() {
 		if (droolsSessionMeta == null)
@@ -115,25 +118,25 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		List<String> ignoreRules = new ArrayList<>();
 		List<String> current = resources;
 		
-		for (String line : splitStrings(sessionMeta)) {
-			if (line.matches(",?\\s*properties:? .*")) {
-				line = line.replaceFirst(",?\\s*properties:?\\s+'?", "");
+		for (String line : sessionMeta.split(NL)) {
+			if (line.matches("\\s*properties.*")) {
+				line = line.replaceFirst("\\s*properties:?", "");
 				current = properties;
-			} else if (line.matches(",?\\s*ignore rules:? .*")) {
-				line = line.replaceFirst(",?\\s*ignore rules:?\\s+'?", "");
+			} else if (line.matches("\\s*ignore rules.*")) {
+				line = line.replaceFirst("\\s*ignore rules:?", "");
 				current = ignoreRules;
-			} else if (line.matches(",?\\s*log resources:? .*")) {
-				droolsSessionMeta.logResources = parseBoolean(line.replaceFirst(",?\\s*log resources:?\\s+", ""));
+			} else if (line.matches("\\s*log resources.*")) {
+				droolsSessionMeta.logResources = parseBoolean(line.replaceFirst("\\s*log resources:?\\s+", ""));
 				continue;
-			} else if (line.matches(",?\\s*keep facts history:? .*")) {
-				droolsSessionMeta.keepFactsHistory = parseBoolean(line.replaceFirst(",?\\s*keep facts history:?\\s+", ""));
+			} else if (line.matches("\\s*keep facts history.*")) {
+				droolsSessionMeta.keepFactsHistory = parseBoolean(line.replaceFirst("\\s*keep facts history:?\\s+", ""));
 				continue;
-			} else if (line.matches(",?\\s*log facts:? .*")) {
-				droolsSessionMeta.logFacts = parseBoolean(line.replaceFirst(",?\\s*log facts:?\\s+", ""));
+			} else if (line.matches("\\s*log facts.*")) {
+				droolsSessionMeta.logFacts = parseBoolean(line.replaceFirst("\\s*log facts:?\\s+", ""));
 				continue;
 			}
 			if (!line.isEmpty())
-				current.add(line);
+				current.addAll(splitStrings(line));
 		}
 		if (!resources.isEmpty())
 			droolsSessionMeta.resources = resources.toArray(new String[0]);
@@ -148,7 +151,11 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 * 
 	 * <pre>
 	 * Given new session for scenario
-	 * Given new session for scenario, ignore '* int rule'
+	 * 
+	 * Given new session for scenario, ignore '* int rule', 'other rule'
+	 * 
+	 * Given new session for scenario
+	 * 	ignore complex name * ${with}(and)[??]
 	 * </pre>
 	 */
 	@Given("new session for scenario$sessionMeta")
@@ -156,11 +163,11 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		testRulesMeta = new TestRulesProxy();
 		List<String> ignore = new ArrayList<>();
 		
-		for (String line : Splitter.onPattern(STRINGS_DELIM).trimResults(STRING_CHARS_TO_TRIM).omitEmptyStrings().split(sessionMeta)) {
-			if (line.matches(",?\\s*ignore:? .*"))
-				line = line.replaceFirst(",?\\s*ignore:?\\s+'?", "");
+		for (String line : sessionMeta.split(NL)) {
+			if (line.matches("\\s*,?\\s*ignore:? .*"))
+				line = line.replaceFirst("\\s*,?\\s*ignore:?\\s+", "");
 			if (!line.isEmpty())
-				ignore.add(line);
+				ignore.addAll(splitStrings(line));
 		}
 		if (!ignore.isEmpty())
 			testRulesMeta.ignore = ignore.toArray(new String[0]);
@@ -182,17 +189,21 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	}
 	
 	/**
-	 * Defines variable that can be used in mvel expressions later
+	 * Defines variable that can be used in mvel expressions later<br>
+	 * <br>
+	 * &lt;name&gt; [is|as[ a][ an]][equal[s] [to]] [&lt;type&gt; from] [mime] [expression]
 	 * 
 	 * <pre>
-	 * Given variable a1 is new AtomicInteger()
-	 * Given variable call as CallInProgress object from the session
-	 * Given variable listOfLong as AtomicLong objects from the session
-	 * Given variable restTemplate is a spring service restTemplate
-	 * Given variable dial as Dialing from yaml resource classpath:org/droolsassert/yaml
+	 * Given variable stdout is System.out
 	 * Given variable dial as Dialing from yaml {...}
 	 * Given variable dial as Dialing from json {...}
+	 * Given variable dial as Dialing from yaml resource classpath:org/droolsassert/yaml
+	 * Given variable call as CallInProgres object from the session
+	 * Given variable listOfLong as AtomicLong objects from the session
+	 * Given variable restTemplate is a spring service restTemplate
 	 * </pre>
+	 * 
+	 * @see #knownMimeTypes()
 	 */
 	@Given("variable $expression")
 	public void givenVariable(String expression) {
@@ -227,12 +238,12 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	@When("advance time for $count $unit")
 	public void whenAdvanceTime(int count, String unit) {
-		drools.advanceTime(count, TimeUnit.valueOf(upperCase(unit)));
+		drools.advanceTime(count, TimeUnit.valueOf(upperCase(unit.endsWith("s") ? unit : unit + "s")));
 	}
 	
 	@When("await for $rules")
-	public void whenAdvanceTime(String rules) {
-		drools.awaitFor(splitStrings(rules));
+	public void whenAwaitFor(String rules) {
+		drools.awaitFor(splitStrings(rules).toArray(new String[0]));
 	}
 	
 	@Then("exist $variables")
@@ -258,45 +269,52 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		if ("no rules".equals(activated))
 			drools.assertActivated();
 		else
-			drools.assertActivated(splitStrings(activated));
+			drools.assertActivated(splitStrings(activated).toArray(new String[0]));
 	}
 	
 	@Then("all activations are$activations")
+	@Alias("all activations is$activations")
 	public void thenAssertAllActivations(String activations) {
-		drools.assertAllActivations(splitStrings(activations));
+		drools.assertAllActivations(splitStrings(activations).toArray(new String[0]));
 	}
 	
 	@Then("all activations and scheduled are$activations")
 	public void thenAssertAllActivationsAndScheduled(String activations) {
 		drools.triggerAllScheduledActivations();
-		drools.assertAllActivations(splitStrings(activations));
+		drools.assertAllActivations(splitStrings(activations).toArray(new String[0]));
 	}
 	
-	@Then("count of activated are $activated")
+	/**
+	 * &lt;number&gt;&lt;delimiter&gt;[']&lt;value&gt;[']<br>
+	 * <br>
+	 * delimiter is one of ' ', ',', ':', '|', '-'
+	 * 
+	 * <pre>
+	 * Then count of activated are
+	 *     1 drop the call if caller is talking more than permitted time
+	 *     1 call in progress dropped
+	 * </pre>
+	 */
+	@Then("count of activated are$activated")
 	public void thenAssertActivatedCount(String activated) {
-		drools.assertActivated(evaluateActivationsCount(activated));
+		drools.assertActivated(splitCountOfStrings(activated));
 	}
 	
+	/**
+	 * @see #thenAssertActivatedCount(String)
+	 */
 	@Then("count of all activations are$activations")
 	public void thenAssertAllActivationsCount(String activations) {
-		drools.assertAllActivations(evaluateActivationsCount(activations));
+		drools.assertAllActivations(splitCountOfStrings(activations));
 	}
 	
+	/**
+	 * @see #thenAssertActivatedCount(String)
+	 */
 	@Then("count of all activations and scheduled are$activations")
 	public void thenAssertAllActivationsAndScheduledCount(String activations) {
 		drools.triggerAllScheduledActivations();
-		drools.assertAllActivations(evaluateActivationsCount(activations));
-	}
-	
-	protected Map<String, Integer> evaluateActivationsCount(String activations) {
-		Map<String, Integer> evaluated = new HashMap<>();
-		for (String line : Splitter.onPattern(NL).trimResults(STRING_CHARS_TO_TRIM).omitEmptyStrings().split(activations)) {
-			Matcher m = ACTIVATIONS_COUNT.matcher(line);
-			if (!m.matches())
-				throw new IllegalArgumentException("Cannot parse count of activations " + line);
-			evaluated.put(m.group("rule"), parseInt(m.group("count")));
-		}
-		return evaluated;
+		drools.assertAllActivations(splitCountOfStrings(activations));
 	}
 	
 	@Then("there are no scheduled activations")
@@ -312,14 +330,42 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 			assertTrue(message, (boolean) mvelProcessor.evaluate(expression));
 	}
 	
+	/**
+	 * <pre>
+	 * Then assert call.callerNumber equals '11111'
+	 * </pre>
+	 */
 	@Then("assert $lhs equals $rhs")
 	@Aliases(values = { "assert $actual equal $expected", "assert $actual is $expected" })
 	public void thenAssertEquals(String actual, String expected) {
 		assertEquals((Object) mvelProcessor.evaluate(expected), mvelProcessor.evaluate(actual));
 	}
 	
-	protected String[] splitStrings(String lines) {
-		return toArray(Splitter.onPattern(STRINGS_DELIM).trimResults(STRING_CHARS_TO_TRIM).omitEmptyStrings().split(lines), String.class);
+	protected List<String> splitStrings(String lines) {
+		return stream(lines.split(STRINGS_DELIM))
+				.map(StringUtils::trim)
+				.filter(StringUtils::isNotEmpty)
+				.map(this::stripString)
+				.collect(toList());
+	}
+	
+	protected Map<String, Integer> splitCountOfStrings(String activations) {
+		Map<String, Integer> evaluated = new HashMap<>();
+		stream(activations.split(NL))
+				.map(StringUtils::trim)
+				.filter(StringUtils::isNotEmpty)
+				.map(this::stripString)
+				.forEach(line -> {
+					Matcher m = COUNT_OF_STRINGS.matcher(line);
+					if (!m.matches())
+						throw new IllegalArgumentException("Cannot parse " + line);
+					evaluated.put(stripString(m.group("rule")), parseInt(m.group("count")));
+				});
+		return evaluated;
+	}
+	
+	protected String stripString(String quoted) {
+		return quoted.startsWith(Q) && quoted.endsWith(Q) ? removeStart(removeEnd(quoted, Q), Q) : quoted;
 	}
 	
 	protected Object[] evalVariables(String variables) {
@@ -327,15 +373,6 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 				.map(var -> mvelProcessor.evaluate(var)).toArray();
 	}
 	
-	/**
-	 * &lt;name&gt; [is|as[ a][ an]][equal[s] [to]] [&lt;type&gt; from] [mime] [expression]
-	 * 
-	 * <pre>
-	 * stdout is System.out
-	 * restController is a spring service springRestController
-	 * caller1Dial as LogicalEventsTest.Dialing from yaml resource classpath:/...
-	 * </pre>
-	 */
 	protected void defineVariable(String expression, boolean droolsGlobal) {
 		String[] rhsArr = expression.split(LHS_DELIM, 2);
 		String name = rhsArr[0];
@@ -365,6 +402,9 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		mvelProcessor.define(name, resolved);
 	}
 	
+	/**
+	 * "json", "json resource", "yaml", "yaml resource", "spring service", "the session"
+	 */
 	protected Set<String> knownMimeTypes() {
 		return newHashSet("json", "json resource", "yaml", "yaml resource", "spring service", "the session");
 	}

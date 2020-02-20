@@ -6,8 +6,8 @@ Given drools session classpath:/org/droolsassert/complex name * ${with}(*)[or].d
 
 
 !-- test int
-Given new session for scenario, 
-    ignore complex name * ${with}(and)[??]
+Given new session for scenario
+	ignore complex name * ${with}(and)[??]
 Given variable atomicInteger is new AtomicInteger()
 Given variable atomicLong is new AtomicLong()
 When insert and fire atomicInteger, atomicLong

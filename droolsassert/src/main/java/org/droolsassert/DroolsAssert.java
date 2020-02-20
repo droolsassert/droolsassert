@@ -2,7 +2,6 @@ package org.droolsassert;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.parseInt;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
 import static java.lang.System.out;
@@ -76,7 +75,7 @@ import org.springframework.util.PathMatcher;
 public class DroolsAssert implements TestRule {
 	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
 	protected static final DateTimeFormatter HH_MM_SS_SSS = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
-	private static PathMatcher pathMatcher = new AntPathMatcher();
+	private static PathMatcher nameMatcher = new AntPathMatcher("\n");
 	private static PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
@@ -194,7 +193,7 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Asserts the only rules listed have been activated no more no less.
 	 *
-	 * @see #assertAllActivations(Map)
+	 * @see #assertAllActivationsCount(Object...)
 	 * @throws AssertionError
 	 */
 	public void assertAllActivations(String... expected) {
@@ -211,8 +210,13 @@ public class DroolsAssert implements TestRule {
 	 * Accepts the number of activations to assert.
 	 * 
 	 * @see #assertAllActivations(String...)
+	 * @see #assertActivatedCount(Object...)
 	 * @throws AssertionError
 	 */
+	public void assertAllActivationsCount(Object... expectedCount) {
+		assertAllActivations(toMap(true, expectedCount));
+	}
+	
 	public void assertAllActivations(Map<String, Integer> expectedCount) {
 		assertActivations(expectedCount, activations);
 	}
@@ -234,11 +238,22 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Asserts the only rules listed have been activated no more no less <i>since previous check</i>.<br>
 	 * Accepts the number of activations to assert.
+	 * 
+	 * <pre>
+	 * drools.assertActivatedCount(
+	 * 		2, "input call",
+	 * 		1, "drop the call if caller is talking more than permitted time",
+	 * 		1, "call in progress dropped");
+	 * </pre>
 	 *
 	 * @see #assertActivated(String...)
 	 * @see #awaitFor(String...)
 	 * @throws AssertionError
 	 */
+	public void assertActivatedCount(Object... expectedCount) {
+		assertActivated(toMap(true, expectedCount));
+	}
+	
 	public void assertActivated(Map<String, Integer> expectedCount) {
 		Map<String, Integer> delta = getNewActivations(activationsSnapshot);
 		activationsSnapshot = new LinkedHashMap<>(activations);
@@ -548,7 +563,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected Map<String, String> defaultSessionProperties() {
-		return toMap(false, "drools.eventProcessingMode", "stream", "drools.clockType", "pseudo");
+		return toMap(false, new String[] { "drools.eventProcessingMode", "stream", "drools.clockType", "pseudo" });
 	}
 	
 	protected RulesChronoAgendaEventListener rulesChrono() {
@@ -567,7 +582,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected boolean isEligibleForAssertion(String rule) {
-		return !ignored.stream().filter(pattern -> pathMatcher.match(pattern, rule)).findFirst().isPresent();
+		return !ignored.stream().filter(pattern -> nameMatcher.match(pattern, rule)).findFirst().isPresent();
 	}
 	
 	protected String factToString(Object fact) {
@@ -588,11 +603,14 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <T> Map<String, T> toMap(boolean convertToInt, String... params) {
+	private <T> Map<String, T> toMap(boolean convertToInt, Object[] params) {
 		checkArgument(params.length % 2 == 0, "Cannot create a map out of odd number of parameters");
 		Map<String, T> map = new LinkedHashMap<>();
 		for (int i = 0; i < params.length; i = i + 2)
-			map.put(params[i], (T) (convertToInt ? parseInt(params[i + 1]) : params[i + 1]));
+			if (convertToInt)
+				map.put("" + params[i + 1], (T) (new Integer("" + params[i])));
+			else
+				map.put("" + params[i], (T) params[i + 1]);
 		return map;
 	}
 	

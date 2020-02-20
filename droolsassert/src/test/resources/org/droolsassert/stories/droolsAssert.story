@@ -41,7 +41,7 @@ Given variable a3 is new AtomicLong()
 When insert and fire a1, a2, a3
 Given variable listOfLong as AtomicLong objects from the session
 Then assert listOfLong.size() is 2
-Then count of all activations are 'atomic long rule', 2
+Then count of all activations are 2 'atomic long rule'
 
 
 !-- test no rule where triggered
