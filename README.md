@@ -19,25 +19,25 @@ With this approach you'll have many isolated unit tests and few integration test
 Specify any combination of rules you want to test in single session using `@DroolsSession`, `logResources` to see what was actually included.  
 Spring ant-like PathMatchingResourcePatternResolver gives you robust tool to include functionality you want to test together or segregate.  
 
-	@DroolsSession(resources = {
-		"classpath*:/org/droolsassert/rules.drl",
-		"classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
-		"classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
-		logResources = true)
+    @DroolsSession(resources = {
+        "classpath*:/org/droolsassert/rules.drl",
+        "classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
+        "classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
+        logResources = true)
 
 Declare the rule for the test
 
-	@Rule
-	public DroolsAssert drools = new DroolsAssert();
+    @Rule
+    public DroolsAssert drools = new DroolsAssert();
 
 Test which rules were triggered in declarative way with `@TestRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
 
-	@Test
-	@TestRules(expected = "atomic int rule")
-	public void testInt() {
-		drools.insertAndFire(new AtomicInteger());
-		assertEquals(1, drools.getObject(AtomicInteger.class).get());
-	}
+    @Test
+    @TestRules(expected = "atomic int rule")
+    public void testInt() {
+        drools.insertAndFire(new AtomicInteger());
+        assertEquals(1, drools.getObject(AtomicInteger.class).get());
+    }
 
 ## Examples
 
