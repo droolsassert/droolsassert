@@ -1,10 +1,10 @@
 package org.droolsassert;
+dialect 'mvel'
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicInteger;
 
 rule 'before'
-    dialect 'mvel'
     salience 1
     when
         $object: Object()
@@ -13,7 +13,6 @@ rule 'before'
 end
 
 rule 'atomic int rule'
-    dialect 'mvel'
     when
         $atomicInteger: AtomicInteger()
     then
@@ -21,7 +20,6 @@ rule 'atomic int rule'
 end
 
 rule 'atomic long rule'
-    dialect 'mvel'
     when
         $atomicLong: AtomicLong()
     then
@@ -29,7 +27,6 @@ rule 'atomic long rule'
 end
 
 rule 'after'
-    dialect 'mvel'
     salience -1
     when
         $object: Object()

@@ -4,6 +4,7 @@ import static java.lang.Long.parseLong;
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getProperty;
+import static javax.management.ObjectName.quote;
 import static org.droolsassert.util.JmxUtils.registerMBean;
 
 import java.util.Map;
@@ -35,7 +36,8 @@ import org.apache.commons.lang3.time.StopWatch;
  */
 public class PerfStat {
 	
-	public static final long AGGREGATION_TIME_MS = parseLong(getProperty("org.droolsassert.perfStatAggregationTimeMs", "4000"));
+	public static final String DOMAIN = getProperty("perfstat.domain", "org.droolsassert.perf");
+	public static final long AGGREGATION_TIME_MS = parseLong(getProperty("perfstat.perfStatAggregationTimeMs", "4000"));
 	private static final ConcurrentHashMap<String, StatImpl> stats = new ConcurrentHashMap<>();
 	
 	/**
@@ -112,7 +114,7 @@ public class PerfStat {
 			if (stat == null) {
 				stat = new StatImpl(domain);
 				stats.put(domain, stat);
-				registerMBean(format("%s:type=%s", getClass().getName(), domain), stat, Stat.class);
+				registerMBean(format("%s:type=%s", DOMAIN, quote(domain)), stat, Stat.class);
 			}
 		}
 	}

@@ -1,4 +1,5 @@
 package org.droolsassert;
+dialect 'mvel'
 
 import org.droolsassert.LogicalEventsTest.Dialing;
 import org.droolsassert.LogicalEventsTest.CallInProgress;
@@ -7,7 +8,6 @@ import org.droolsassert.LogicalEventsTest.CallDropped;
 global java.io.PrintStream stdout;
 
 rule 'input call'
-	dialect 'mvel'
     when
         $dial: Dialing()
         not CallInProgress(this.callerNumber == $dial.calleeNumber)
@@ -18,7 +18,6 @@ rule 'input call'
 end
 
 rule 'drop dial-up if callee is talking'
-	dialect 'mvel'
 	timer (7001)
     when
         $dial: Dialing()
@@ -29,7 +28,6 @@ rule 'drop dial-up if callee is talking'
 end
 
 rule 'drop the call if caller is talking more than permitted time'
-	dialect 'mvel'
 	timer (int: 30m)
     when
         $callInProgress : CallInProgress()
@@ -38,7 +36,6 @@ rule 'drop the call if caller is talking more than permitted time'
 end
 
 rule 'call in progress dropped'
-	dialect 'mvel'
     when
         $callDropped: CallDropped()
         ($callInProgress : CallInProgress(this.callerNumber == $callDropped.number)
@@ -50,7 +47,6 @@ rule 'call in progress dropped'
 end
 
 rule 'input call dropped'
-	dialect 'mvel'
     when
         $callDropped: CallDropped()
         ($dial : Dialing(this.callerNumber == $callDropped.number)
