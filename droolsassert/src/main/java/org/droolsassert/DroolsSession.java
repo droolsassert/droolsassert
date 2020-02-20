@@ -7,6 +7,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.util.AntPathMatcher;
 
 /**
  * Describes the session being constructed for each test.<br>
@@ -33,6 +34,8 @@ public @interface DroolsSession {
 	/**
 	 * Ignore rules matching patterns while assertion.<br>
 	 * Rules themselves will be executed
+	 * 
+	 * @see AntPathMatcher
 	 */
 	String[] ignoreRules() default {};
 	

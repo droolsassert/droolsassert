@@ -6,6 +6,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.springframework.util.AntPathMatcher;
+
 /**
  * Marks a method to be a drools test.<br>
  * Provides additional options limited to the current test only.<br>
@@ -28,6 +30,8 @@ public @interface TestRules {
 	/**
 	 * Ignore rules matching patterns while assertion.<br>
 	 * Rules themselves will be executed.
+	 * 
+	 * @see AntPathMatcher
 	 */
 	String[] ignore() default {};
 	
