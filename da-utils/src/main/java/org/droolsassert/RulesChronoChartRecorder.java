@@ -3,7 +3,6 @@ package org.droolsassert;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.droolsassert.util.PerfStat.AGGREGATION_TIME_MS;
 
 import java.util.Map.Entry;
 import java.util.Timer;
@@ -35,44 +34,44 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 	protected long retentionPeriodSec = MINUTES.toSeconds(RETENTION_PERIOD_MIN);
 	
 	/**
-	 * Creates {@link RulesChronoChartRecorder} with no session prefix and default aggregation time
+	 * Creates {@link RulesChronoChartRecorder} with no session prefix and default aggregation period
 	 */
 	public RulesChronoChartRecorder() {
-		this(null, AGGREGATION_TIME_MS);
+		this(null, RETENTION_PERIOD_MIN);
 	}
 	
 	/**
-	 * Creates {@link RulesChronoChartRecorder} with no session prefix and provided aggregation time
+	 * Creates {@link RulesChronoChartRecorder} with no session prefix and provided aggregation period
 	 * 
-	 * @param aggregationTimeMs
+	 * @param aggregationPeriodMs
 	 */
-	public RulesChronoChartRecorder(long aggregationTimeMs) {
-		this(null, aggregationTimeMs);
+	public RulesChronoChartRecorder(long aggregationPeriodMs) {
+		this(null, aggregationPeriodMs);
 	}
 	
 	/**
-	 * Creates {@link RulesChronoChartRecorder} with provided session prefix and default aggregation time
+	 * Creates {@link RulesChronoChartRecorder} with provided session prefix and default aggregation period
 	 * 
 	 * @param sessionPreffix
 	 */
 	public RulesChronoChartRecorder(String sessionPreffix) {
-		this(sessionPreffix, AGGREGATION_TIME_MS);
+		this(sessionPreffix, RETENTION_PERIOD_MIN);
 	}
 	
 	/**
-	 * Creates {@link RulesChronoChartRecorder} with provided session prefix and aggregation time
+	 * Creates {@link RulesChronoChartRecorder} with provided session prefix and aggregation period
 	 * 
 	 * @param sessionPreffix
-	 * @param aggregationTimeMs
+	 * @param aggregationPeriodMs
 	 */
-	public RulesChronoChartRecorder(String sessionPreffix, long aggregationTimeMs) {
-		super(sessionPreffix, aggregationTimeMs);
+	public RulesChronoChartRecorder(String sessionPreffix, long aggregationPeriodMs) {
+		super(sessionPreffix, aggregationPeriodMs);
 		timer.scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
 				recordTimeSeries();
 			}
-		}, 0, aggregationTimeMs);
+		}, 0, aggregationPeriodMs);
 		
 	}
 	

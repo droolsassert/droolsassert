@@ -22,7 +22,7 @@ public final class JsonUtils {
 	static {
 		DEFAULT_MAPPER.registerModule(new JodaModule());
 		DEFAULT_MAPPER.configure(WRITE_DATES_AS_TIMESTAMPS, false);
-		DEFAULT_MAPPER.enableDefaultTyping(OBJECT_AND_NON_CONCRETE);
+		DEFAULT_MAPPER.activateDefaultTyping(DEFAULT_MAPPER.getPolymorphicTypeValidator(), OBJECT_AND_NON_CONCRETE);
 
 		YAML_MAPPER.registerModule(new JodaModule());
 		YAML_MAPPER.configure(WRITE_DATES_AS_TIMESTAMPS, false);

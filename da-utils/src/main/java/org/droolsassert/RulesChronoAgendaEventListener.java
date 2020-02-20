@@ -1,6 +1,6 @@
 package org.droolsassert;
 
-import static org.droolsassert.util.PerfStat.AGGREGATION_TIME_MS;
+import static org.droolsassert.util.PerfStat.AGGREGATION_PERIOD_MS;
 
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -22,43 +22,43 @@ import org.kie.api.event.rule.DefaultAgendaEventListener;
 public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 	
 	protected final ConcurrentHashMap<String, PerfStat> rulesStat = new ConcurrentHashMap<>();
-	protected final long aggregationTimeMs;
+	protected final long aggregationPeriodMs;
 	protected final String sessionPreffix;
 	
 	/**
-	 * Creates {@link RulesChronoAgendaEventListener} with no session prefix and default aggregation time
+	 * Creates {@link RulesChronoAgendaEventListener} with no session prefix and default aggregation period
 	 */
 	public RulesChronoAgendaEventListener() {
-		this(null, AGGREGATION_TIME_MS);
+		this(null, AGGREGATION_PERIOD_MS);
 	}
 	
 	/**
-	 * Creates {@link RulesChronoAgendaEventListener} with no session prefix and provided aggregation time
+	 * Creates {@link RulesChronoAgendaEventListener} with no session prefix and provided aggregation period
 	 * 
-	 * @param aggregationTimeMs
+	 * @param aggregationPeriodMs
 	 */
-	public RulesChronoAgendaEventListener(long aggregationTimeMs) {
-		this(null, aggregationTimeMs);
+	public RulesChronoAgendaEventListener(long aggregationPeriodMs) {
+		this(null, aggregationPeriodMs);
 	}
 	
 	/**
-	 * Creates {@link RulesChronoAgendaEventListener} with provided session prefix and default aggregation time
+	 * Creates {@link RulesChronoAgendaEventListener} with provided session prefix and default aggregation period
 	 * 
 	 * @param sessionPreffix
 	 */
 	public RulesChronoAgendaEventListener(String sessionPreffix) {
-		this(sessionPreffix, AGGREGATION_TIME_MS);
+		this(sessionPreffix, AGGREGATION_PERIOD_MS);
 	}
 	
 	/**
-	 * Creates {@link RulesChronoAgendaEventListener} with provided session prefix and aggregation time
+	 * Creates {@link RulesChronoAgendaEventListener} with provided session prefix and aggregation period
 	 * 
 	 * @param sessionPreffix
-	 * @param aggregationTimeMs
+	 * @param aggregationPeriodMs
 	 */
-	public RulesChronoAgendaEventListener(String sessionPreffix, long aggregationTimeMs) {
+	public RulesChronoAgendaEventListener(String sessionPreffix, long aggregationPeriodMs) {
 		this.sessionPreffix = sessionPreffix;
-		this.aggregationTimeMs = aggregationTimeMs;
+		this.aggregationPeriodMs = aggregationPeriodMs;
 	}
 	
 	public TreeMap<String, Stat> getPerfStat() {
@@ -75,7 +75,7 @@ public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 		if (ruleStat == null) {
 			synchronized (rulesStat) {
 				if (ruleStat == null) {
-					ruleStat = new PerfStat(sessionPreffix == null ? ruleName : sessionPreffix + ruleName, aggregationTimeMs);
+					ruleStat = new PerfStat(sessionPreffix == null ? ruleName : sessionPreffix + ruleName, aggregationPeriodMs);
 					rulesStat.put(ruleName, ruleStat);
 				}
 			}

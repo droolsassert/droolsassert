@@ -37,7 +37,7 @@ import org.apache.commons.lang3.time.StopWatch;
 public class PerfStat {
 	
 	public static final String DOMAIN = getProperty("perfstat.domain", "org.droolsassert.perf");
-	public static final long AGGREGATION_TIME_MS = parseLong(getProperty("perfstat.perfStatAggregationTimeMs", "4000"));
+	public static final long AGGREGATION_PERIOD_MS = parseLong(getProperty("perfstat.aggregationPeriodMs", "4000"));
 	private static final ConcurrentHashMap<String, StatImpl> stats = new ConcurrentHashMap<>();
 	
 	/**
@@ -88,14 +88,14 @@ public class PerfStat {
 	private ThreadLocal<StopWatch> stopWatch = ThreadLocal.withInitial(() -> new StopWatch());
 	private StatImpl stat;
 	private long lastAggregationTimeMs = currentTimeMillis();
-	private long aggregationTimeMs;
+	private long aggregationPeriodMs;
 	
 	public PerfStat(String domain) {
-		this(domain, AGGREGATION_TIME_MS);
+		this(domain, AGGREGATION_PERIOD_MS);
 	}
 	
-	public PerfStat(String domain, long aggregationTimeMs) {
-		this.aggregationTimeMs = aggregationTimeMs;
+	public PerfStat(String domain, long aggregationPeriodMs) {
+		this.aggregationPeriodMs = aggregationPeriodMs;
 		stat = stats.get(domain);
 		if (stat == null)
 			initStat(domain);
@@ -121,7 +121,7 @@ public class PerfStat {
 	
 	/**
 	 * Start to measure execution time for current thread.<br>
-	 * Reset sample (period) values if aggregation time threshold was passed over.
+	 * Reset sample (period) values if aggregation time threshold passed over.
 	 */
 	public PerfStat start() {
 		if (stopWatch.get().isStarted()) {
@@ -130,9 +130,9 @@ public class PerfStat {
 			}
 		}
 		long currentTimeMillis = currentTimeMillis();
-		if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationTimeMs) {
+		if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationPeriodMs) {
 			synchronized (stat) {
-				if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationTimeMs) {
+				if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationPeriodMs) {
 					lastAggregationTimeMs = currentTimeMillis;
 					stat.avgTimeSampleMs = round(stat.totalTimeSampleNs / stat.leapsCountSample);
 					stat.leapsCountSample = 0;
