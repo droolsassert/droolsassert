@@ -75,8 +75,8 @@ import org.springframework.util.PathMatcher;
 public class DroolsAssert implements TestRule {
 	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
 	protected static final DateTimeFormatter HH_MM_SS_SSS = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
-	private static PathMatcher nameMatcher = new AntPathMatcher("\n");
-	private static PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+	protected static final PathMatcher nameMatcher = new AntPathMatcher("\n");
+	protected static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
 	protected DroolsSession droolsSessionMeta;

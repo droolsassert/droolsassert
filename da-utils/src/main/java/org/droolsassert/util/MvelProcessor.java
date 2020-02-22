@@ -25,10 +25,20 @@ public class MvelProcessor extends PatternProcessor {
 		parserContext.addPackageImport(packageName);
 	}
 	
+	/**
+	 * Define execution context variable
+	 * 
+	 * @param name
+	 * @param value
+	 * @return
+	 */
 	public Object define(String name, Object value) {
 		return executionContext.put(name, value);
 	}
 	
+	/**
+	 * Reset execution context variables
+	 */
 	public void reset() {
 		executionContext = executionContext();
 	}
@@ -47,10 +57,16 @@ public class MvelProcessor extends PatternProcessor {
 		}
 	}
 	
+	/**
+	 * Execution context which could be reset with {@link #reset()}
+	 */
 	protected Map<String, Object> executionContext() {
 		return new HashMap<>();
 	}
 	
+	/**
+	 * Parser context used for evaluation.
+	 */
 	protected ParserContext parserContext() {
 		return new ParserContext();
 	}

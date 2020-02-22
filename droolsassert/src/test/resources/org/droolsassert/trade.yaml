@@ -1,0 +1,4 @@
+{
+    tradeDate: '${T0}',
+    settlementDate: '${T3}'
+}
