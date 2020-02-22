@@ -1,4 +1,4 @@
-<img src="wiki-data/logo.png" width="170" height="200" align="right" style="">
+<img src="wiki-data/logo.png" width="170" height="200" align="right">
 
 ## Goal
 
@@ -6,21 +6,21 @@ Relieve Drools JUnit testing
 
 ## Audience
 
-The goal of unit testing is to isolate each part of the program and show that the individual parts are correct. Now you can echieve this easier for drools. Be certain about the rules being triggered and the facts retained in your session for a scenario you need.
+The goal of unit testing is to isolate each part of the program and show that the individual parts are correct. You can achieve this easier when working with drools using the library. Be certain about the rules being triggered and the facts retained in your session for a scenario you need.
 
 ## Approach
 
-Unit test is about taking minimum piece of code and test all possible usecases defining specification. With integration tests your goal is not all possible usecases but integration of several units that work together. Do the same with rules. Segregate rules by business meaning and purpose. Simplest 'unit under the test' could be file with single or [high cohension](https://stackoverflow.com/questions/10830135/what-is-high-cohesion-and-how-to-use-it-make-it) set of rules and what is required for it to work (if any), like common dsl definition file and decision table. For integration test you could take meaningful subset or all rules of the system. 
+Unit test is about taking minimum piece of code and test all possible usecases defining specification. With integration tests your goal is not all possible usecases but integration of several units that work together. Do the same with rules. Segregate rules by business meaning and purpose. Simplest 'unit under the test' could be file with single or [high cohesion](https://stackoverflow.com/questions/10830135/what-is-high-cohesion-and-how-to-use-it-make-it) set of rules and what is required for it to work (if any), like common DSL definition file or decision table. For integration test you could take meaningful subset or all rules of the system. 
 
 ## Usage
 
 Specify any combination of rules you want to test in single session using `@DroolsSession`, `logResources` to see what was actually included.  
-Spring ant-like PathMatchingResourcePatternResolver gives you robust tool to include functionality you want to test together or segregate.  
+Spring ant-like [PathMatchingResourcePatternResolver](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/core/io/support/PathMatchingResourcePatternResolver.html) gives you robust tool to include functionality you want to test together or segregate.  
 
     @DroolsSession(resources = {
-        "classpath*:/org/droolsassert/rules.drl",
-        "classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
-        "classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
+        "classpath:/org/droolsassert/rules.drl",
+        "classpath:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
+        "classpath:/com/company/project/*/ruleUnderTest.rdslr" },
         logResources = true)
 
 Declare the rule for the test
@@ -55,6 +55,6 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.0.4</version>
+        <version>2.0.5</version>
         <scope>test</scope>
     </dependency>
