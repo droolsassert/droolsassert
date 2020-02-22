@@ -1,4 +1,4 @@
 {
     tradeDate: '${T0}',
-    settlementDate: '${T3}'
+    settlementDate: '${businessDay(24)}'
 }

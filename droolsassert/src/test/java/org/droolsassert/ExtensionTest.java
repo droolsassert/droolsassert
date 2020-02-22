@@ -19,6 +19,7 @@ import org.joda.time.LocalDate;
 import org.junit.Rule;
 import org.junit.Test;
 import org.kie.api.runtime.rule.FactHandle;
+import org.mvel2.ParserContext;
 
 import com.google.common.io.Resources;
 
@@ -29,7 +30,6 @@ public class ExtensionTest {
 	public ExtendedDroolsAssert drools = new ExtendedDroolsAssert();
 	
 	@Test(expected = RuntimeException.class)
-	@TestRules(expected = {})
 	public void testNoErrors() throws Exception {
 		drools.insertAndFire(new RuntimeException("Something reported"));
 		drools.assertNoErrors();
@@ -46,16 +46,16 @@ public class ExtensionTest {
 		
 		private MvelProcessor mvelProcessor = new ExtendedMvelProcessor();
 		
+		public void assertNoErrors() throws Exception {
+			assertEmpty(new ArrayList<Throwable>(getObjects(Throwable.class)));
+		}
+		
 		public FactHandle insertFromYaml(Class<?> type, String resource) {
 			try {
 				return super.insert(fromYaml(mvelProcessor.process(Resources.toString(resourceResolver.getResource(resource).getURL(), UTF_8)), type)).get(0);
 			} catch (IOException e) {
 				throw new RuntimeException(format("Cannot insert %s from %s", type.getSimpleName(), resource));
 			}
-		}
-		
-		public void assertNoErrors() throws Exception {
-			assertEmpty(new ArrayList<Throwable>(getObjects(Throwable.class)));
 		}
 		
 		@Override
@@ -66,8 +66,11 @@ public class ExtensionTest {
 	
 	public static class ExtendedMvelProcessor extends MvelProcessor {
 		
-		public ExtendedMvelProcessor() {
-			parserContext.addPackageImport("java.lang");
+		@Override
+		protected ParserContext parserContext() throws Exception {
+			ParserContext parserContext = super.parserContext();
+			parserContext.addImport("businessDay", ExtendedMvelProcessor.class.getMethod("businessDay", int.class));
+			return parserContext;
 		}
 		
 		@Override

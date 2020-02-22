@@ -14,11 +14,17 @@ public class MvelProcessor extends PatternProcessor {
 	
 	private static final String PATTERN = "\\$\\$\\{(?<long>(?!.*?\\$\\{).*?)\\}\\$|\\$\\{(?<short>(?!.*?\\$\\{).*?)\\}";
 	
-	protected final ParserContext parserContext = parserContext();
+	protected final ParserContext parserContext;
 	protected volatile Map<String, Object> executionContext = executionContext();
 	
 	public MvelProcessor() {
 		super(PATTERN);
+		
+		try {
+			parserContext = parserContext();
+		} catch (Exception e) {
+			throw new RuntimeException("Cannot create parser context ", e);
+		}
 	}
 	
 	public void importPackage(String packageName) {
@@ -66,8 +72,10 @@ public class MvelProcessor extends PatternProcessor {
 	
 	/**
 	 * Parser context used for evaluation.
+	 * 
+	 * @throws Exception
 	 */
-	protected ParserContext parserContext() {
+	protected ParserContext parserContext() throws Exception {
 		return new ParserContext();
 	}
 }
