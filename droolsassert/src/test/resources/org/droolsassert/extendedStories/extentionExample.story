@@ -4,7 +4,7 @@ Given imports
     org.droolsassert
     org.droolsassert.ComplexEventProcessingTest
 
-Given drools session classpath:/org/droolsassert/logicalEvents.drl
+Given drools session classpath:/org/droolsassert/complexEventProcessing.drl
 
 Given global stdout is System.out
 

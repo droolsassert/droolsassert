@@ -23,7 +23,7 @@ import org.mvel2.ParserContext;
 
 import com.google.common.io.Resources;
 
-@DroolsSession("classpath:/org/droolsassert/logicalEvents.drl")
+@DroolsSession("classpath:/org/droolsassert/complexEventProcessing.drl")
 public class ExtensionTest {
 	
 	@Rule

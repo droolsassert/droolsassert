@@ -1,4 +1,4 @@
-Logical events story
+Complex name story
 
 Given import java.util.concurrent.atomic
 

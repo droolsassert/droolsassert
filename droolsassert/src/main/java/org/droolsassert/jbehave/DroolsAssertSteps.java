@@ -99,7 +99,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 * Drools session definition, suitable for many scenarios
 	 * 
 	 * <pre>
-	 * Given drools session classpath:/org/droolsassert/logicalEvents.drl
+	 * Given drools session classpath:/org/droolsassert/complexEventProcessing.drl
 	 * </pre>
 	 * 
 	 * <pre>

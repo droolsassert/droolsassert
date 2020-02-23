@@ -1,4 +1,4 @@
-Logical events story
+Drools assert story
 
 Given import java.util.concurrent.atomic
 
