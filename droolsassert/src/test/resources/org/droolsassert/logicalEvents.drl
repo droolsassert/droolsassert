@@ -1,9 +1,9 @@
 package org.droolsassert;
 dialect 'mvel'
 
-import org.droolsassert.LogicalEventsTest.Dialing;
-import org.droolsassert.LogicalEventsTest.CallInProgress;
-import org.droolsassert.LogicalEventsTest.CallDropped;
+import org.droolsassert.ComplexEventProcessingTest.Dialing;
+import org.droolsassert.ComplexEventProcessingTest.CallInProgress;
+import org.droolsassert.ComplexEventProcessingTest.CallDropped;
 
 declare CallDropped @role (event) @expires (0s) end
 

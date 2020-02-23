@@ -10,7 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 @DroolsSession("classpath:/org/droolsassert/logicalEvents.drl")
-public class LogicalEventsTest {
+public class ComplexEventProcessingTest {
 	
 	@Rule
 	public DroolsAssert drools = new DroolsAssert();

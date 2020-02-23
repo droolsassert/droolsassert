@@ -2,7 +2,7 @@ Logical events story
 
 Given imports 
     org.droolsassert
-    org.droolsassert.LogicalEventsTest
+    org.droolsassert.ComplexEventProcessingTest
 
 Given drools session classpath:/org/droolsassert/logicalEvents.drl
 
