@@ -122,12 +122,12 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		boolean properties = true;
 		
 		for (String line : sessionMeta.split(NL)) {
-			if (line.matches("\\s*baseProperties.*")) {
-				line = line.replaceFirst("\\s*baseProperties:?", "");
+			if (line.matches("\\s*base properties.*")) {
+				line = line.replaceFirst("\\s*base properties:?", "");
 				current = baseProperties;
 				properties = true;
-			} else if (line.matches("\\s*sessionProperties.*")) {
-				line = line.replaceFirst("\\s*sessionProperties:?", "");
+			} else if (line.matches("\\s*session properties.*")) {
+				line = line.replaceFirst("\\s*session properties:?", "");
 				current = sessionProperties;
 				properties = true;
 			} else if (line.matches("\\s*ignore rules.*")) {
