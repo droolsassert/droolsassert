@@ -198,13 +198,6 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Move clock forward for smallest period drools care (1ms) and trigger any scheduled rules.<br>
-	 */
-	public void tickTime() {
-		tickTime(1, MILLISECONDS);
-	}
-	
-	/**
 	 * Asserts the only rules listed have been activated no more no less.
 	 *
 	 * @see #assertAllActivationsCount(Object...)
@@ -440,7 +433,9 @@ public class DroolsAssert implements TestRule {
 	 */
 	public void assertAllRetracted() {
 		// for any expired events to be retracted
-		tickTime();
+		clock.advanceTime(1, MILLISECONDS);
+		session.fireAllRules();
+		clock.advanceTime(-1, MILLISECONDS);
 		
 		List<String> facts = session.getObjects().stream().map(this::factToString).collect(toList());
 		assertTrue(formatUnexpectedCollection("Object", "not retracted from the session", facts), facts.isEmpty());
