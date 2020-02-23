@@ -40,7 +40,7 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
 ## Examples
 
 [Dummy assertions](https://github.com/droolsassert/droolsassert/wiki/1.-Dummy-assertions)  
-[Logical events](https://github.com/droolsassert/droolsassert/wiki/2.-Logical-events)  
+[Complex event processing](https://github.com/droolsassert/droolsassert/wiki/2.-Complex-event-processing)  
 [Spring integration test 1](https://github.com/droolsassert/droolsassert/wiki/3.-Spring-integration-test-1)  
 [Spring integration test 2](https://github.com/droolsassert/droolsassert/wiki/4.-Spring-integration-test-2)  
 [Extend it with your application specific utilities](https://github.com/droolsassert/droolsassert/wiki/5.-Extension-example)  
