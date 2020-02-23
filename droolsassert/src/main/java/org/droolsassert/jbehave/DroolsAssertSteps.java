@@ -6,6 +6,7 @@ import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.lang.reflect.Proxy.newProxyInstance;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
@@ -114,17 +115,25 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		resetVariableDefinitions();
 		droolsSessionMeta = new DroolsSessionProxy();
 		List<String> resources = new ArrayList<>();
-		List<String> properties = new ArrayList<>();
+		List<String> baseProperties = new ArrayList<>();
+		List<String> sessionProperties = new ArrayList<>();
 		List<String> ignoreRules = new ArrayList<>();
 		List<String> current = resources;
+		boolean properties = true;
 		
 		for (String line : sessionMeta.split(NL)) {
-			if (line.matches("\\s*properties.*")) {
-				line = line.replaceFirst("\\s*properties:?", "");
-				current = properties;
+			if (line.matches("\\s*baseProperties.*")) {
+				line = line.replaceFirst("\\s*baseProperties:?", "");
+				current = baseProperties;
+				properties = true;
+			} else if (line.matches("\\s*sessionProperties.*")) {
+				line = line.replaceFirst("\\s*sessionProperties:?", "");
+				current = sessionProperties;
+				properties = true;
 			} else if (line.matches("\\s*ignore rules.*")) {
 				line = line.replaceFirst("\\s*ignore rules:?", "");
 				current = ignoreRules;
+				properties = false;
 			} else if (line.matches("\\s*log resources.*")) {
 				droolsSessionMeta.logResources = parseBoolean(line.replaceFirst("\\s*log resources:?\\s+", ""));
 				continue;
@@ -135,13 +144,20 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 				droolsSessionMeta.logFacts = parseBoolean(line.replaceFirst("\\s*log facts:?\\s+", ""));
 				continue;
 			}
-			if (!line.isEmpty())
+			if (line.isEmpty())
+				continue;
+			if (properties)
+				for (String property : splitStrings(line))
+					current.addAll(asList(property.split("\\s*=\\s*")));
+			else
 				current.addAll(splitStrings(line));
 		}
 		if (!resources.isEmpty())
 			droolsSessionMeta.resources = resources.toArray(new String[0]);
-		if (!properties.isEmpty())
-			droolsSessionMeta.properties = properties.toArray(new String[0]);
+		if (!baseProperties.isEmpty())
+			droolsSessionMeta.baseProperties = baseProperties.toArray(new String[0]);
+		if (!sessionProperties.isEmpty())
+			droolsSessionMeta.sessionProperties = sessionProperties.toArray(new String[0]);
 		if (!ignoreRules.isEmpty())
 			droolsSessionMeta.ignoreRules = ignoreRules.toArray(new String[0]);
 	}

@@ -6,7 +6,7 @@ Relieve Drools JUnit testing
 
 ## Audience
 
-The goal of unit testing is to isolate each part of the program and show that the individual parts are correct. You can achieve this easier when working with drools using the library. Be certain about the rules being triggered and the facts retained in your session for a scenario you need.
+The goal of unit testing is to isolate each part of the program and show that the individual parts are correct. You can achieve this easier when working with drools using this library. Be certain about the rules being triggered and the facts retained in your session for a scenario you need.
 
 ## Approach
 
@@ -55,6 +55,6 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.0.5</version>
+        <version>2.0.6</version>
         <scope>test</scope>
     </dependency>

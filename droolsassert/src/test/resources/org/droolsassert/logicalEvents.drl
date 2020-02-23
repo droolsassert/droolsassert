@@ -5,6 +5,8 @@ import org.droolsassert.LogicalEventsTest.Dialing;
 import org.droolsassert.LogicalEventsTest.CallInProgress;
 import org.droolsassert.LogicalEventsTest.CallDropped;
 
+declare CallDropped @role (event) @expires (0s) end
+
 global java.io.PrintStream stdout;
 
 rule 'input call'
@@ -43,16 +45,14 @@ rule 'call in progress dropped'
     then
     	stdout.println('Call ' + $callInProgress.callerNumber + ' dropped due to ' + $callDropped.reason)
     	retract ($callInProgress)
-    	retract ($callDropped)
 end
 
 rule 'input call dropped'
     when
-        $callDropped: CallDropped()
+        $callDropped: CallDropped() 
         ($dial : Dialing(this.callerNumber == $callDropped.number)
         	or $dial : Dialing(this.calleeNumber == $callDropped.number))
     then
     	stdout.println('Dial-up ' + $dial.callerNumber + ' dropped due to ' + $callDropped.reason)
     	retract ($dial)
-    	retract ($callDropped)
 end

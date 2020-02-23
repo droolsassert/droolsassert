@@ -9,7 +9,8 @@ import java.lang.reflect.Method;
 public class DroolsSessionProxy implements InvocationHandler {
 	
 	String[] resources = new String[0];
-	String[] properties = new String[0];
+	String[] baseProperties = new String[0];
+	String[] sessionProperties = new String[0];
 	String[] ignoreRules = new String[0];
 	boolean logResources;
 	boolean keepFactsHistory = true;
@@ -21,8 +22,10 @@ public class DroolsSessionProxy implements InvocationHandler {
 		case "value":
 		case "resources":
 			return resources;
-		case "properties":
-			return properties;
+		case "baseProperties":
+			return baseProperties;
+		case "sessionProperties":
+			return sessionProperties;
 		case "ignoreRules":
 			return ignoreRules;
 		case "logResources":

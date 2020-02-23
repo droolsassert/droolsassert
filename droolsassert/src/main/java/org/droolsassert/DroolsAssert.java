@@ -48,6 +48,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.kie.api.KieBase;
+import org.kie.api.KieBaseConfiguration;
 import org.kie.api.KieServices;
 import org.kie.api.command.Command;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
@@ -113,7 +114,7 @@ public class DroolsAssert implements TestRule {
 	
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
 		Map<String, String> properties = defaultSessionProperties();
-		properties.putAll(toMap(false, checkNotNull(droolsSessionMeta, "Missing @DroolsSession on a class").properties()));
+		properties.putAll(toMap(false, checkNotNull(droolsSessionMeta, "Missing DroolsSession definition").sessionProperties()));
 		KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
 		for (Map.Entry<String, String> property : properties.entrySet())
 			config.setProperty(property.getKey(), property.getValue());
@@ -126,10 +127,16 @@ public class DroolsAssert implements TestRule {
 			return kieBases.get(droolsSessionMeta);
 		
 		try {
+			Map<String, String> properties = defaultBaseProperties();
+			properties.putAll(toMap(false, droolsSessionMeta.baseProperties()));
+			KieBaseConfiguration config = KieServices.Factory.get().newKieBaseConfiguration();
+			for (Map.Entry<String, String> property : properties.entrySet())
+				config.setProperty(property.getKey(), property.getValue());
+			
 			KieHelper kieHelper = new KieHelper();
 			for (Resource resource : getResources(droolsSessionMeta))
 				kieHelper.addResource(newUrlResource(resource.getURL()));
-			kieBases.put(droolsSessionMeta, kieHelper.build());
+			kieBases.put(droolsSessionMeta, kieHelper.build(config));
 			return kieBases.get(droolsSessionMeta);
 		} catch (IOException e) {
 			throw new IllegalStateException("Cannot create new session", e);
@@ -188,6 +195,13 @@ public class DroolsAssert implements TestRule {
 	public void advanceTime(TimeUnit unit, long amount) {
 		for (int i = 0; i < amount; i++)
 			tickTime(1, unit);
+	}
+	
+	/**
+	 * Move clock forward for smallest period drools care (1ms) and trigger any scheduled rules.<br>
+	 */
+	public void tickTime() {
+		tickTime(1, MILLISECONDS);
 	}
 	
 	/**
@@ -425,6 +439,9 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertAllRetracted() {
+		// for any expired events to be retracted
+		tickTime();
+		
 		List<String> facts = session.getObjects().stream().map(this::factToString).collect(toList());
 		assertTrue(formatUnexpectedCollection("Object", "not retracted from the session", facts), facts.isEmpty());
 	}
@@ -562,8 +579,12 @@ public class DroolsAssert implements TestRule {
 		session.dispose();
 	}
 	
+	protected Map<String, String> defaultBaseProperties() {
+		return toMap(false, new String[] { "drools.eventProcessingMode", "stream" });
+	}
+	
 	protected Map<String, String> defaultSessionProperties() {
-		return toMap(false, new String[] { "drools.eventProcessingMode", "stream", "drools.clockType", "pseudo" });
+		return toMap(false, new String[] { "drools.clockType", "pseudo" });
 	}
 	
 	protected RulesChronoAgendaEventListener rulesChrono() {
@@ -604,7 +625,7 @@ public class DroolsAssert implements TestRule {
 	
 	@SuppressWarnings("unchecked")
 	private <T> Map<String, T> toMap(boolean convertToInt, Object[] params) {
-		checkArgument(params.length % 2 == 0, "Cannot create a map out of odd number of parameters");
+		checkArgument(params.length % 2 == 0, format("Cannot create %s out of odd number of parameters", convertToInt ? "expected count" : "properties"));
 		Map<String, T> map = new LinkedHashMap<>();
 		for (int i = 0; i < params.length; i = i + 2)
 			if (convertToInt)
