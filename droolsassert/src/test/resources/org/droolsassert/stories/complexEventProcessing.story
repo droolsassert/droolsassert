@@ -71,7 +71,7 @@ Given variable dial as Dialing from yaml {
     calleeNumber: '22222'
 }
 When insert and fire dial
-Then all activations is 'input call'
+Then there was single activation 'input call'
 
 
 !-- test assert scheduled activations

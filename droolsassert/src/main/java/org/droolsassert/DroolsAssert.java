@@ -43,6 +43,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -59,7 +60,9 @@ import org.kie.api.event.rule.ObjectInsertedEvent;
 import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.KieSessionConfiguration;
+import org.kie.api.runtime.ObjectFilter;
 import org.kie.api.runtime.rule.Agenda;
+import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.api.runtime.rule.FactHandle;
 import org.kie.api.time.SessionPseudoClock;
 import org.kie.internal.utils.KieHelper;
@@ -158,6 +161,10 @@ public class DroolsAssert implements TestRule {
 		return session;
 	}
 	
+	public EntryPoint getEntryPoint(String entryPoint) {
+		return checkNotNull(session.getEntryPoint(entryPoint), "No entry point instance associated with %s", entryPoint);
+	}
+	
 	/**
 	 * Returns an object of the specified class.
 	 *
@@ -175,9 +182,28 @@ public class DroolsAssert implements TestRule {
 	/**
 	 * Returns all objects of the class if found
 	 */
+	public <T> List<T> getObjects(Class<T> clazz) {
+		return getObjects(obj -> clazz.isInstance(obj));
+	}
+	
+	/**
+	 * Returns all objects of the class if found
+	 */
+	public <T> List<T> getObjects(Class<T> clazz, Predicate<T> filter) {
+		retractExpiredEvents();
+		return (List<T>) session.getEntryPoints().stream()
+				.flatMap(e -> e.getObjects(obj -> clazz.isInstance(obj)).stream())
+				.map(obj -> clazz.cast(obj))
+				.filter(filter).collect(toList());
+	}
+	
+	/**
+	 * Returns all objects of the class if found
+	 */
 	@SuppressWarnings("unchecked")
-	public <T> Collection<T> getObjects(Class<T> clazz) {
-		return (Collection<T>) session.getObjects(obj -> clazz.isInstance(obj));
+	public <T> List<T> getObjects(ObjectFilter filter) {
+		retractExpiredEvents();
+		return (List<T>) session.getEntryPoints().stream().flatMap(e -> e.getObjects(filter).stream()).collect(toList());
 	}
 	
 	/**
@@ -375,6 +401,12 @@ public class DroolsAssert implements TestRule {
 		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
 	}
 	
+	protected final void retractExpiredEvents() {
+		clock.advanceTime(1, MILLISECONDS);
+		session.fireAllRules();
+		clock.advanceTime(-1, MILLISECONDS);
+	}
+	
 	/**
 	 * New activations (delta) since previous check.
 	 */
@@ -400,16 +432,17 @@ public class DroolsAssert implements TestRule {
 		
 		if (droolsSessionMeta.keepFactsHistory()) {
 			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
-			assertTrue(formatUnexpectedCollection("Object", "never inserted into the session", unknown), unknown.isEmpty());
+			assertTrue(formatUnexpectedCollection("Fact", "never inserted into the session", unknown), unknown.isEmpty());
 		}
 		
-		session.getObjects().stream().forEach(obj -> identityMap.remove(obj));
+		retractExpiredEvents();
+		session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).forEach(obj -> identityMap.remove(obj));
 		List<String> retracted = identityMap.keySet().stream().map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Object", "removed from the session", retracted), retracted.isEmpty());
+		assertTrue(formatUnexpectedCollection("Fact", "removed from the session", retracted), retracted.isEmpty());
 	}
 	
 	/**
-	 * Asserts object(s) retracted from knowledge base.
+	 * Asserts object(s) retracted from knowledge base in all partitions.
 	 * 
 	 * @throws AssertionError
 	 */
@@ -419,35 +452,34 @@ public class DroolsAssert implements TestRule {
 		
 		if (droolsSessionMeta.keepFactsHistory()) {
 			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
-			assertTrue(formatUnexpectedCollection("Object", "never inserted into the session", unknown), unknown.isEmpty());
+			assertTrue(formatUnexpectedCollection("Fact", "never inserted into the session", unknown), unknown.isEmpty());
 		}
 		
-		List<String> notRetracted = session.getObjects().stream().filter(obj -> identityMap.containsKey(obj)).map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Object", "not retracted from the session", notRetracted), notRetracted.isEmpty());
+		retractExpiredEvents();
+		List<String> notRetracted = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream())
+				.filter(obj -> identityMap.containsKey(obj)).map(this::factToString).collect(toList());
+		assertTrue(formatUnexpectedCollection("Fact", "not retracted from the session", notRetracted), notRetracted.isEmpty());
 	}
 	
 	/**
-	 * Asserts all objects were retracted from knowledge base.
+	 * Asserts all objects were retracted from knowledge base in all partitions.
 	 * 
 	 * @throws AssertionError
 	 */
 	public void assertAllRetracted() {
-		// for any expired events to be retracted
-		clock.advanceTime(1, MILLISECONDS);
-		session.fireAllRules();
-		clock.advanceTime(-1, MILLISECONDS);
-		
-		List<String> facts = session.getObjects().stream().map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Object", "not retracted from the session", facts), facts.isEmpty());
+		retractExpiredEvents();
+		List<String> facts = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).map(this::factToString).collect(toList());
+		assertTrue(formatUnexpectedCollection("Fact", "not retracted from the session", facts), facts.isEmpty());
 	}
 	
 	/**
-	 * Asserts exact count of facts in knowledge base.
+	 * Asserts exact count of facts in knowledge base in all partitions.
 	 * 
 	 * @throws AssertionError
 	 */
 	public void assertFactsCount(long factsCount) {
-		assertEquals(factsCount, session.getFactCount());
+		retractExpiredEvents();
+		assertEquals(factsCount, session.getEntryPoints().stream().mapToLong(e -> e.getFactCount()).sum());
 	}
 	
 	/**
@@ -472,12 +504,32 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
+	 * Insert all objects listed
+	 * 
 	 * @see KieSession#insert(Object)
 	 */
 	public List<FactHandle> insert(Object... objects) {
+		return insert(session, objects);
+	}
+	
+	/**
+	 * Insert all objects listed into entry point
+	 * 
+	 * @see EntryPoint#insert(Object)
+	 */
+	public List<FactHandle> insertTo(String entryPoint, Object... objects) {
+		return insert(getEntryPoint(entryPoint), objects);
+	}
+	
+	/**
+	 * Insert all objects listed into entry point
+	 * 
+	 * @see EntryPoint#insert(Object)
+	 */
+	public List<FactHandle> insert(EntryPoint entryPoint, Object... objects) {
 		List<FactHandle> factHandles = new LinkedList<>();
 		for (Object object : objects)
-			factHandles.add(session.insert(object));
+			factHandles.add(entryPoint.insert(object));
 		return factHandles;
 	}
 	
@@ -496,12 +548,32 @@ public class DroolsAssert implements TestRule {
 	 * @see KieSession#fireAllRules()
 	 */
 	public List<FactHandle> insertAndFire(Object... objects) {
-		List<FactHandle> result = new LinkedList<>();
+		return insertAndFire(session, objects);
+	}
+	
+	/**
+	 * Insert all objects listed into entry point and fire all rules after each
+	 * 
+	 * @see EntryPoint#insert(Object)
+	 * @see KieSession#fireAllRules()
+	 */
+	public List<FactHandle> insertAndFireTo(String entryPoint, Object... objects) {
+		return insertAndFire(getEntryPoint(entryPoint), objects);
+	}
+	
+	/**
+	 * Insert all objects listed into entry point and fire all rules after each
+	 * 
+	 * @see EntryPoint#insert(Object)
+	 * @see KieSession#fireAllRules()
+	 */
+	public List<FactHandle> insertAndFire(EntryPoint entryPoint, Object... objects) {
+		List<FactHandle> factHandles = new LinkedList<>();
 		for (Object object : objects) {
-			result.addAll(insert(object));
+			factHandles.add(entryPoint.insert(object));
 			fireAllRules();
 		}
-		return result;
+		return factHandles;
 	}
 	
 	/**
@@ -510,12 +582,11 @@ public class DroolsAssert implements TestRule {
 	 * @see DroolsSession#keepFactsHistory()
 	 */
 	public void printFacts() {
-		if (!droolsSessionMeta.keepFactsHistory())
-			return;
-		
-		List<Object> sortedFacts = new LinkedList<>(session.getObjects());
-		sort(sortedFacts, (o1, o2) -> factsHistory.get(o1).compareTo(factsHistory.get(o2)));
-		out.println(format("%s Facts (%s):", formatTime(), session.getFactCount()));
+		retractExpiredEvents();
+		List<Object> sortedFacts = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).collect(toList());
+		if (droolsSessionMeta.keepFactsHistory())
+			sort(sortedFacts, (o1, o2) -> factsHistory.get(o1).compareTo(factsHistory.get(o2)));
+		out.println(format("%s Facts (%s):", formatTime(), sortedFacts.size()));
 		for (Object fact : sortedFacts)
 			out.println(factToString(fact));
 	}

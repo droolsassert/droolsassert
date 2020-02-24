@@ -1,0 +1,16 @@
+package org.droolsassert;
+dialect 'mvel'
+
+import org.droolsassert.TemporalReasoningTest.Heartbeat
+
+declare Heartbeat @role (event) end
+
+global java.io.PrintStream stdout
+
+rule "Sound the Alarm"
+when
+    $h: Heartbeat() from entry-point "MonitoringStream"
+    not(Heartbeat(this != $h, this after[0s,10s] $h) from entry-point "MonitoringStream")
+then
+    stdout.println('No heartbeat')
+end

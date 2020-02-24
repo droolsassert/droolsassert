@@ -1,13 +1,13 @@
 package org.droolsassert;
 dialect 'mvel'
 
-import org.droolsassert.ComplexEventProcessingTest.Dialing;
-import org.droolsassert.ComplexEventProcessingTest.CallInProgress;
-import org.droolsassert.ComplexEventProcessingTest.CallDropped;
+import org.droolsassert.ComplexEventProcessingTest.Dialing
+import org.droolsassert.ComplexEventProcessingTest.CallInProgress
+import org.droolsassert.ComplexEventProcessingTest.CallDropped
 
 declare CallDropped @role (event) @expires (0s) end
 
-global java.io.PrintStream stdout;
+global java.io.PrintStream stdout
 
 rule 'input call'
     when
@@ -15,44 +15,44 @@ rule 'input call'
         not CallInProgress(this.callerNumber == $dial.calleeNumber)
         not CallInProgress(this.calleeNumber == $dial.calleeNumber)
     then
-    	insert (new CallInProgress($dial.callerNumber, $dial.calleeNumber))
-    	retract ($dial)
+        insert (new CallInProgress($dial.callerNumber, $dial.calleeNumber))
+        retract ($dial)
 end
 
 rule 'drop dial-up if callee is talking'
-	timer (7001)
+    timer (7001)
     when
         $dial: Dialing()
         (CallInProgress(this.callerNumber == $dial.calleeNumber)
-        	or CallInProgress(this.calleeNumber == $dial.calleeNumber))
+            or CallInProgress(this.calleeNumber == $dial.calleeNumber))
     then
-    	insert (new CallDropped($dial.callerNumber, 'callee is busy'))
+        insert (new CallDropped($dial.callerNumber, 'callee is busy'))
 end
 
 rule 'drop the call if caller is talking more than permitted time'
-	timer (int: 30m)
+    timer (int: 30m)
     when
         $callInProgress : CallInProgress()
     then
-    	insert (new CallDropped($callInProgress.callerNumber, 'call timed out'))
+        insert (new CallDropped($callInProgress.callerNumber, 'call timed out'))
 end
 
 rule 'call in progress dropped'
     when
         $callDropped: CallDropped()
         ($callInProgress : CallInProgress(this.callerNumber == $callDropped.number)
-        	or $callInProgress : CallInProgress(this.calleeNumber == $callDropped.number))
+            or $callInProgress : CallInProgress(this.calleeNumber == $callDropped.number))
     then
-    	stdout.println('Call ' + $callInProgress.callerNumber + ' dropped due to ' + $callDropped.reason)
-    	retract ($callInProgress)
+        stdout.println('Call ' + $callInProgress.callerNumber + ' dropped due to ' + $callDropped.reason)
+        retract ($callInProgress)
 end
 
 rule 'input call dropped'
     when
         $callDropped: CallDropped() 
         ($dial : Dialing(this.callerNumber == $callDropped.number)
-        	or $dial : Dialing(this.calleeNumber == $callDropped.number))
+            or $dial : Dialing(this.calleeNumber == $callDropped.number))
     then
-    	stdout.println('Dial-up ' + $dial.callerNumber + ' dropped due to ' + $callDropped.reason)
-    	retract ($dial)
+        stdout.println('Dial-up ' + $dial.callerNumber + ' dropped due to ' + $callDropped.reason)
+        retract ($dial)
 end

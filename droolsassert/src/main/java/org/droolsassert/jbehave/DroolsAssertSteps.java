@@ -241,10 +241,21 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		drools.insertAndFire(evalVariables(variables));
 	}
 	
+	@When("insert into $entryPoint and fire $variables")
+	public void whenInsertAndFire(String entryPoint, String variables) {
+		drools.insertAndFireTo(entryPoint, evalVariables(variables));
+	}
+	
 	@When("insert fact $variables")
 	@Alias("insert facts $variables")
 	public void whenInsert(String variables) {
 		drools.insert(evalVariables(variables));
+	}
+	
+	@When("insert into $entryPoint fact $variables")
+	@Alias("insert $entryPoint facts $variables")
+	public void whenInsert(String entryPoint, String variables) {
+		drools.insertTo(entryPoint, evalVariables(variables));
 	}
 	
 	@When("fire all rules")
@@ -289,7 +300,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	}
 	
 	@Then("all activations are$activations")
-	@Alias("all activations is$activations")
+	@Aliases(values = { "there was single activation$activations", "there were no activations$activations" })
 	public void thenAssertAllActivations(String activations) {
 		drools.assertAllActivations(splitStrings(activations).toArray(new String[0]));
 	}
@@ -320,6 +331,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 * @see #thenAssertActivatedCount(String)
 	 */
 	@Then("count of all activations are$activations")
+	@Alias("count of all activations is$activations")
 	public void thenAssertAllActivationsCount(String activations) {
 		drools.assertAllActivations(splitCountOfStrings(activations));
 	}
@@ -351,7 +363,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 * Then assert call.callerNumber equals '11111'
 	 * </pre>
 	 */
-	@Then("assert $lhs equals $rhs")
+	@Then("assert $actual equals $expected")
 	@Aliases(values = { "assert $actual equal $expected", "assert $actual is $expected" })
 	public void thenAssertEquals(String actual, String expected) {
 		assertEquals((Object) mvelProcessor.evaluate(expected), mvelProcessor.evaluate(actual));
