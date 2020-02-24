@@ -1,0 +1,19 @@
+package org.droolsassert;
+dialect 'mvel'
+
+import org.droolsassert.SlidingTimeWindowTest.SensorReading
+import org.droolsassert.SlidingTimeWindowTest.TemperatureThreshold
+
+declare SensorReading @role (event) end
+
+global java.io.PrintStream stdout
+
+rule 'Sound the alarm if temperature rises above threshold'
+when
+    TemperatureThreshold($max : max)
+    Number(doubleValue > $max) from accumulate(
+        SensorReading($temp : temperature) over window:time(3s),
+        average($temp))
+then
+    stdout.println('Temperature Rises Above Threshold')
+end
