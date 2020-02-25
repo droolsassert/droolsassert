@@ -20,16 +20,16 @@ public class SlidingLengthWindowTest {
 	}
 	
 	@Test
-	@TestRules(expectedCount = { "1", "Sound the alarm if temperature rises above threshold" })
-	public void testSlidingTime() {
+	@TestRules(expectedCount = { "2", "Sound the alarm if temperature rises above threshold" })
+	public void testSlidingLengthWindow() {
 		drools.insert(new TemperatureThreshold(2));
 		
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 6; i++) {
 			drools.insertAndFire(new SensorReading(i));
 			drools.advanceTime(1, SECONDS);
 		}
 		
-		drools.assertFactsCount(6);
+		drools.assertFactsCount(7);
 		drools.printFacts();
 	}
 }
