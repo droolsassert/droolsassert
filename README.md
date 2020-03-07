@@ -59,4 +59,4 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
         <scope>test</scope>
     </dependency>
 
-[![Analytics](https://ga-beacon.appspot.com/UA-12203641-2/droolsassert?pixel)](https://github.com/igrigorik/ga-beacon)
+[![Analytics](https://ga-beacon.appspot.com/UA-160010393-1/droolsassert?pixel)](https://github.com/igrigorik/ga-beacon)
