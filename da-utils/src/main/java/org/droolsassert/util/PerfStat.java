@@ -195,4 +195,9 @@ public class PerfStat {
 		double nsInMs = 1000_000.0;
 		return Math.round(nanos * scale / nsInMs) / scale;
 	}
+	
+	@Override
+	public String toString() {
+		return stat.toString();
+	}
 }
