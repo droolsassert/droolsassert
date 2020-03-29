@@ -56,7 +56,12 @@ public @interface DroolsSession {
 	boolean keepFactsHistory() default true;
 	
 	/**
-	 * Log facts being inserted/deleted/updated
+	 * Log fact attributes or just class simple name
 	 */
 	boolean logFacts() default true;
+	
+	/**
+	 * Enable / disable all logging
+	 */
+	boolean log() default true;
 }

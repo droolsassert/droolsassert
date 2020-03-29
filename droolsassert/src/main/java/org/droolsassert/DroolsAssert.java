@@ -111,7 +111,8 @@ public class DroolsAssert implements TestRule {
 		agenda = session.getAgenda();
 		clock = session.getSessionClock();
 		session.addEventListener(new LoggingAgendaEventListener());
-		session.addEventListener(new LoggingWorkingMemoryEventListener());
+		if (droolsSessionMeta.log())
+			session.addEventListener(new LoggingWorkingMemoryEventListener());
 		session.addEventListener(rulesChrono);
 	}
 	
@@ -537,7 +538,8 @@ public class DroolsAssert implements TestRule {
 	 * @see KieSession#fireAllRules()
 	 */
 	public int fireAllRules() {
-		out.println(formatTime() + " --> fireAllRules");
+		if (droolsSessionMeta.log())
+			out.println(formatTime() + " --> fireAllRules");
 		return session.fireAllRules();
 	}
 	
@@ -714,7 +716,8 @@ public class DroolsAssert implements TestRule {
 		public void beforeMatchFired(BeforeMatchFiredEvent event) {
 			String ruleName = event.getMatch().getRule().getName();
 			activations.put(ruleName, firstNonNull(activations.get(ruleName), INTEGER_ZERO) + 1);
-			out.printf("%s <-- '%s' has been activated by the tuple %s%n", formatTime(), ruleName, tupleToString(event.getMatch().getObjects()));
+			if (droolsSessionMeta.log())
+				out.printf("%s <-- '%s' has been activated by the tuple %s%n", formatTime(), ruleName, tupleToString(event.getMatch().getObjects()));
 		}
 	}
 	

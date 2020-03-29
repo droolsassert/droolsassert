@@ -143,6 +143,9 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 			} else if (line.matches("\\s*log facts.*")) {
 				droolsSessionMeta.logFacts = parseBoolean(line.replaceFirst("\\s*log facts:?\\s+", ""));
 				continue;
+			} else if (line.matches("\\s*log.*")) {
+				droolsSessionMeta.log = parseBoolean(line.replaceFirst("\\s*log:?\\s+", ""));
+				continue;
 			}
 			if (line.isEmpty())
 				continue;
