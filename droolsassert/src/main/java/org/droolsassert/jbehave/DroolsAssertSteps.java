@@ -6,7 +6,6 @@ import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.lang.reflect.Proxy.newProxyInstance;
-import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
@@ -106,6 +105,8 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 * Given drools session 
 	 * 	classpath*:/org/droolsassert/rules.drl
 	 * 	classpath*:/org/droolsassert/rules2.drl
+	 * base property source: classpath:/kie.properties
+	 * session property source: classpath:/session.properties
 	 * ignore rules: 'before', 'after'
 	 * log resources: true
 	 * </pre>
@@ -116,24 +117,28 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		droolsSessionMeta = new DroolsSessionProxy();
 		List<String> resources = new ArrayList<>();
 		List<String> baseProperties = new ArrayList<>();
+		List<String> basePropertySource = new ArrayList<>();
 		List<String> sessionProperties = new ArrayList<>();
+		List<String> sessionPropertySource = new ArrayList<>();
 		List<String> ignoreRules = new ArrayList<>();
 		List<String> current = resources;
-		boolean properties = true;
 		
 		for (String line : sessionMeta.split(NL)) {
 			if (line.matches("\\s*base properties.*")) {
 				line = line.replaceFirst("\\s*base properties:?", "");
 				current = baseProperties;
-				properties = true;
+			} else if (line.matches("\\s*base property source.*")) {
+				line = line.replaceFirst("\\s*base property source:?", "");
+				current = basePropertySource;
 			} else if (line.matches("\\s*session properties.*")) {
 				line = line.replaceFirst("\\s*session properties:?", "");
 				current = sessionProperties;
-				properties = true;
+			} else if (line.matches("\\s*session property source.*")) {
+				line = line.replaceFirst("\\s*session property source:?", "");
+				current = sessionPropertySource;
 			} else if (line.matches("\\s*ignore rules.*")) {
 				line = line.replaceFirst("\\s*ignore rules:?", "");
 				current = ignoreRules;
-				properties = false;
 			} else if (line.matches("\\s*log resources.*")) {
 				droolsSessionMeta.logResources = parseBoolean(line.replaceFirst("\\s*log resources:?\\s+", ""));
 				continue;
@@ -149,18 +154,18 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 			}
 			if (line.isEmpty())
 				continue;
-			if (properties)
-				for (String property : splitStrings(line))
-					current.addAll(asList(property.split("\\s*=\\s*")));
-			else
-				current.addAll(splitStrings(line));
+			current.addAll(splitStrings(line));
 		}
 		if (!resources.isEmpty())
 			droolsSessionMeta.resources = resources.toArray(new String[0]);
 		if (!baseProperties.isEmpty())
 			droolsSessionMeta.baseProperties = baseProperties.toArray(new String[0]);
+		if (!basePropertySource.isEmpty())
+			droolsSessionMeta.basePropertySource = basePropertySource.toArray(new String[0]);
 		if (!sessionProperties.isEmpty())
 			droolsSessionMeta.sessionProperties = sessionProperties.toArray(new String[0]);
+		if (!sessionPropertySource.isEmpty())
+			droolsSessionMeta.sessionPropertySource = sessionPropertySource.toArray(new String[0]);
 		if (!ignoreRules.isEmpty())
 			droolsSessionMeta.ignoreRules = ignoreRules.toArray(new String[0]);
 	}

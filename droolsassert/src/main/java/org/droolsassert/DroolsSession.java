@@ -27,14 +27,28 @@ public @interface DroolsSession {
 	String[] resources() default {};
 	
 	/**
+	 * @see #basePropertySource()
 	 * @see DroolsAssert#defaultBaseProperties()
 	 */
 	String[] baseProperties() default {};
 	
 	/**
+	 * @see #sessionPropertySource()
 	 * @see DroolsAssert#defaultSessionProperties()
 	 */
 	String[] sessionProperties() default {};
+	
+	/**
+	 * @see #baseProperties()
+	 * @see DroolsAssert#defaultBaseProperties()
+	 */
+	String[] basePropertySource() default {};
+	
+	/**
+	 * @see #sessionProperties()
+	 * @see DroolsAssert#defaultSessionProperties()
+	 */
+	String[] sessionPropertySource() default {};
 	
 	/**
 	 * Ignore rules matching patterns while assertion.<br>

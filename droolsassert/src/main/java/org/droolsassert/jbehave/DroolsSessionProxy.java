@@ -10,7 +10,9 @@ public class DroolsSessionProxy implements InvocationHandler {
 	
 	String[] resources = new String[0];
 	String[] baseProperties = new String[0];
+	String[] basePropertySource = new String[0];
 	String[] sessionProperties = new String[0];
+	String[] sessionPropertySource = new String[0];
 	String[] ignoreRules = new String[0];
 	boolean logResources;
 	boolean keepFactsHistory = true;
@@ -25,8 +27,12 @@ public class DroolsSessionProxy implements InvocationHandler {
 			return resources;
 		case "baseProperties":
 			return baseProperties;
+		case "basePropertySource":
+			return basePropertySource;
 		case "sessionProperties":
 			return sessionProperties;
+		case "sessionPropertySource":
+			return sessionPropertySource;
 		case "ignoreRules":
 			return ignoreRules;
 		case "logResources":

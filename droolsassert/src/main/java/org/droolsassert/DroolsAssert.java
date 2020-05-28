@@ -17,6 +17,7 @@ import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.join;
+import static org.apache.commons.lang3.StringUtils.joinWith;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.apache.commons.lang3.math.NumberUtils.INTEGER_ZERO;
@@ -28,6 +29,9 @@ import static org.junit.runners.model.MultipleFailureException.assertEmpty;
 import static org.kie.internal.io.ResourceFactory.newUrlResource;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -40,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
@@ -117,45 +122,22 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
-		Map<String, String> properties = defaultSessionProperties();
-		properties.putAll(toMap(false, checkNotNull(droolsSessionMeta, "Missing DroolsSession definition").sessionProperties()));
-		KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
-		for (Map.Entry<String, String> property : properties.entrySet())
-			config.setProperty(property.getKey(), property.getValue());
-		
-		return kieBase(droolsSessionMeta).newKieSession(config, null);
-	}
-	
-	protected KieBase kieBase(DroolsSession droolsSessionMeta) {
-		if (kieBases.containsKey(droolsSessionMeta))
-			return kieBases.get(droolsSessionMeta);
-		
 		try {
-			Map<String, String> properties = defaultBaseProperties();
-			properties.putAll(toMap(false, droolsSessionMeta.baseProperties()));
-			KieBaseConfiguration config = KieServices.Factory.get().newKieBaseConfiguration();
-			for (Map.Entry<String, String> property : properties.entrySet())
-				config.setProperty(property.getKey(), property.getValue());
-			
-			KieHelper kieHelper = new KieHelper();
-			for (Resource resource : getResources(droolsSessionMeta))
-				kieHelper.addResource(newUrlResource(resource.getURL()));
-			kieBases.put(droolsSessionMeta, kieHelper.build(config));
-			return kieBases.get(droolsSessionMeta);
+			return kieBase(droolsSessionMeta).newKieSession(sessionConfiguration(droolsSessionMeta), null);
 		} catch (IOException e) {
 			throw new IllegalStateException("Cannot create new session", e);
 		}
 	}
 	
-	protected final List<Resource> getResources(DroolsSession droolsSessionMeta) throws IOException {
-		List<Resource> resources = new ArrayList<>();
-		for (String resourceNameFilter : firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources()))
-			resources.addAll(asList(resourceResolver.getResources(resourceNameFilter)));
-		checkArgument(resources.size() > 0, "No resources found");
+	protected KieBase kieBase(DroolsSession droolsSessionMeta) throws IOException {
+		if (kieBases.containsKey(droolsSessionMeta))
+			return kieBases.get(droolsSessionMeta);
 		
-		if (droolsSessionMeta.logResources())
-			resources.forEach(resource -> out.println(resource));
-		return resources;
+		KieHelper kieHelper = new KieHelper();
+		for (Resource resource : getResources(true, firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources())))
+			kieHelper.addResource(newUrlResource(resource.getURL()));
+		kieBases.put(droolsSessionMeta, kieHelper.build(baseConfiguration(droolsSessionMeta)));
+		return kieBases.get(droolsSessionMeta);
 	}
 	
 	public KieSession getSession() {
@@ -248,7 +230,7 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertAllActivationsCount(Object... expectedCount) {
-		assertAllActivations(toMap(true, expectedCount));
+		assertAllActivations(expectedCount(expectedCount));
 	}
 	
 	public void assertAllActivations(Map<String, Integer> expectedCount) {
@@ -285,7 +267,7 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertActivatedCount(Object... expectedCount) {
-		assertActivated(toMap(true, expectedCount));
+		assertActivated(expectedCount(expectedCount));
 	}
 	
 	public void assertActivated(Map<String, Integer> expectedCount) {
@@ -630,7 +612,7 @@ public class DroolsAssert implements TestRule {
 				if (testRulesMeta.checkScheduled())
 					triggerAllScheduledActivations();
 				if (testRulesMeta.expectedCount().length != 0)
-					assertAllActivations(toMap(true, testRulesMeta.expectedCount()));
+					assertAllActivations(expectedCount(testRulesMeta.expectedCount()));
 				else
 					assertAllActivations(testRulesMeta.expected());
 			} catch (Throwable th) {
@@ -647,12 +629,56 @@ public class DroolsAssert implements TestRule {
 		session.dispose();
 	}
 	
-	protected Map<String, String> defaultBaseProperties() {
-		return toMap(false, new String[] { "drools.eventProcessingMode", "stream" });
+	protected final List<Resource> getResources(boolean mandatory, String... locations) throws IOException {
+		List<Resource> resources = new ArrayList<>();
+		for (String resourceNameFilter : locations)
+			resources.addAll(asList(resourceResolver.getResources(resourceNameFilter)));
+		if (mandatory)
+			checkArgument(resources.size() > 0, "No resources found");
+		
+		if (droolsSessionMeta.logResources())
+			resources.forEach(resource -> out.println(resource));
+		return resources;
 	}
 	
-	protected Map<String, String> defaultSessionProperties() {
-		return toMap(false, new String[] { "drools.clockType", "pseudo" });
+	protected KieSessionConfiguration sessionConfiguration(DroolsSession droolsSessionMeta) throws IOException {
+		Properties properties = new Properties();
+		properties.load(new StringReader(joinWith(LF, defaultSessionProperties())));
+		for (Resource resource : getResources(false, checkNotNull(droolsSessionMeta, "Missing DroolsSession definition").sessionPropertySource())) {
+			try (Reader reader = new InputStreamReader(resource.getInputStream())) {
+				properties.load(reader);
+			}
+		}
+		properties.load(new StringReader(joinWith(LF, droolsSessionMeta.sessionProperties())));
+		
+		KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
+		for (Entry<Object, Object> entry : properties.entrySet())
+			config.setProperty((String) entry.getKey(), (String) entry.getValue());
+		return config;
+	}
+	
+	protected KieBaseConfiguration baseConfiguration(DroolsSession droolsSessionMeta) throws IOException {
+		Properties properties = new Properties();
+		properties.load(new StringReader(joinWith(LF, defaultBaseProperties())));
+		for (Resource resource : getResources(false, checkNotNull(droolsSessionMeta, "Missing DroolsSession definition").basePropertySource())) {
+			try (Reader reader = new InputStreamReader(resource.getInputStream())) {
+				properties.load(reader);
+			}
+		}
+		properties.load(new StringReader(joinWith(LF, droolsSessionMeta.baseProperties())));
+		
+		KieBaseConfiguration config = KieServices.Factory.get().newKieBaseConfiguration();
+		for (Entry<Object, Object> entry : properties.entrySet())
+			config.setProperty((String) entry.getKey(), (String) entry.getValue());
+		return config;
+	}
+	
+	protected String[] defaultBaseProperties() {
+		return new String[] { "drools.eventProcessingMode = stream" };
+	}
+	
+	protected String[] defaultSessionProperties() {
+		return new String[] { "drools.clockType = pseudo" };
 	}
 	
 	protected RulesChronoAgendaEventListener rulesChrono() {
@@ -691,15 +717,11 @@ public class DroolsAssert implements TestRule {
 				.format(clock.getCurrentTime() == MAX_VALUE || clock.getCurrentTime() % 1000 == 0 ? HH_MM_SS : HH_MM_SS_SSS);
 	}
 	
-	@SuppressWarnings("unchecked")
-	private <T> Map<String, T> toMap(boolean convertToInt, Object[] params) {
-		checkArgument(params.length % 2 == 0, format("Cannot create %s out of odd number of parameters", convertToInt ? "expected count" : "properties"));
-		Map<String, T> map = new LinkedHashMap<>();
+	private Map<String, Integer> expectedCount(Object[] params) {
+		checkArgument(params.length % 2 == 0, "Cannot create expected count out of odd number of parameters");
+		Map<String, Integer> map = new LinkedHashMap<>();
 		for (int i = 0; i < params.length; i = i + 2)
-			if (convertToInt)
-				map.put("" + params[i + 1], (T) (new Integer("" + params[i])));
-			else
-				map.put("" + params[i], (T) params[i + 1]);
+			map.put("" + params[i + 1], new Integer("" + params[i]));
 		return map;
 	}
 	
