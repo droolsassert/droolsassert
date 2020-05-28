@@ -22,26 +22,26 @@ public class TemporalReasoningTest {
 	@TestRules(expected = {})
 	public void testRegularHeartbeat() {
 		Heartbeat heartbeat1 = new Heartbeat(1);
-		drools.insertAndFireTo("MonitoringStream", heartbeat1);
+		drools.insertAndFireAt("MonitoringStream", heartbeat1);
 		drools.advanceTime(5, SECONDS);
 		drools.assertExist(heartbeat1);
 		
 		Heartbeat heartbeat2 = new Heartbeat(2);
-		drools.insertAndFireTo("MonitoringStream", heartbeat2);
+		drools.insertAndFireAt("MonitoringStream", heartbeat2);
 		drools.assertExist(heartbeat1, heartbeat2);
 		drools.advanceTime(5, SECONDS);
 		drools.assertRetracted(heartbeat1);
 		drools.assertExist(heartbeat2);
 		
 		Heartbeat heartbeat3 = new Heartbeat(3);
-		drools.insertAndFireTo("MonitoringStream", heartbeat3);
+		drools.insertAndFireAt("MonitoringStream", heartbeat3);
 		drools.assertExist(heartbeat2, heartbeat3);
 		drools.advanceTime(5, SECONDS);
 		drools.assertRetracted(heartbeat2);
 		drools.assertExist(heartbeat3);
 		
 		Heartbeat heartbeat4 = new Heartbeat(4);
-		drools.insertAndFireTo("MonitoringStream", heartbeat4);
+		drools.insertAndFireAt("MonitoringStream", heartbeat4);
 		drools.assertExist(heartbeat3, heartbeat4);
 		drools.advanceTime(5, SECONDS);
 		drools.assertRetracted(heartbeat3);
@@ -55,10 +55,10 @@ public class TemporalReasoningTest {
 	@Test
 	@TestRules(expectedCount = { "1", "Sound the Alarm" })
 	public void testIrregularHeartbeat() {
-		drools.insertAndFireTo("MonitoringStream", new Heartbeat(1));
+		drools.insertAndFireAt("MonitoringStream", new Heartbeat(1));
 		drools.advanceTime(5, SECONDS);
 		drools.advanceTime(5, SECONDS);
-		drools.insertAndFireTo("MonitoringStream", new Heartbeat(2), new Heartbeat(3));
+		drools.insertAndFireAt("MonitoringStream", new Heartbeat(2), new Heartbeat(3));
 		drools.advanceTime(5, SECONDS);
 		
 		drools.assertFactsCount(2);

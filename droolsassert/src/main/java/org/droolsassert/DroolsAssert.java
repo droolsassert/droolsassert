@@ -541,7 +541,7 @@ public class DroolsAssert implements TestRule {
 	 * @see EntryPoint#insert(Object)
 	 * @see KieSession#fireAllRules()
 	 */
-	public List<FactHandle> insertAndFireTo(String entryPoint, Object... objects) {
+	public List<FactHandle> insertAndFireAt(String entryPoint, Object... objects) {
 		return insertAndFire(getEntryPoint(entryPoint), objects);
 	}
 	

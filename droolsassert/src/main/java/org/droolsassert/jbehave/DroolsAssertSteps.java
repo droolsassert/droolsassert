@@ -251,7 +251,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	@When("insert into $entryPoint and fire $variables")
 	public void whenInsertAndFire(String entryPoint, String variables) {
-		drools.insertAndFireTo(entryPoint, evalVariables(variables));
+		drools.insertAndFireAt(entryPoint, evalVariables(variables));
 	}
 	
 	@When("insert fact $variables")
