@@ -17,7 +17,7 @@ import org.springframework.util.AntPathMatcher;
 @Target(TYPE)
 public @interface DroolsSession {
 	/**
-	 * @see #resources()
+	 * @see #resources
 	 */
 	String[] value() default {};
 	
@@ -27,25 +27,25 @@ public @interface DroolsSession {
 	String[] resources() default {};
 	
 	/**
-	 * @see #basePropertySource()
+	 * @see #basePropertySource
 	 * @see DroolsAssert#defaultBaseProperties()
 	 */
 	String[] baseProperties() default {};
 	
 	/**
-	 * @see #sessionPropertySource()
+	 * @see #sessionPropertySource
 	 * @see DroolsAssert#defaultSessionProperties()
 	 */
 	String[] sessionProperties() default {};
 	
 	/**
-	 * @see #baseProperties()
+	 * @see #baseProperties
 	 * @see DroolsAssert#defaultBaseProperties()
 	 */
 	String[] basePropertySource() default {};
 	
 	/**
-	 * @see #sessionProperties()
+	 * @see #sessionProperties
 	 * @see DroolsAssert#defaultSessionProperties()
 	 */
 	String[] sessionPropertySource() default {};
