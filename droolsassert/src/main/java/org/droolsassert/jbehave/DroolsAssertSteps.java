@@ -116,26 +116,34 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		resetVariableDefinitions();
 		droolsSessionMeta = new DroolsSessionProxy();
 		List<String> resources = new ArrayList<>();
-		List<String> baseProperties = new ArrayList<>();
-		List<String> basePropertySource = new ArrayList<>();
 		List<String> sessionProperties = new ArrayList<>();
 		List<String> sessionPropertySource = new ArrayList<>();
+		List<String> baseProperties = new ArrayList<>();
+		List<String> basePropertySource = new ArrayList<>();
+		List<String> builderProperties = new ArrayList<>();
+		List<String> builderPropertySource = new ArrayList<>();
 		List<String> ignoreRules = new ArrayList<>();
 		List<String> current = resources;
 		
 		for (String line : sessionMeta.split(NL)) {
-			if (line.matches("\\s*base properties.*")) {
-				line = line.replaceFirst("\\s*base properties:?", "");
-				current = baseProperties;
-			} else if (line.matches("\\s*base property source.*")) {
-				line = line.replaceFirst("\\s*base property source:?", "");
-				current = basePropertySource;
-			} else if (line.matches("\\s*session properties.*")) {
+			if (line.matches("\\s*session properties.*")) {
 				line = line.replaceFirst("\\s*session properties:?", "");
 				current = sessionProperties;
 			} else if (line.matches("\\s*session property source.*")) {
 				line = line.replaceFirst("\\s*session property source:?", "");
 				current = sessionPropertySource;
+			} else if (line.matches("\\s*base properties.*")) {
+				line = line.replaceFirst("\\s*base properties:?", "");
+				current = baseProperties;
+			} else if (line.matches("\\s*base property source.*")) {
+				line = line.replaceFirst("\\s*base property source:?", "");
+				current = basePropertySource;
+			} else if (line.matches("\\s*builder properties.*")) {
+				line = line.replaceFirst("\\s*builder properties:?", "");
+				current = builderProperties;
+			} else if (line.matches("\\s*builder property source.*")) {
+				line = line.replaceFirst("\\s*builder property source:?", "");
+				current = builderPropertySource;
 			} else if (line.matches("\\s*ignore rules.*")) {
 				line = line.replaceFirst("\\s*ignore rules:?", "");
 				current = ignoreRules;
@@ -158,14 +166,18 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		}
 		if (!resources.isEmpty())
 			droolsSessionMeta.resources = resources.toArray(new String[0]);
-		if (!baseProperties.isEmpty())
-			droolsSessionMeta.baseProperties = baseProperties.toArray(new String[0]);
-		if (!basePropertySource.isEmpty())
-			droolsSessionMeta.basePropertySource = basePropertySource.toArray(new String[0]);
 		if (!sessionProperties.isEmpty())
 			droolsSessionMeta.sessionProperties = sessionProperties.toArray(new String[0]);
 		if (!sessionPropertySource.isEmpty())
 			droolsSessionMeta.sessionPropertySource = sessionPropertySource.toArray(new String[0]);
+		if (!baseProperties.isEmpty())
+			droolsSessionMeta.baseProperties = baseProperties.toArray(new String[0]);
+		if (!basePropertySource.isEmpty())
+			droolsSessionMeta.basePropertySource = basePropertySource.toArray(new String[0]);
+		if (!builderProperties.isEmpty())
+			droolsSessionMeta.builderProperties = builderProperties.toArray(new String[0]);
+		if (!builderPropertySource.isEmpty())
+			droolsSessionMeta.builderPropertySource = builderPropertySource.toArray(new String[0]);
 		if (!ignoreRules.isEmpty())
 			droolsSessionMeta.ignoreRules = ignoreRules.toArray(new String[0]);
 	}

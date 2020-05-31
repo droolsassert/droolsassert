@@ -21,6 +21,7 @@ Spring ant-like [PathMatchingResourcePatternResolver](https://docs.spring.io/spr
         "classpath:/org/droolsassert/rules.drl",
         "classpath:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
         "classpath:/com/company/project/*/ruleUnderTest.rdslr" },
+        builderProperties = "drools.dump.dir = target/dump",
         logResources = true)
 
 Declare the rule for the test
@@ -55,7 +56,7 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.0.9</version>
+        <version>2.0.10</version>
         <scope>test</scope>
     </dependency>
 

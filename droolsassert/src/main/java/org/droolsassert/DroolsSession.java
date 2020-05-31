@@ -27,28 +27,46 @@ public @interface DroolsSession {
 	String[] resources() default {};
 	
 	/**
-	 * @see #basePropertySource
-	 * @see DroolsAssert#defaultBaseProperties()
-	 */
-	String[] baseProperties() default {};
-	
-	/**
 	 * @see #sessionPropertySource
 	 * @see DroolsAssert#defaultSessionProperties()
+	 * @see DroolsAssert#sessionConfiguration(DroolsSession)
 	 */
 	String[] sessionProperties() default {};
 	
 	/**
+	 * @see #sessionProperties
+	 * @see DroolsAssert#defaultSessionProperties()
+	 * @see DroolsAssert#sessionConfiguration(DroolsSession)
+	 */
+	String[] sessionPropertySource() default {};
+	
+	/**
 	 * @see #baseProperties
 	 * @see DroolsAssert#defaultBaseProperties()
+	 * @see DroolsAssert#baseConfiguration(DroolsSession)
 	 */
 	String[] basePropertySource() default {};
 	
 	/**
-	 * @see #sessionProperties
-	 * @see DroolsAssert#defaultSessionProperties()
+	 * @see #basePropertySource
+	 * @see DroolsAssert#defaultBaseProperties()
+	 * @see DroolsAssert#baseConfiguration(DroolsSession)
 	 */
-	String[] sessionPropertySource() default {};
+	String[] baseProperties() default {};
+	
+	/**
+	 * @see #builderPropertySource
+	 * @see DroolsAssert#defaultBuilderProperties()
+	 * @see DroolsAssert#builderConfiguration(DroolsSession)
+	 */
+	String[] builderProperties() default {};
+	
+	/**
+	 * @see #builderProperties
+	 * @see DroolsAssert#defaultBuilderProperties()
+	 * @see DroolsAssert#builderConfiguration(DroolsSession)
+	 */
+	String[] builderPropertySource() default {};
 	
 	/**
 	 * Ignore rules matching patterns while assertion.<br>

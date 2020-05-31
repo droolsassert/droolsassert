@@ -14,6 +14,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.subtract;
+import static org.apache.commons.io.FileUtils.forceMkdir;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.join;
@@ -28,6 +29,7 @@ import static org.junit.Assert.fail;
 import static org.junit.runners.model.MultipleFailureException.assertEmpty;
 import static org.kie.internal.io.ResourceFactory.newUrlResource;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -49,6 +51,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -56,6 +59,7 @@ import org.junit.runners.model.Statement;
 import org.kie.api.KieBase;
 import org.kie.api.KieBaseConfiguration;
 import org.kie.api.KieServices;
+import org.kie.api.builder.model.KieModuleModel;
 import org.kie.api.command.Command;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
@@ -70,6 +74,8 @@ import org.kie.api.runtime.rule.Agenda;
 import org.kie.api.runtime.rule.EntryPoint;
 import org.kie.api.runtime.rule.FactHandle;
 import org.kie.api.time.SessionPseudoClock;
+import org.kie.internal.builder.KnowledgeBuilderConfiguration;
+import org.kie.internal.builder.conf.DumpDirOption;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -134,10 +140,23 @@ public class DroolsAssert implements TestRule {
 			return kieBases.get(droolsSessionMeta);
 		
 		KieHelper kieHelper = new KieHelper();
+		kieHelper.setKieModuleModel(kieModule(builderConfiguration(droolsSessionMeta)));
 		for (Resource resource : getResources(true, firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources())))
 			kieHelper.addResource(newUrlResource(resource.getURL()));
-		kieBases.put(droolsSessionMeta, kieHelper.build(baseConfiguration(droolsSessionMeta)));
-		return kieBases.get(droolsSessionMeta);
+		KieBase kieBase = kieHelper.build(baseConfiguration(droolsSessionMeta));
+		
+		kieBases.put(droolsSessionMeta, kieBase);
+		return kieBase;
+	}
+	
+	protected KieModuleModel kieModule(Properties properties) throws IOException {
+		KieModuleModel kmm = KieServices.Factory.get().newKieModuleModel();
+		for (Entry<Object, Object> property : properties.entrySet()) {
+			if (DumpDirOption.PROPERTY_NAME.equals(property.getKey()))
+				forceMkdir(new File((String) property.getValue()));
+			kmm.setConfigurationProperty((String) property.getKey(), (String) property.getValue());
+		}
+		return kmm;
 	}
 	
 	public KieSession getSession() {
@@ -583,7 +602,7 @@ public class DroolsAssert implements TestRule {
 	
 	@Override
 	public Statement apply(Statement base, Description description) {
-		droolsSessionMeta = description.getTestClass().getAnnotation(DroolsSession.class);
+		droolsSessionMeta = checkNotNull(description.getTestClass().getAnnotation(DroolsSession.class), "Missing DroolsSession definition");
 		testRulesMeta = description.getAnnotation(TestRules.class);
 		
 		init(newSession(droolsSessionMeta));
@@ -642,43 +661,44 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected KieSessionConfiguration sessionConfiguration(DroolsSession droolsSessionMeta) throws IOException {
-		Properties properties = new Properties();
-		properties.load(new StringReader(joinWith(LF, defaultSessionProperties())));
-		for (Resource resource : getResources(false, checkNotNull(droolsSessionMeta, "Missing DroolsSession definition").sessionPropertySource())) {
-			try (Reader reader = new InputStreamReader(resource.getInputStream())) {
-				properties.load(reader);
-			}
-		}
-		properties.load(new StringReader(joinWith(LF, droolsSessionMeta.sessionProperties())));
-		
-		KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
-		for (Entry<Object, Object> entry : properties.entrySet())
-			config.setProperty((String) entry.getKey(), (String) entry.getValue());
-		return config;
+		return KieServices.Factory.get().newKieSessionConfiguration(loadProperties(droolsSessionMeta,
+				() -> this.defaultSessionProperties(), () -> droolsSessionMeta.sessionPropertySource(), () -> droolsSessionMeta.sessionProperties()));
 	}
 	
 	protected KieBaseConfiguration baseConfiguration(DroolsSession droolsSessionMeta) throws IOException {
+		return KieServices.Factory.get().newKieBaseConfiguration(loadProperties(droolsSessionMeta,
+				() -> this.defaultBaseProperties(), () -> droolsSessionMeta.basePropertySource(), () -> droolsSessionMeta.baseProperties()));
+	}
+	
+	/**
+	 * @see KnowledgeBuilderConfiguration
+	 */
+	protected Properties builderConfiguration(DroolsSession droolsSessionMeta) throws IOException {
+		return loadProperties(droolsSessionMeta, () -> this.defaultBuilderProperties(), () -> droolsSessionMeta.builderPropertySource(), () -> droolsSessionMeta.builderProperties());
+	}
+	
+	protected Properties loadProperties(DroolsSession droolsSessionMeta, Supplier<String[]> defaultProperties, Supplier<String[]> propertySource, Supplier<String[]> propertyOverrides) throws IOException {
 		Properties properties = new Properties();
-		properties.load(new StringReader(joinWith(LF, defaultBaseProperties())));
-		for (Resource resource : getResources(false, checkNotNull(droolsSessionMeta, "Missing DroolsSession definition").basePropertySource())) {
+		properties.load(new StringReader(joinWith(LF, defaultProperties.get())));
+		for (Resource resource : getResources(false, propertySource.get())) {
 			try (Reader reader = new InputStreamReader(resource.getInputStream())) {
 				properties.load(reader);
 			}
 		}
-		properties.load(new StringReader(joinWith(LF, droolsSessionMeta.baseProperties())));
-		
-		KieBaseConfiguration config = KieServices.Factory.get().newKieBaseConfiguration();
-		for (Entry<Object, Object> entry : properties.entrySet())
-			config.setProperty((String) entry.getKey(), (String) entry.getValue());
-		return config;
+		properties.load(new StringReader(joinWith(LF, propertyOverrides.get())));
+		return properties;
+	}
+	
+	protected String[] defaultSessionProperties() {
+		return new String[] { "drools.clockType = pseudo" };
 	}
 	
 	protected String[] defaultBaseProperties() {
 		return new String[] { "drools.eventProcessingMode = stream" };
 	}
 	
-	protected String[] defaultSessionProperties() {
-		return new String[] { "drools.clockType = pseudo" };
+	protected String[] defaultBuilderProperties() {
+		return new String[0]; // { "drools.dump.dir = target/drools-dump" };
 	}
 	
 	protected RulesChronoAgendaEventListener rulesChrono() {
