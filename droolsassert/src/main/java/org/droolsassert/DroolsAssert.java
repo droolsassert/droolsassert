@@ -661,23 +661,23 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected KieSessionConfiguration sessionConfiguration(DroolsSession droolsSessionMeta) throws IOException {
-		return KieServices.Factory.get().newKieSessionConfiguration(loadProperties(droolsSessionMeta,
-				() -> this.defaultSessionProperties(), () -> droolsSessionMeta.sessionPropertySource(), () -> droolsSessionMeta.sessionProperties()));
+		return KieServices.Factory.get().newKieSessionConfiguration(
+				loadProperties(() -> this.defaultSessionProperties(), () -> droolsSessionMeta.sessionPropertySource(), () -> droolsSessionMeta.sessionProperties()));
 	}
 	
 	protected KieBaseConfiguration baseConfiguration(DroolsSession droolsSessionMeta) throws IOException {
-		return KieServices.Factory.get().newKieBaseConfiguration(loadProperties(droolsSessionMeta,
-				() -> this.defaultBaseProperties(), () -> droolsSessionMeta.basePropertySource(), () -> droolsSessionMeta.baseProperties()));
+		return KieServices.Factory.get().newKieBaseConfiguration(
+				loadProperties(() -> this.defaultBaseProperties(), () -> droolsSessionMeta.basePropertySource(), () -> droolsSessionMeta.baseProperties()));
 	}
 	
 	/**
 	 * @see KnowledgeBuilderConfiguration
 	 */
 	protected Properties builderConfiguration(DroolsSession droolsSessionMeta) throws IOException {
-		return loadProperties(droolsSessionMeta, () -> this.defaultBuilderProperties(), () -> droolsSessionMeta.builderPropertySource(), () -> droolsSessionMeta.builderProperties());
+		return loadProperties(() -> this.defaultBuilderProperties(), () -> droolsSessionMeta.builderPropertySource(), () -> droolsSessionMeta.builderProperties());
 	}
 	
-	protected Properties loadProperties(DroolsSession droolsSessionMeta, Supplier<String[]> defaultProperties, Supplier<String[]> propertySource, Supplier<String[]> propertyOverrides) throws IOException {
+	protected Properties loadProperties(Supplier<String[]> defaultProperties, Supplier<String[]> propertySource, Supplier<String[]> propertyOverrides) throws IOException {
 		Properties properties = new Properties();
 		properties.load(new StringReader(joinWith(LF, defaultProperties.get())));
 		for (Resource resource : getResources(false, propertySource.get())) {
