@@ -6,6 +6,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.kie.api.KieBaseConfiguration;
+import org.kie.api.runtime.KieSessionConfiguration;
+import org.kie.internal.builder.KnowledgeBuilderConfiguration;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.AntPathMatcher;
 
@@ -27,6 +30,7 @@ public @interface DroolsSession {
 	String[] resources() default {};
 	
 	/**
+	 * @see KieSessionConfiguration
 	 * @see #sessionPropertySource
 	 * @see DroolsAssert#defaultSessionProperties()
 	 * @see DroolsAssert#sessionConfiguration(DroolsSession)
@@ -34,6 +38,7 @@ public @interface DroolsSession {
 	String[] sessionProperties() default {};
 	
 	/**
+	 * @see KieSessionConfiguration
 	 * @see #sessionProperties
 	 * @see DroolsAssert#defaultSessionProperties()
 	 * @see DroolsAssert#sessionConfiguration(DroolsSession)
@@ -41,6 +46,7 @@ public @interface DroolsSession {
 	String[] sessionPropertySource() default {};
 	
 	/**
+	 * @see KieBaseConfiguration
 	 * @see #baseProperties
 	 * @see DroolsAssert#defaultBaseProperties()
 	 * @see DroolsAssert#baseConfiguration(DroolsSession)
@@ -48,6 +54,7 @@ public @interface DroolsSession {
 	String[] basePropertySource() default {};
 	
 	/**
+	 * @see KieBaseConfiguration
 	 * @see #basePropertySource
 	 * @see DroolsAssert#defaultBaseProperties()
 	 * @see DroolsAssert#baseConfiguration(DroolsSession)
@@ -55,6 +62,7 @@ public @interface DroolsSession {
 	String[] baseProperties() default {};
 	
 	/**
+	 * @see KnowledgeBuilderConfiguration
 	 * @see #builderPropertySource
 	 * @see DroolsAssert#defaultBuilderProperties()
 	 * @see DroolsAssert#builderConfiguration(DroolsSession)
@@ -62,6 +70,7 @@ public @interface DroolsSession {
 	String[] builderProperties() default {};
 	
 	/**
+	 * @see KnowledgeBuilderConfiguration
 	 * @see #builderProperties
 	 * @see DroolsAssert#defaultBuilderProperties()
 	 * @see DroolsAssert#builderConfiguration(DroolsSession)
