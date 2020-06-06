@@ -316,7 +316,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Move clock forward until all listed will not triggered, fail if any of the rule was not triggered before threshold.<br>
+	 * Move clock forward until all listed rules will not be triggered, fail if any was not triggered before threshold.<br>
 	 * Use second as a smallest time tick and a day as a threshold.<br>
 	 * It is imperative that all other activations which were part of the same agenda were also triggered, see below.
 	 * <p>
@@ -348,7 +348,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Move clock forward until all listed or any upcoming scheduled activation (if list is empty) will be triggered, fail if any of the rule was not triggered before threshold.<br>
+	 * Move clock forward until all listed rules will be triggered, fail if any of the rule was not triggered before threshold.<br>
 	 * Use time unit as a smallest time tick, make specified amount of ticks at maximum.
 	 * 
 	 * @see #awaitFor(String...)
