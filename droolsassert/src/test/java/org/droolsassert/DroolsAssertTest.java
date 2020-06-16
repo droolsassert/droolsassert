@@ -45,6 +45,24 @@ public class DroolsAssertTest {
 	}
 	
 	@Test
+	@TestRules(expectedSource = "org/droolsassert/expectedDroolsAssertTest.txt")
+	public void testExpectedSource() {
+		drools.insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+		drools.fireAllRules();
+		drools.assertFactsCount(3);
+		assertEquals(2, drools.getObjects(AtomicLong.class).size());
+	}
+	
+	@Test
+	@TestRules(expectedCountSource = "**/expectedCountDroolsAssertTest.txt", ignoreSource = "**/ignoreDroolsAssertTest.txt")
+	public void testExpectedCountSource() {
+		drools.insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
+		drools.fireAllRules();
+		drools.assertFactsCount(3);
+		assertEquals(2, drools.getObjects(AtomicLong.class).size());
+	}
+	
+	@Test
 	@TestRules(expected = {})
 	public void testNoRulesWereTriggered() {
 		drools.insertAndFire("string");

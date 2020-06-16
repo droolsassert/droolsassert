@@ -3,17 +3,19 @@ package org.droolsassert.jbehave;
 import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.Boolean.parseBoolean;
-import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.Arrays.stream;
-import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.apache.commons.lang3.StringUtils.removeStart;
 import static org.apache.commons.lang3.StringUtils.upperCase;
+import static org.droolsassert.DroolsAssertUtils.getResources;
+import static org.droolsassert.DroolsAssertUtils.getRulesCountFromSource;
+import static org.droolsassert.DroolsAssertUtils.getRulesFromSource;
+import static org.droolsassert.DroolsAssertUtils.parseCountOfRules;
 import static org.droolsassert.util.JsonUtils.fromJson;
 import static org.droolsassert.util.JsonUtils.fromYaml;
 import static org.junit.Assert.assertEquals;
@@ -23,11 +25,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
@@ -49,7 +48,6 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	protected static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	
-	protected static final Pattern COUNT_OF_STRINGS = compile("(?<count>\\d+)\\s*[ ,:|-]?\\s*(?<rule>.+)");
 	protected static final String STRINGS_DELIM = "(\r?\n|(?<=')\\s*,\\s*(?='[^']*'))";
 	protected static final String VARIABLES_DELIM = "(\r?\n|\\s*,\\s*)";
 	protected static final String LHS_DELIM = "\\s+((is|as)( an?)?|equals?( to)?)\\s+";
@@ -144,6 +142,9 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 			} else if (line.matches("\\s*builder property source.*")) {
 				line = line.replaceFirst("\\s*builder property source:?", "");
 				current = builderPropertySource;
+			} else if (line.matches("\\s*ignore rules source.*")) {
+				droolsSessionMeta.ignoreRulesSource = line.replaceFirst("\\s*ignore rules source:?\\s+", "");
+				continue;
 			} else if (line.matches("\\s*ignore rules.*")) {
 				line = line.replaceFirst("\\s*ignore rules:?", "");
 				current = ignoreRules;
@@ -188,18 +189,29 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 * <pre>
 	 * Given new session for scenario
 	 * 
-	 * Given new session for scenario, ignore '* int rule', 'other rule'
+	 * Given new session for scenario, check scheduled, ignore '* int rule', 'other rule'
+	 * 
+	 * Given new session for scenario, check scheduled, ignore source: &#42;&#42;/ignoreDroolsAssertTest.txt
 	 * 
 	 * Given new session for scenario
-	 * 	ignore complex name * ${with}(and)[??]
+	 * 	check scheduled
+	 * 	ignore * ${with}(and)[??]
 	 * </pre>
 	 */
 	@Given("new session for scenario$sessionMeta")
-	public void givenNewSessionForScenario(String sessionMeta) {
+	public void givenNewSessionForScenario(String sessionMeta) throws IOException {
 		testRulesMeta = new TestRulesProxy();
 		List<String> ignore = new ArrayList<>();
 		
 		for (String line : sessionMeta.split(NL)) {
+			if (line.matches("\\s*,?\\s*check scheduled.*")) {
+				line = line.replaceFirst("\\s*,?\\s*check scheduled", "");
+				testRulesMeta.checkScheduled = true;
+			}
+			if (line.matches("\\s*,?\\s*ignore source.*")) {
+				testRulesMeta.ignoreSource = line.replaceFirst("\\s*,?\\s*ignore source:?\\s+", "");
+				continue;
+			}
 			if (line.matches("\\s*,?\\s*ignore:? .*"))
 				line = line.replaceFirst("\\s*,?\\s*ignore:?\\s+", "");
 			if (!line.isEmpty())
@@ -311,6 +323,19 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 			drools.assertRetracted(evalVariables(variables));
 	}
 	
+	/**
+	 * Asserts the only rules listed have been activated no more no less <i>since previous check</i>.
+	 * 
+	 * <pre>
+	 * Then activated no rules
+	 * 
+	 * Then activated 'rule 1', 'rule 2'
+	 * 
+	 * Then activated
+	 *     drop the call if caller is talking more than permitted time
+	 *     call in progress dropped
+	 * </pre>
+	 */
 	@Then("activated $activated")
 	public void thenAssertActivated(String activated) {
 		if ("no rules".equals(activated))
@@ -319,50 +344,66 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 			drools.assertActivated(splitStrings(activated).toArray(new String[0]));
 	}
 	
+	/**
+	 * Asserts the only rules listed have been activated no more no less.
+	 * 
+	 * @see #thenAssertActivated(String)
+	 */
 	@Then("all activations are$activations")
 	@Aliases(values = { "there was single activation$activations", "there were no activations$activations" })
 	public void thenAssertAllActivations(String activations) {
+		if (testRulesMeta.checkScheduled)
+			drools.triggerAllScheduledActivations();
 		drools.assertAllActivations(splitStrings(activations).toArray(new String[0]));
 	}
 	
-	@Then("all activations and scheduled are$activations")
-	public void thenAssertAllActivationsAndScheduled(String activations) {
-		drools.triggerAllScheduledActivations();
-		drools.assertAllActivations(splitStrings(activations).toArray(new String[0]));
+	@Then("all activations defined by$source")
+	public void thenAssertAllActivationsFromSource(String source) throws IOException {
+		if (testRulesMeta.checkScheduled)
+			drools.triggerAllScheduledActivations();
+		drools.assertAllActivations(getRulesFromSource(getResources(true, false, source.trim())));
 	}
 	
 	/**
-	 * &lt;number&gt;&lt;delimiter&gt;[']&lt;value&gt;[']<br>
-	 * <br>
-	 * delimiter is one of ' ', ',', ':', '|', '-'
+	 * Asserts the only rules listed have been activated no more no less <i>since previous check</i>.<br>
+	 * Accepts the number of activations to assert.
 	 * 
 	 * <pre>
+	 * Then count of activated is 1 drop the call if caller is talking more than permitted time
+	 *     
 	 * Then count of activated are
 	 *     1 drop the call if caller is talking more than permitted time
 	 *     1 call in progress dropped
 	 * </pre>
 	 */
 	@Then("count of activated are$activated")
+	@Alias("count of activated is$activated")
 	public void thenAssertActivatedCount(String activated) {
-		drools.assertActivated(splitCountOfStrings(activated));
+		drools.assertActivated(parseCountOfRules(activated));
 	}
 	
 	/**
+	 * Asserts the only rules listed have been activated no more no less.<br>
+	 * Accepts the number of activations to assert.
+	 * 
 	 * @see #thenAssertActivatedCount(String)
 	 */
 	@Then("count of all activations are$activations")
 	@Alias("count of all activations is$activations")
 	public void thenAssertAllActivationsCount(String activations) {
-		drools.assertAllActivations(splitCountOfStrings(activations));
+		if (testRulesMeta.checkScheduled)
+			drools.triggerAllScheduledActivations();
+		drools.assertAllActivations(parseCountOfRules(activations));
 	}
 	
 	/**
 	 * @see #thenAssertActivatedCount(String)
 	 */
-	@Then("count of all activations and scheduled are$activations")
-	public void thenAssertAllActivationsAndScheduledCount(String activations) {
-		drools.triggerAllScheduledActivations();
-		drools.assertAllActivations(splitCountOfStrings(activations));
+	@Then("count of all activations defined by$source")
+	public void thenAssertAllActivationsCountFromSource(String source) throws IOException {
+		if (testRulesMeta.checkScheduled)
+			drools.triggerAllScheduledActivations();
+		drools.assertAllActivations(getRulesCountFromSource(getResources(true, false, source.trim())));
 	}
 	
 	@Then("there are no scheduled activations")
@@ -395,21 +436,6 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 				.filter(StringUtils::isNotEmpty)
 				.map(this::stripString)
 				.collect(toList());
-	}
-	
-	protected Map<String, Integer> splitCountOfStrings(String activations) {
-		Map<String, Integer> evaluated = new HashMap<>();
-		stream(activations.split(NL))
-				.map(StringUtils::trim)
-				.filter(StringUtils::isNotEmpty)
-				.map(this::stripString)
-				.forEach(line -> {
-					Matcher m = COUNT_OF_STRINGS.matcher(line);
-					if (!m.matches())
-						throw new IllegalArgumentException("Cannot parse " + line);
-					evaluated.put(stripString(m.group("rule")), parseInt(m.group("count")));
-				});
-		return evaluated;
 	}
 	
 	protected String stripString(String quoted) {
@@ -515,9 +541,11 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	@SuppressWarnings("unchecked")
 	protected A droolsAssert() {
-		return (A) new DroolsAssert(
+		DroolsAssert droolsAssert = new DroolsAssert();
+		droolsAssert.init(
 				(DroolsSession) newProxyInstance(getClass().getClassLoader(), new Class[] { DroolsSession.class }, droolsSessionMeta),
 				(TestRules) newProxyInstance(getClass().getClassLoader(), new Class[] { TestRules.class }, testRulesMeta));
+		return (A) droolsAssert;
 	}
 	
 	protected MvelProcessor mvelProcessor() {

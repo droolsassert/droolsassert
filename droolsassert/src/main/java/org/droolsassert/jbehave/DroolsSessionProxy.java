@@ -1,5 +1,6 @@
 package org.droolsassert.jbehave;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
 import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
 
@@ -16,6 +17,7 @@ public class DroolsSessionProxy implements InvocationHandler {
 	String[] builderProperties = new String[0];
 	String[] builderPropertySource = new String[0];
 	String[] ignoreRules = new String[0];
+	String ignoreRulesSource = EMPTY;
 	boolean logResources;
 	boolean keepFactsHistory = true;
 	boolean logFacts = true;
@@ -41,6 +43,8 @@ public class DroolsSessionProxy implements InvocationHandler {
 			return builderPropertySource;
 		case "ignoreRules":
 			return ignoreRules;
+		case "ignoreRulesSource":
+			return ignoreRulesSource;
 		case "logResources":
 			return logResources;
 		case "keepFactsHistory":

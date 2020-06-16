@@ -1,0 +1,3 @@
+# atomics
+atomic int rule
+atomic long rule

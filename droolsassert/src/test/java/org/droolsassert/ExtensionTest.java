@@ -4,6 +4,7 @@ import static com.google.common.base.Charsets.UTF_8;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+import static org.droolsassert.DroolsAssertUtils.resourceResolver;
 import static org.droolsassert.util.JsonUtils.fromYaml;
 import static org.droolsassert.util.JsonUtils.toYaml;
 import static org.joda.time.DateTimeConstants.SATURDAY;

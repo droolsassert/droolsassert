@@ -75,10 +75,10 @@ Then there was single activation 'input call'
 
 
 !-- test assert scheduled activations
-Given new session for scenario
+Given new session for scenario, check scheduled
 Given variable dial as new Dialing('11111', '22222')
 When insert and fire dial
-Then all activations and scheduled are 
+Then all activations are 
     input call
     drop the call if caller is talking more than permitted time
     call in progress dropped

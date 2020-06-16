@@ -15,7 +15,7 @@ Given new session for scenario
 Given variable atomicInteger is new AtomicInteger()
 When insert and fire atomicInteger
 Then assert atomicInteger.get() is 1
-Then all activations are 'atomic int rule'
+Then there was single activation atomic int rule
 
 
 !-- test long
@@ -41,7 +41,33 @@ Given variable a3 is new AtomicLong()
 When insert and fire a1, a2, a3
 Given variable listOfLong as AtomicLong objects from the session
 Then assert listOfLong.size() is 2
-Then count of all activations are 2 'atomic long rule'
+Then count of all activations are 2 atomic long rule
+
+
+!-- test expected source
+Given new session for scenario
+Given variable a1 is new AtomicInteger()
+Given variable a2 is new AtomicLong()
+Given variable a3 is new AtomicLong()
+When insert facts a1, a2, a3
+When fire all rules
+Then count of facts is 3
+Given variable listOfLong as AtomicLong objects from the session
+Then assert listOfLong.size() is 2
+Then all activations defined by org/droolsassert/expectedDroolsAssertTest.txt 
+
+
+!-- test expected count source
+Given new session for scenario, check scheduled, ignore source: **/ignoreDroolsAssertTest.txt
+Given variable a1 is new AtomicInteger()
+Given variable a2 is new AtomicLong()
+Given variable a3 is new AtomicLong()
+When insert facts a1, a2, a3
+When fire all rules
+Then count of facts is 3
+Given variable listOfLong as AtomicLong objects from the session
+Then assert listOfLong.size() is 2
+Then count of all activations defined by **/expectedCountDroolsAssertTest.txt
 
 
 !-- test no rule where triggered
@@ -52,4 +78,4 @@ Then count of facts is 1
 Given variable xRef as String object from the session
 Then assert xRef is 'string'
 Given facts printed
-Then all activations are
+Then there were no activations

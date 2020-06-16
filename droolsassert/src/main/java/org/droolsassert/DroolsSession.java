@@ -2,6 +2,7 @@ package org.droolsassert;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -47,19 +48,19 @@ public @interface DroolsSession {
 	
 	/**
 	 * @see KieBaseConfiguration
-	 * @see #baseProperties
-	 * @see DroolsAssert#defaultBaseProperties()
-	 * @see DroolsAssert#baseConfiguration(DroolsSession)
-	 */
-	String[] basePropertySource() default {};
-	
-	/**
-	 * @see KieBaseConfiguration
 	 * @see #basePropertySource
 	 * @see DroolsAssert#defaultBaseProperties()
 	 * @see DroolsAssert#baseConfiguration(DroolsSession)
 	 */
 	String[] baseProperties() default {};
+	
+	/**
+	 * @see KieBaseConfiguration
+	 * @see #baseProperties
+	 * @see DroolsAssert#defaultBaseProperties()
+	 * @see DroolsAssert#baseConfiguration(DroolsSession)
+	 */
+	String[] basePropertySource() default {};
 	
 	/**
 	 * @see KnowledgeBuilderConfiguration
@@ -79,30 +80,49 @@ public @interface DroolsSession {
 	
 	/**
 	 * Ignore rules matching patterns while assertion.<br>
-	 * Rules themselves will be executed
+	 * Rules themselves will be executed<br>
+	 * This supplements {@link #ignoreRulesSource()}
 	 * 
 	 * @see AntPathMatcher
 	 */
 	String[] ignoreRules() default {};
 	
 	/**
-	 * Log resources loaded for the session
+	 * Ignore rules matching patterns while assertion from source.<br>
+	 * Rules themselves will be executed<br>
+	 * This supplements {@link #ignoreRules()}
+	 * 
+	 * @see AntPathMatcher
 	 */
-	boolean logResources() default false;
+	String ignoreRulesSource() default EMPTY;
 	
 	/**
 	 * Keep track of all facts ever inserted into the session.<br>
-	 * This gives you some additional features, like logging retained facts in insertion order and some additional sanity checks while assertions, but you may want to skip this for data-heavy tests.
+	 * This gives you some additional features, like logging retained facts in insertion order and some additional sanity checks while assertions, but you may want to skip this for data-heavy tests.<br>
+	 * <br>
+	 * Default - true
 	 */
 	boolean keepFactsHistory() default true;
 	
 	/**
-	 * Log fact attributes or just class simple name
+	 * Log resources loaded for the session<br>
+	 * <br>
+	 * Default - false
+	 */
+	boolean logResources() default false;
+	
+	/**
+	 * Log fact attributes or just class simple name<br>
+	 * <br>
+	 * Default - true
 	 */
 	boolean logFacts() default true;
 	
 	/**
-	 * Enable / disable all logging
+	 * Enable / disable all logging.<br>
+	 * You may want to disable all logging for performance analysis
+	 * <br>
+	 * Default - true (enable)
 	 */
 	boolean log() default true;
 }

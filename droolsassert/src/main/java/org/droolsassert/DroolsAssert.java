@@ -1,6 +1,5 @@
 package org.droolsassert;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
@@ -16,12 +15,18 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.io.FileUtils.forceMkdir;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.StringUtils.joinWith;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.apache.commons.lang3.math.NumberUtils.INTEGER_ZERO;
+import static org.droolsassert.DroolsAssertUtils.firstNonEmpty;
+import static org.droolsassert.DroolsAssertUtils.getExpectedCount;
+import static org.droolsassert.DroolsAssertUtils.getResources;
+import static org.droolsassert.DroolsAssertUtils.getRulesCountFromSource;
+import static org.droolsassert.DroolsAssertUtils.getRulesFromSource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -78,7 +83,6 @@ import org.kie.internal.builder.KnowledgeBuilderConfiguration;
 import org.kie.internal.builder.conf.DumpDirOption;
 import org.kie.internal.utils.KieHelper;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 
@@ -91,7 +95,6 @@ public class DroolsAssert implements TestRule {
 	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
 	protected static final DateTimeFormatter HH_MM_SS_SSS = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 	protected static final PathMatcher nameMatcher = new AntPathMatcher("\n");
-	protected static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
 	protected DroolsSession droolsSessionMeta;
@@ -109,22 +112,19 @@ public class DroolsAssert implements TestRule {
 	public DroolsAssert() {
 	}
 	
-	public DroolsAssert(DroolsSession droolsSessionMeta, TestRules testRulesMeta) {
+	public void init(DroolsSession droolsSessionMeta, TestRules testRulesMeta) {
 		this.droolsSessionMeta = droolsSessionMeta;
 		this.testRulesMeta = testRulesMeta;
-		init(newSession(droolsSessionMeta));
-		ignoreActivations(droolsSessionMeta.ignoreRules());
-		ignoreActivations(testRulesMeta.ignore());
-	}
-	
-	protected void init(KieSession session) {
-		this.session = session;
+		this.session = newSession(droolsSessionMeta);
+		
 		agenda = session.getAgenda();
 		clock = session.getSessionClock();
 		session.addEventListener(new LoggingAgendaEventListener());
 		if (droolsSessionMeta.log())
 			session.addEventListener(new LoggingWorkingMemoryEventListener());
 		session.addEventListener(rulesChrono);
+		
+		initializeIgnoredActivations();
 	}
 	
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
@@ -141,7 +141,7 @@ public class DroolsAssert implements TestRule {
 		
 		KieHelper kieHelper = new KieHelper();
 		kieHelper.setKieModuleModel(kieModule(builderConfiguration(droolsSessionMeta)));
-		for (Resource resource : getResources(true, firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources())))
+		for (Resource resource : getResources(true, droolsSessionMeta.logResources(), firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources())))
 			kieHelper.addResource(newUrlResource(resource.getURL()));
 		KieBase kieBase = kieHelper.build(baseConfiguration(droolsSessionMeta));
 		
@@ -232,8 +232,6 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertAllActivations(String... expected) {
-		if (expected.length == 1 && "null".equals(expected[0]))
-			return;
 		Map<String, Integer> expectedMap = new LinkedHashMap<>();
 		for (String rule : expected)
 			expectedMap.put(rule, null);
@@ -249,7 +247,7 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertAllActivationsCount(Object... expectedCount) {
-		assertAllActivations(expectedCount(expectedCount));
+		assertAllActivations(getExpectedCount(expectedCount));
 	}
 	
 	public void assertAllActivations(Map<String, Integer> expectedCount) {
@@ -286,7 +284,7 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertActivatedCount(Object... expectedCount) {
-		assertActivated(expectedCount(expectedCount));
+		assertActivated(getExpectedCount(expectedCount));
 	}
 	
 	public void assertActivated(Map<String, Integer> expectedCount) {
@@ -316,7 +314,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Move clock forward until all listed rules will not be triggered, fail if any was not triggered before threshold.<br>
+	 * Move clock forward until all listed rules will be triggered, fail if any was not triggered before threshold.<br>
 	 * Use second as a smallest time tick and a day as a threshold.<br>
 	 * It is imperative that all other activations which were part of the same agenda were also triggered, see below.
 	 * <p>
@@ -602,10 +600,9 @@ public class DroolsAssert implements TestRule {
 	
 	@Override
 	public Statement apply(Statement base, Description description) {
-		droolsSessionMeta = checkNotNull(description.getTestClass().getAnnotation(DroolsSession.class), "Missing DroolsSession definition");
-		testRulesMeta = description.getAnnotation(TestRules.class);
-		
-		init(newSession(droolsSessionMeta));
+		init(
+				checkNotNull(description.getTestClass().getAnnotation(DroolsSession.class), "Missing @DroolsSession definition"),
+				description.getAnnotation(TestRules.class));
 		
 		return new Statement() {
 			@Override
@@ -616,10 +613,6 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected void evaluate(Statement base) throws Throwable {
-		ignoreActivations(droolsSessionMeta.ignoreRules());
-		if (testRulesMeta != null)
-			ignoreActivations(testRulesMeta.ignore());
-		
 		List<Throwable> errors = new ArrayList<>();
 		try {
 			base.evaluate();
@@ -631,9 +624,13 @@ public class DroolsAssert implements TestRule {
 				if (testRulesMeta.checkScheduled())
 					triggerAllScheduledActivations();
 				if (testRulesMeta.expectedCount().length != 0)
-					assertAllActivations(expectedCount(testRulesMeta.expectedCount()));
-				else
+					assertAllActivations(getExpectedCount(testRulesMeta.expectedCount()));
+				else if (isExpectedSet(testRulesMeta.expected()))
 					assertAllActivations(testRulesMeta.expected());
+				else if (!testRulesMeta.expectedCountSource().isEmpty())
+					assertAllActivations(getRulesCountFromSource(getResources(true, false, testRulesMeta.expectedCountSource())));
+				else if (!testRulesMeta.expectedSource().isEmpty())
+					assertAllActivations(getRulesFromSource(getResources(true, false, testRulesMeta.expectedSource())));
 			} catch (Throwable th) {
 				errors.add(0, th);
 			}
@@ -643,21 +640,24 @@ public class DroolsAssert implements TestRule {
 		assertEmpty(errors);
 	}
 	
+	public final void initializeIgnoredActivations() {
+		ignoreActivations(droolsSessionMeta.ignoreRules());
+		if (!droolsSessionMeta.ignoreRulesSource().isEmpty())
+			ignoreActivations(getRulesFromSource(getResources(true, false, droolsSessionMeta.ignoreRulesSource())));
+		if (testRulesMeta != null) {
+			ignoreActivations(testRulesMeta.ignore());
+			if (!testRulesMeta.ignoreSource().isEmpty())
+				ignoreActivations(getRulesFromSource(getResources(true, false, testRulesMeta.ignoreSource())));
+		}
+	}
+	
+	protected final boolean isExpectedSet(String[] expected) {
+		return expected.length != 1 || !EMPTY.equals(expected[0]);
+	}
+	
 	public void destroy() {
 		rulesChrono.reset();
 		session.dispose();
-	}
-	
-	protected final List<Resource> getResources(boolean mandatory, String... locations) throws IOException {
-		List<Resource> resources = new ArrayList<>();
-		for (String resourceNameFilter : locations)
-			resources.addAll(asList(resourceResolver.getResources(resourceNameFilter)));
-		if (mandatory)
-			checkArgument(resources.size() > 0, "No resources found");
-		
-		if (droolsSessionMeta.logResources())
-			resources.forEach(resource -> out.println(resource));
-		return resources;
 	}
 	
 	protected KieSessionConfiguration sessionConfiguration(DroolsSession droolsSessionMeta) throws IOException {
@@ -680,7 +680,7 @@ public class DroolsAssert implements TestRule {
 	protected Properties loadProperties(Supplier<String[]> defaultProperties, Supplier<String[]> propertySource, Supplier<String[]> propertyOverrides) throws IOException {
 		Properties properties = new Properties();
 		properties.load(new StringReader(joinWith(LF, defaultProperties.get())));
-		for (Resource resource : getResources(false, propertySource.get())) {
+		for (Resource resource : getResources(false, droolsSessionMeta.logResources(), propertySource.get())) {
 			try (Reader reader = new InputStreamReader(resource.getInputStream())) {
 				properties.load(reader);
 			}
@@ -735,22 +735,6 @@ public class DroolsAssert implements TestRule {
 	protected final String formatTime() {
 		return MIDNIGHT.plus(Duration.ofMillis(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()))
 				.format(clock.getCurrentTime() == MAX_VALUE || clock.getCurrentTime() % 1000 == 0 ? HH_MM_SS : HH_MM_SS_SSS);
-	}
-	
-	private Map<String, Integer> expectedCount(Object[] params) {
-		checkArgument(params.length % 2 == 0, "Cannot create expected count out of odd number of parameters");
-		Map<String, Integer> map = new LinkedHashMap<>();
-		for (int i = 0; i < params.length; i = i + 2)
-			map.put("" + params[i + 1], new Integer("" + params[i]));
-		return map;
-	}
-	
-	private String[] firstNonEmpty(String[]... params) {
-		for (String[] param : params) {
-			if (param.length != 0)
-				return param;
-		}
-		return new String[0];
 	}
 	
 	private class LoggingAgendaEventListener extends DefaultAgendaEventListener {
