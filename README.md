@@ -1,5 +1,3 @@
-<img src="wiki-data/logo.png" width="170" height="200" align="right">
-
 ## Goal
 
 Relieve Drools JUnit testing 
