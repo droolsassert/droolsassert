@@ -1,5 +1,6 @@
 Logical events story
 
+Scenario: definitions
 Given imports 
     org.droolsassert
     org.droolsassert.ComplexEventProcessingTest
@@ -9,7 +10,7 @@ Given drools session classpath:/org/droolsassert/complexEventProcessing.drl
 Given global stdout is System.out
 
 
-!-- test calls connect and disconnect logic stick to events
+Scenario: test calls connect and disconnect logic stick to events
 Given new session for scenario
 Given variable exception is new RuntimeException('Something reported')
 !-- When insert and fire exception

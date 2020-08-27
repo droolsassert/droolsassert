@@ -26,8 +26,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 public final class DroolsAssertUtils {
-	protected static final Pattern COUNT_OF_RULES = compile("(?<count>\\d+)\\s+(?<rule>.+)");
-	protected static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+	public static final Pattern COUNT_OF_RULES = compile("(?<count>\\d+)\\s+(?<rule>.+)");
+	public static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	
 	private DroolsAssertUtils() {
 	}
@@ -87,7 +87,7 @@ public final class DroolsAssertUtils {
 				.forEach(line -> {
 					Matcher m = COUNT_OF_RULES.matcher(line);
 					if (!m.matches())
-						throw new IllegalArgumentException("Expected <number><space><rule name>, but found: " + line);
+						throw new DroolsAssertException("Expected <number><space><rule name>, but found: " + line);
 					parsed.put(m.group("rule"), parseInt(m.group("count")));
 				});
 		return parsed;

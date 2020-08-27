@@ -29,6 +29,8 @@ import com.google.common.io.Resources;
 
 public class JbehaveExtentionExample extends JUnitStories {
 	
+	private ExtendedDroolsAssertSteps steps = new ExtendedDroolsAssertSteps();
+	
 	@Override
 	public Configuration configuration() {
 		return new MostUsefulConfiguration()
@@ -36,12 +38,14 @@ public class JbehaveExtentionExample extends JUnitStories {
 				.useStoryReporterBuilder(new StoryReporterBuilder()
 						.withCodeLocation(codeLocationFromClass(this.getClass()))
 						.withDefaultFormats().withFormats(TXT)
+						.withMultiThreading(false)
+						.withReporters(steps)
 						.withFailureTrace(true));
 	}
 	
 	@Override
 	public InjectableStepsFactory stepsFactory() {
-		return new InstanceStepsFactory(configuration(), new ExtendedDroolsAssertSteps());
+		return new InstanceStepsFactory(configuration(), steps);
 	}
 	
 	@Override
@@ -56,18 +60,22 @@ public class JbehaveExtentionExample extends JUnitStories {
 			assertEmpty(new ArrayList<Throwable>(drools.getObjects(Throwable.class)));
 		}
 		
+		@Override
 		protected Object resolveVariableFromJson(String type, String expression) {
 			return fromJson(mvelProcessor.process(expression), classOf(type));
 		}
 		
+		@Override
 		protected Object resolveVariableFromJsonResource(String type, String expression) throws IOException {
 			return fromJson(mvelProcessor.process(Resources.toString(resourceResolver.getResource(expression).getURL(), UTF_8)), classOf(type));
 		}
 		
+		@Override
 		protected Object resolveValriableFromYaml(String type, String expression) {
 			return fromYaml(mvelProcessor.process(expression), classOf(type));
 		}
 		
+		@Override
 		protected Object resolveVariableFromYamlResource(String type, String expression) throws IOException {
 			return fromYaml(mvelProcessor.process(Resources.toString(resourceResolver.getResource(expression).getURL(), UTF_8)), classOf(type));
 		}

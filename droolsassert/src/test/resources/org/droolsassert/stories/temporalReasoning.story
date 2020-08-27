@@ -1,5 +1,6 @@
 Temporal reasoning story
 
+Scenario: definitions
 Given import org.droolsassert.TemporalReasoningTest
 
 Given drools session classpath:/org/droolsassert/temporalReasoning.drl
@@ -7,7 +8,7 @@ Given drools session classpath:/org/droolsassert/temporalReasoning.drl
 Given global stdout is System.out
 
 
-!-- test regular heartbeat
+Scenario: test regular heartbeat
 Given new session for scenario
 Given variable heartbeat1 is new Heartbeat(1)
 When insert into MonitoringStream and fire heartbeat1
@@ -43,7 +44,7 @@ Given facts printed
 Then there were no activations
 
 
-!-- test irregular heartbeat
+Scenario: test irregular heartbeat
 Given new session for scenario
 Given variable heartbeat1 is new Heartbeat(1)
 When insert into MonitoringStream and fire heartbeat1

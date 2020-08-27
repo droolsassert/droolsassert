@@ -20,6 +20,8 @@ import org.jbehave.core.steps.InstanceStepsFactory;
 
 public class JbehaveStories extends JUnitStories {
 	
+	private DroolsAssertSteps<DroolsAssert> droolsAssertSteps = new DroolsAssertSteps<>();
+	
 	@Override
 	public Configuration configuration() {
 		return new MostUsefulConfiguration()
@@ -27,12 +29,14 @@ public class JbehaveStories extends JUnitStories {
 				.useStoryReporterBuilder(new StoryReporterBuilder()
 						.withCodeLocation(codeLocationFromClass(this.getClass()))
 						.withDefaultFormats().withFormats(TXT)
+						.withMultiThreading(false)
+						.withReporters(droolsAssertSteps)
 						.withFailureTrace(true));
 	}
 	
 	@Override
 	public InjectableStepsFactory stepsFactory() {
-		return new InstanceStepsFactory(configuration(), new DroolsAssertSteps<DroolsAssert>());
+		return new InstanceStepsFactory(configuration(), droolsAssertSteps);
 	}
 	
 	@Override

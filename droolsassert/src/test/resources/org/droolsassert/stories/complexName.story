@@ -1,11 +1,12 @@
 Complex name story
 
+Scenario: definitions
 Given import java.util.concurrent.atomic
 
 Given drools session classpath:/org/droolsassert/complex name * ${with}(*)[or].drl
 
 
-!-- test int
+Scenario: test int
 Given new session for scenario
 	ignore * ${with}(and)[??]
 Given variable atomicInteger is new AtomicInteger()

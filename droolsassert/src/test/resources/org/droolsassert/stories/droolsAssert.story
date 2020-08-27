@@ -1,5 +1,6 @@
 Drools assert story
 
+Scenario: definitions
 Given import java.util.concurrent.atomic
 
 Given drools session 
@@ -10,7 +11,7 @@ ignore rules: 'before', 'after'
 log resources: true
 
 
-!-- test int
+Scenario: test int
 Given new session for scenario
 Given variable atomicInteger is new AtomicInteger()
 When insert and fire atomicInteger
@@ -18,7 +19,7 @@ Then assert atomicInteger.get() is 1
 Then there was single activation atomic int rule
 
 
-!-- test long
+Scenario: test long
 Given new session for scenario
 Given variable a1 is new AtomicInteger()
 Given variable a2 is new AtomicLong()
@@ -33,7 +34,7 @@ Then all activations are
     atomic long rule
 
 
-!-- test activation count
+Scenario: test activation count
 Given new session for scenario, ignore '* int rule'
 Given variable a1 is new AtomicInteger()
 Given variable a2 is new AtomicLong()
@@ -44,7 +45,7 @@ Then assert listOfLong.size() is 2
 Then count of all activations are 2 atomic long rule
 
 
-!-- test expected source
+Scenario: test expected source
 Given new session for scenario
 Given variable a1 is new AtomicInteger()
 Given variable a2 is new AtomicLong()
@@ -57,7 +58,7 @@ Then assert listOfLong.size() is 2
 Then all activations defined by org/droolsassert/expectedDroolsAssertTest.txt 
 
 
-!-- test expected count source
+Scenario: test expected count source
 Given new session for scenario, check scheduled, ignore source: **/ignoreDroolsAssertTest.txt
 Given variable a1 is new AtomicInteger()
 Given variable a2 is new AtomicLong()
@@ -70,7 +71,7 @@ Then assert listOfLong.size() is 2
 Then count of all activations defined by **/expectedCountDroolsAssertTest.txt
 
 
-!-- test no rule where triggered
+Scenario: test no rule where triggered
 Given new session for scenario
 Given variable x is 'string'
 When insert and fire x

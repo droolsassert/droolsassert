@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -39,12 +40,54 @@ import org.jbehave.core.annotations.Aliases;
 import org.jbehave.core.annotations.Given;
 import org.jbehave.core.annotations.Then;
 import org.jbehave.core.annotations.When;
+import org.jbehave.core.model.Scenario;
+import org.jbehave.core.model.Story;
+import org.jbehave.core.reporters.NullStoryReporter;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
 
-public class DroolsAssertSteps<A extends DroolsAssert> {
+/**
+ * 
+ * <pre>
+ * Drools assert story
+ * 
+ * Scenario: definitions
+ * Given import java.util.concurrent.atomic
+ * 
+ * Given drools session 
+ *     classpath&#42;:/org/droolsassert/rules.drl
+ *     classpath&#42;:/com/company/project/&#42;/{regex:.&#42;.(drl|dsl|xlsx|gdst)}
+ *     classpath&#42;:/com/company/project/&#42;/ruleUnderTest.rdslr
+ * ignore rules: 'before', 'after'
+ * log resources: true
+ * 
+ * 
+ * Scenario: test int
+ * Given new session for scenario
+ * Given variable atomicInteger is new AtomicInteger()
+ * When insert and fire atomicInteger
+ * Then assert atomicInteger.get() is 1
+ * Then there was single activation atomic int rule
+ * 
+ * 
+ * Scenario: test long
+ * Given new session for scenario
+ * Given variable a1 is new AtomicInteger()
+ * Given variable a2 is new AtomicLong()
+ * Given variable a3 is new AtomicLong()
+ * When insert facts a1, a2, a3
+ * When fire all rules
+ * Then count of facts is 3
+ * Given variable listOfLong as AtomicLong objects from the session
+ * Then assert listOfLong.size() is 2
+ * Then all activations are 
+ *     atomic int rule
+ *     atomic long rule
+ * </pre>
+ */
+public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter {
 	
 	protected static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	
@@ -58,20 +101,12 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	protected final Set<String> knownMimeTypes = knownMimeTypes();
 	protected DroolsSessionProxy droolsSessionMeta;
 	protected TestRulesProxy testRulesMeta;
-	protected MvelProcessor mvelProcessor = mvelProcessor();
-	protected HashMap<String, Object> globals = new HashMap<>();
-	protected A drools;
-	
-	/**
-	 * Reset variables for each session definition
-	 */
-	protected void resetVariableDefinitions() {
-		if (droolsSessionMeta == null)
-			return;
-		droolsSessionMeta = null;
-		mvelProcessor = mvelProcessor();
-		globals = new HashMap<>();
-	}
+	protected volatile MvelProcessor mvelProcessor;
+	protected volatile Set<String> imports;
+	protected volatile HashMap<String, Object> globals;
+	protected volatile Story story;
+	protected volatile Scenario scenario;
+	protected volatile A drools;
 	
 	/**
 	 * <pre>
@@ -87,9 +122,8 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	@Given("import $imports")
 	@Alias("imports $imports")
 	public void givenImports(String imports) {
-		resetVariableDefinitions();
-		for (String line : Splitter.onPattern(NL).trimResults().omitEmptyStrings().split(imports))
-			mvelProcessor.importPackage(line);
+		Splitter.onPattern(NL).trimResults().omitEmptyStrings().split(imports)
+				.forEach(line -> mvelProcessor.importPackage(line));
 	}
 	
 	/**
@@ -111,7 +145,6 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	 */
 	@Given("drools session $sessionMeta")
 	public void givenDroolsSession(String sessionMeta) {
-		resetVariableDefinitions();
 		droolsSessionMeta = new DroolsSessionProxy();
 		List<String> resources = new ArrayList<>();
 		List<String> sessionProperties = new ArrayList<>();
@@ -184,22 +217,26 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	}
 	
 	/**
-	 * Create empty drools session for a scenario.
+	 * Create new drools session for a scenario.
 	 * 
 	 * <pre>
+	 * Scenario:  test 1
 	 * Given new session for scenario
 	 * 
+	 * Scenario:  test 2
 	 * Given new session for scenario, check scheduled, ignore '* int rule', 'other rule'
 	 * 
+	 * Scenario:  test 3
 	 * Given new session for scenario, check scheduled, ignore source: &#42;&#42;/ignoreDroolsAssertTest.txt
 	 * 
+	 * Scenario:  test 4
 	 * Given new session for scenario
 	 * 	check scheduled
 	 * 	ignore * ${with}(and)[??]
 	 * </pre>
 	 */
 	@Given("new session for scenario$sessionMeta")
-	public void givenNewSessionForScenario(String sessionMeta) throws IOException {
+	public void givenNewSessionForScenario(String sessionMeta) {
 		testRulesMeta = new TestRulesProxy();
 		List<String> ignore = new ArrayList<>();
 		
@@ -220,9 +257,10 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 		if (!ignore.isEmpty())
 			testRulesMeta.ignore = ignore.toArray(new String[0]);
 		
-		if (drools != null)
-			drools.destroy();
-		drools = droolsAssert();
+		drools.init(
+				(DroolsSession) newProxyInstance(getClass().getClassLoader(), new Class[] { DroolsSession.class }, droolsSessionMeta),
+				(TestRules) newProxyInstance(getClass().getClassLoader(), new Class[] { TestRules.class }, testRulesMeta));
+		drools.getActivationReportBuilder().setReportName(story.getPath() + "." + scenario.getTitle());
 		globals.entrySet().forEach(e -> drools.setGlobal(e.getKey(), e.getValue()));
 	}
 	
@@ -541,11 +579,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	@SuppressWarnings("unchecked")
 	protected A droolsAssert() {
-		DroolsAssert droolsAssert = new DroolsAssert();
-		droolsAssert.init(
-				(DroolsSession) newProxyInstance(getClass().getClassLoader(), new Class[] { DroolsSession.class }, droolsSessionMeta),
-				(TestRules) newProxyInstance(getClass().getClassLoader(), new Class[] { TestRules.class }, testRulesMeta));
-		return (A) droolsAssert;
+		return (A) new DroolsAssert();
 	}
 	
 	protected MvelProcessor mvelProcessor() {
@@ -554,5 +588,28 @@ public class DroolsAssertSteps<A extends DroolsAssert> {
 	
 	protected final <T> Class<T> classOf(String className) {
 		return mvelProcessor.evaluate(className + ".class");
+	}
+	
+	@Override
+	public void beforeStory(Story story, boolean givenStory) {
+		this.story = story;
+		
+		drools = droolsAssert();
+		mvelProcessor = mvelProcessor();
+		imports = new HashSet<>();
+		globals = new HashMap<>();
+	}
+	
+	@Override
+	public void beforeScenario(Scenario scenario) {
+		this.scenario = scenario;
+	}
+	
+	@Override
+	public void afterScenario() {
+		if (drools.getSession() != null) {
+			drools.getActivationReportBuilder().buildReports();
+			drools.destroy();
+		}
 	}
 }

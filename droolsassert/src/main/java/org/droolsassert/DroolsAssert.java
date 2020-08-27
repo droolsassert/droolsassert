@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.droolsassert.report.ActivationReportBuilder;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -103,15 +104,21 @@ public class DroolsAssert implements TestRule {
 	protected KieSession session;
 	protected Agenda agenda;
 	protected SessionPseudoClock clock;
-	protected Map<String, Integer> activations = new LinkedHashMap<>();
-	protected Map<String, Integer> activationsSnapshot = new LinkedHashMap<>();
-	protected Set<String> ignored = new HashSet<>();
-	protected Map<Object, Integer> factsHistory = new IdentityHashMap<>();
-	protected RulesChronoAgendaEventListener rulesChrono = rulesChrono();
+	protected Map<String, Integer> activations;
+	protected Map<String, Integer> activationsSnapshot;
+	protected Set<String> ignored;
+	protected Map<Object, Integer> factsHistory;
+	protected RulesChronoAgendaEventListener rulesChrono;
+	protected ActivationReportBuilder activationReportBuilder;
 	
 	public DroolsAssert() {
 	}
 	
+	/**
+	 * Initializes new drools session based on meta data.<br>
+	 * Must be paired with {@link #destroy()} to free-up resources.<br>
+	 * Can be called multiple times paired with {@link #destroy()}
+	 */
 	public void init(DroolsSession droolsSessionMeta, TestRules testRulesMeta) {
 		this.droolsSessionMeta = droolsSessionMeta;
 		this.testRulesMeta = testRulesMeta;
@@ -122,9 +129,14 @@ public class DroolsAssert implements TestRule {
 		session.addEventListener(new LoggingAgendaEventListener());
 		if (droolsSessionMeta.log())
 			session.addEventListener(new LoggingWorkingMemoryEventListener());
+		rulesChrono = rulesChrono();
 		session.addEventListener(rulesChrono);
 		
+		activations = new LinkedHashMap<>();
+		activationsSnapshot = new LinkedHashMap<>();
 		initializeIgnoredActivations();
+		factsHistory = new IdentityHashMap<>();
+		activationReportBuilder = new ActivationReportBuilder(session, activations);
 	}
 	
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
@@ -604,6 +616,8 @@ public class DroolsAssert implements TestRule {
 				checkNotNull(description.getTestClass().getAnnotation(DroolsSession.class), "Missing @DroolsSession definition"),
 				description.getAnnotation(TestRules.class));
 		
+		activationReportBuilder.setReportName(description.getClassName() + "." + description.getMethodName());
+		
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
@@ -618,6 +632,8 @@ public class DroolsAssert implements TestRule {
 			base.evaluate();
 		} catch (Throwable th) {
 			errors.add(th);
+		} finally {
+			activationReportBuilder.buildReports();
 		}
 		if (testRulesMeta != null) {
 			try {
@@ -641,6 +657,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	public final void initializeIgnoredActivations() {
+		ignored = new HashSet<>();
 		ignoreActivations(droolsSessionMeta.ignoreRules());
 		if (!droolsSessionMeta.ignoreRulesSource().isEmpty())
 			ignoreActivations(getRulesFromSource(getResources(true, false, droolsSessionMeta.ignoreRulesSource())));
@@ -714,6 +731,10 @@ public class DroolsAssert implements TestRule {
 		session.removeEventListener(this.rulesChrono);
 		session.addEventListener(rulesChrono);
 		this.rulesChrono = rulesChrono;
+	}
+	
+	public ActivationReportBuilder getActivationReportBuilder() {
+		return activationReportBuilder;
 	}
 	
 	protected boolean isEligibleForAssertion(String rule) {

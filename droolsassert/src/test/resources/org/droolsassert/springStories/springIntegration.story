@@ -1,5 +1,6 @@
 Logical events story
 
+Scenario: definitions
 Given import org.droolsassert.SpringIntegrationTest
 
 Given drools session classpath:/org/droolsassert/weather.drl
@@ -8,7 +9,7 @@ Given global weatherUrl is 'https://samples.openweathermap.org/data/2.5/weather?
 Given global restTemplate is a spring service restTemplate
 
 
-!-- test weather in London
+Scenario: test weather in London
 Given new session for scenario
 When advance time for 1 hours
 Given variable weather as Weather object from the session

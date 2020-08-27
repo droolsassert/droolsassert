@@ -36,7 +36,10 @@ public class JbehaveSpringStories extends InjectableEmbedder {
 	
 	@Autowired
 	private ApplicationContext appContext;
+	@Autowired
+	private SpringContextAwareDroolsAssertSteps springContextAwareDroolsAssertSteps;
 	
+	@Override
 	@Test
 	public void run() {
 		Embedder embedder = injectedEmbedder();
@@ -51,6 +54,8 @@ public class JbehaveSpringStories extends InjectableEmbedder {
 				.useStoryReporterBuilder(new StoryReporterBuilder()
 						.withCodeLocation(codeLocationFromClass(this.getClass()))
 						.withDefaultFormats().withFormats(TXT)
+						.withMultiThreading(false)
+						.withReporters(springContextAwareDroolsAssertSteps)
 						.withFailureTrace(true));
 	}
 	
