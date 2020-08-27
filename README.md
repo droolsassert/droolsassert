@@ -46,17 +46,18 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
 [Spring integration test 2](https://github.com/droolsassert/droolsassert/wiki/4.-Spring-integration-test-2)  
 [Extend it with your application specific utilities](https://github.com/droolsassert/droolsassert/wiki/5.-Extension-example)  
 [Gather performance statistic](https://github.com/droolsassert/droolsassert/wiki/6.-Performance-stats)  
-[Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/8.1-Jbehave-integration)  
-[Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/8.2-Jbehave-Spring-example)  
-[Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/8.3-Jbehave-extention)  
-[JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/8.4-JUnit-vs-jbehave)  
+[Kinda coverage report](https://github.com/droolsassert/droolsassert/wiki/7.-Kinda-coverage-report)  
+[Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/9.1-Jbehave-integration)  
+[Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/9.2-Jbehave-Spring-example)  
+[Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/9.3-Jbehave-extention)  
+[JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/9.4-JUnit-vs-jbehave)  
 
 ## Latest maven build
 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.0.10</version>
+        <version>2.1.0</version>
         <scope>test</scope>
     </dependency>
 
