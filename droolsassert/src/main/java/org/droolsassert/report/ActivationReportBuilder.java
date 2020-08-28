@@ -26,9 +26,9 @@ import org.droolsassert.DroolsAssertException;
 import org.kie.api.runtime.KieSession;
 
 /**
- * Creates activations coverage (known rules in a session vs activated rules)<br>
+ * Creates activation report (known rules in a session vs activated rules)<br>
  * First line of the report is percent of activated rules<br>
- * Other lines shows absolute count of rule activations<br>
+ * Other lines show absolute count of rules activation<br>
  * 
  * <pre>
  * 75.00 

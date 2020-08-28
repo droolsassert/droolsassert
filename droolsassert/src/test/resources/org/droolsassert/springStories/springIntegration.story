@@ -11,7 +11,7 @@ Given global restTemplate is a spring service restTemplate
 
 Scenario: test weather in London
 Given new session for scenario
-When advance time for 1 hours
+When advance time for 1 hour
 Given variable weather as Weather object from the session
 Then assert weather.humidity is 81
 Then all activations are 
