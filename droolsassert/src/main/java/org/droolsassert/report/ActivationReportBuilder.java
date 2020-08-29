@@ -151,7 +151,7 @@ public class ActivationReportBuilder {
 	private void writeReport(File report, Map<String, Integer> activations) {
 		Set<String> triggeredRules = triggeredRules(activations);
 		try (PrintWriter pw = new PrintWriter(report)) {
-			pw.printf("%-6.2f%n", 100.0 * triggeredRules.size() / activations.size());
+			pw.printf("%.2f%n", 100.0 * triggeredRules.size() / activations.size());
 			for (Entry<String, Integer> e : activations.entrySet())
 				pw.printf("%-7d \t%s%n", e.getValue(), e.getKey());
 		} catch (IOException e) {
