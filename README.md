@@ -1,9 +1,3 @@
-<style>
-span.new{
-    color:red;
-}
-</style>
-
 ## Goal
 
 Relieve Drools JUnit testing 
@@ -50,7 +44,7 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
 [Spring integration test 2](https://github.com/droolsassert/droolsassert/wiki/4.-Spring-integration-test-2)  
 [Extend it with your application specific utilities](https://github.com/droolsassert/droolsassert/wiki/5.-Extension-example)  
 [Gather performance statistic](https://github.com/droolsassert/droolsassert/wiki/6.-Performance-stats)  
-[Activation report](https://github.com/droolsassert/droolsassert/wiki/7.-Activation-report) <span class="new">new</span>  
+[Activation report](https://github.com/droolsassert/droolsassert/wiki/7.-Activation-report) <img src="wiki-data/new.png"/>  
 [Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/9.1-Jbehave-integration)  
 [Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/9.2-Jbehave-Spring-example)  
 [Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/9.3-Jbehave-extention)  
