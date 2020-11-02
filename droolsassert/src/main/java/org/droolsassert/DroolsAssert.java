@@ -111,9 +111,6 @@ public class DroolsAssert implements TestRule {
 	protected RulesChronoAgendaEventListener rulesChrono;
 	protected ActivationReportBuilder activationReportBuilder;
 	
-	public DroolsAssert() {
-	}
-	
 	/**
 	 * Initializes new drools session based on meta data.<br>
 	 * Must be paired with {@link #destroy()} to free-up resources.<br>
