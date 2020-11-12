@@ -22,7 +22,7 @@ Spring ant-like [PathMatchingResourcePatternResolver](https://docs.spring.io/spr
         builderProperties = "drools.dump.dir = target/dump",
         logResources = true)
 
-Declare the rule for the test
+Declare [the rule](https://www.baeldung.com/junit-4-rules) for the test
 
     @Rule
     public DroolsAssert drools = new DroolsAssert();
