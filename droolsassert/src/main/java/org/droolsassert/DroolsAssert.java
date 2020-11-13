@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
 import static java.lang.System.out;
-import static java.time.LocalTime.MIDNIGHT;
+import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.sort;
@@ -39,7 +39,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -164,6 +165,9 @@ import org.springframework.util.PathMatcher;
 public class DroolsAssert implements TestRule {
 	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
 	protected static final DateTimeFormatter HH_MM_SS_SSS = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+	protected static final DateTimeFormatter DDD_HH_MM_SS = DateTimeFormatter.ofPattern("DDD HH:mm:ss");
+	protected static final DateTimeFormatter DDD_HH_MM_SS_SSS = DateTimeFormatter.ofPattern("DDD HH:mm:ss.SSS");
+	protected static final long DAY_MILLISECONDS = DAYS.toMillis(1);
 	protected static final PathMatcher nameMatcher = new AntPathMatcher("\n");
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
@@ -795,6 +799,9 @@ public class DroolsAssert implements TestRule {
 		return (T) rulesChrono;
 	}
 	
+	/**
+	 * Set rules chrono listener last to exclude other listeners (if any) processing time in performance results
+	 */
 	public void setRulesChrono(RulesChronoAgendaEventListener rulesChrono) {
 		session.removeEventListener(this.rulesChrono);
 		session.addEventListener(rulesChrono);
@@ -822,8 +829,10 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	protected final String formatTime() {
-		return MIDNIGHT.plus(Duration.ofMillis(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()))
-				.format(clock.getCurrentTime() == MAX_VALUE || clock.getCurrentTime() % 1000 == 0 ? HH_MM_SS : HH_MM_SS_SSS);
+		return LocalDateTime.ofInstant(Instant.ofEpochMilli(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()), UTC)
+				.format(clock.getCurrentTime() == MAX_VALUE ? DDD_HH_MM_SS_SSS : clock.getCurrentTime() % 1000 == 0
+						? (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS : DDD_HH_MM_SS)
+						: (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS_SSS : DDD_HH_MM_SS_SSS));
 	}
 	
 	private class LoggingAgendaEventListener extends DefaultAgendaEventListener {
