@@ -18,7 +18,7 @@ import org.jbehave.core.reporters.StoryReporterBuilder;
 import org.jbehave.core.steps.InjectableStepsFactory;
 import org.jbehave.core.steps.InstanceStepsFactory;
 
-public class JbehaveStories extends JUnitStories {
+public class JbehaveTest extends JUnitStories {
 	
 	private DroolsAssertSteps<DroolsAssert> droolsAssertSteps = new DroolsAssertSteps<>();
 	
@@ -29,7 +29,6 @@ public class JbehaveStories extends JUnitStories {
 				.useStoryReporterBuilder(new StoryReporterBuilder()
 						.withCodeLocation(codeLocationFromClass(this.getClass()))
 						.withDefaultFormats().withFormats(TXT)
-						.withMultiThreading(false)
 						.withReporters(droolsAssertSteps)
 						.withFailureTrace(true));
 	}

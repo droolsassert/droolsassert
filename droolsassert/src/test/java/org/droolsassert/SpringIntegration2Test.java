@@ -5,7 +5,7 @@ import static org.drools.core.impl.KnowledgeBaseFactory.newKnowledgeSessionConfi
 import static org.junit.Assert.assertEquals;
 
 import org.droolsassert.SpringIntegrationTest.Weather;
-import org.droolsassert.SpringIntegrationTest2.AppConfig;
+import org.droolsassert.SpringIntegration2Test.AppConfig;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,7 +27,7 @@ import org.springframework.web.client.RestTemplate;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = { AppConfig.class })
 @DroolsSession
-public class SpringIntegrationTest2 {
+public class SpringIntegration2Test {
 	
 	@Autowired
 	private KieContainer kieContainer;

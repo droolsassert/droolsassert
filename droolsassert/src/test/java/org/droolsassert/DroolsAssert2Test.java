@@ -16,10 +16,10 @@ import org.junit.Test;
 		ignoreRules = { "before", "after" },
 		keepFactsHistory = false,
 		logResources = true)
-public class DroolsAssertTest2 extends DroolsAssert {
+public class DroolsAssert2Test extends DroolsAssert {
 	
 	@Rule
-	public DroolsAssert drools = this;
+	public DroolsAssert droolsAssert = this;
 	
 	@Test
 	@TestRules(expected = "atomic int rule")

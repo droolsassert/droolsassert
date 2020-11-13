@@ -27,7 +27,7 @@ import org.jbehave.core.steps.InstanceStepsFactory;
 
 import com.google.common.io.Resources;
 
-public class JbehaveExtentionExample extends JUnitStories {
+public class JbehaveExtentionTest extends JUnitStories {
 	
 	private ExtendedDroolsAssertSteps steps = new ExtendedDroolsAssertSteps();
 	
@@ -38,7 +38,6 @@ public class JbehaveExtentionExample extends JUnitStories {
 				.useStoryReporterBuilder(new StoryReporterBuilder()
 						.withCodeLocation(codeLocationFromClass(this.getClass()))
 						.withDefaultFormats().withFormats(TXT)
-						.withMultiThreading(false)
 						.withReporters(steps)
 						.withFailureTrace(true));
 	}

@@ -2,14 +2,14 @@ package org.droolsassert;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import org.droolsassert.SlidingWindowTest.SensorReading;
-import org.droolsassert.SlidingWindowTest.TemperatureThreshold;
+import org.droolsassert.SlidingTimeWindowTest.SensorReading;
+import org.droolsassert.SlidingTimeWindowTest.TemperatureThreshold;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 @DroolsSession("classpath:/org/droolsassert/slidingLengthWindow.drl")
-public class SlidingWindowTest2 {
+public class SlidingLengthWindowTest {
 	
 	@Rule
 	public DroolsAssert drools = new DroolsAssert();

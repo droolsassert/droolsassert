@@ -7,7 +7,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 @DroolsSession("classpath:/org/droolsassert/slidingTimeWindow.drl")
-public class SlidingWindowTest {
+public class SlidingTimeWindowTest {
 	
 	@Rule
 	public DroolsAssert drools = new DroolsAssert();

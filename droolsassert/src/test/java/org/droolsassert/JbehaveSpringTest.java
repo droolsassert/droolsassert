@@ -5,7 +5,7 @@ import static org.jbehave.core.reporters.Format.TXT;
 
 import java.util.List;
 
-import org.droolsassert.JbehaveSpringStories.AppConfig;
+import org.droolsassert.JbehaveSpringTest.AppConfig;
 import org.droolsassert.jbehave.DroolsAssertSteps;
 import org.jbehave.core.InjectableEmbedder;
 import org.jbehave.core.configuration.Configuration;
@@ -32,7 +32,7 @@ import org.springframework.web.client.RestTemplate;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { AppConfig.class })
-public class JbehaveSpringStories extends InjectableEmbedder {
+public class JbehaveSpringTest extends InjectableEmbedder {
 	
 	@Autowired
 	private ApplicationContext appContext;
@@ -54,7 +54,6 @@ public class JbehaveSpringStories extends InjectableEmbedder {
 				.useStoryReporterBuilder(new StoryReporterBuilder()
 						.withCodeLocation(codeLocationFromClass(this.getClass()))
 						.withDefaultFormats().withFormats(TXT)
-						.withMultiThreading(false)
 						.withReporters(springContextAwareDroolsAssertSteps)
 						.withFailureTrace(true));
 	}

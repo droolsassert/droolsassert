@@ -87,15 +87,17 @@ public class ActivationReportBuilder {
 					consolidatedReport = file;
 			}
 		}
-		try {
-			if (reportsDirectory != null)
-				forceMkdir(reportsDirectory);
-			if (consolidatedReport != null) {
-				forceMkdirParent(consolidatedReport);
-				consolidatedReport.createNewFile();
+		synchronized (ActivationReportBuilder.class) {
+			try {
+				if (reportsDirectory != null && !reportsDirectory.exists())
+					forceMkdir(reportsDirectory);
+				if (consolidatedReport != null && !consolidatedReport.exists()) {
+					forceMkdirParent(consolidatedReport);
+					consolidatedReport.createNewFile();
+				}
+			} catch (IOException e) {
+				throw new RuntimeException("Cannot initialize reports file-system", e);
 			}
-		} catch (IOException e) {
-			throw new RuntimeException("Cannot initialize reports file-system", e);
 		}
 	}
 	
@@ -126,26 +128,28 @@ public class ActivationReportBuilder {
 		TreeMap<String, Integer> consolidatedReportData = new TreeMap<>(CASE_INSENSITIVE_ORDER);
 		knownRules().forEach(rule -> consolidatedReportData.put(rule, 0));
 		
-		try (InputStream is = new FileInputStream(consolidatedReport)) {
-			readLines(is, defaultCharset()).stream()
-					.skip(1)
-					.forEach(line -> {
-						Matcher m = COUNT_OF_RULES.matcher(line);
-						if (!m.matches())
-							throw new IllegalStateException("Report broken, please delete manually " + consolidatedReport);
-						consolidatedReportData.put(m.group("rule"), parseInt(m.group("count")));
-					});
-		} catch (IOException e) {
-			throw new DroolsAssertException("Cannot read consolidated report", e);
+		synchronized (ActivationReportBuilder.class) {
+			try (InputStream is = new FileInputStream(consolidatedReport)) {
+				readLines(is, defaultCharset()).stream()
+						.skip(1)
+						.forEach(line -> {
+							Matcher m = COUNT_OF_RULES.matcher(line);
+							if (!m.matches())
+								throw new IllegalStateException("Report broken, please delete manually " + consolidatedReport);
+							consolidatedReportData.put(m.group("rule"), parseInt(m.group("count")));
+						});
+			} catch (IOException e) {
+				throw new DroolsAssertException("Cannot read consolidated report", e);
+			}
+			
+			activations.entrySet().forEach(e -> {
+				consolidatedReportData.put(e.getKey(), consolidatedReportData.containsKey(e.getKey())
+						? e.getValue() + consolidatedReportData.get(e.getKey())
+						: e.getValue());
+			});
+			
+			writeReport(consolidatedReport, consolidatedReportData);
 		}
-		
-		activations.entrySet().forEach(e -> {
-			consolidatedReportData.put(e.getKey(), consolidatedReportData.containsKey(e.getKey())
-					? e.getValue() + consolidatedReportData.get(e.getKey())
-					: e.getValue());
-		});
-		
-		writeReport(consolidatedReport, consolidatedReportData);
 	}
 	
 	private void writeReport(File report, Map<String, Integer> activations) {

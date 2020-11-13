@@ -9,7 +9,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-@DroolsSession("classpath:/org/droolsassert/complexEventProcessing.drl")
+@DroolsSession("org/droolsassert/complexEventProcessing.drl")
 public class ComplexEventProcessingTest {
 	
 	@Rule

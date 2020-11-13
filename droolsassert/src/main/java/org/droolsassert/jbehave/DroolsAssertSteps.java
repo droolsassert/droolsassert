@@ -49,6 +49,7 @@ import com.google.common.base.Splitter;
 import com.google.common.io.Resources;
 
 /**
+ * Example <a href="https://jbehave.org/">jbehave</a> test
  * 
  * <pre>
  * Drools assert story

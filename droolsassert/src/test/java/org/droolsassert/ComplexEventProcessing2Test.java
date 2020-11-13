@@ -11,11 +11,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-@DroolsSession("classpath:/org/droolsassert/complexEventProcessing.drl")
-public class ComplexEventProcessingTest2 extends DroolsAssert {
+@DroolsSession("org/droolsassert/complexEventProcessing.drl")
+public class ComplexEventProcessing2Test extends DroolsAssert {
 	
 	@Rule
-	public DroolsAssert drools = this;
+	public DroolsAssert droolsAssert = this;
 	
 	@Before
 	public void before() {

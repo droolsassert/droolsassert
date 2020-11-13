@@ -1,8 +1,8 @@
 package org.droolsassert;
 dialect 'mvel'
 
-import org.droolsassert.SlidingWindowTest.SensorReading
-import org.droolsassert.SlidingWindowTest.TemperatureThreshold
+import org.droolsassert.SlidingTimeWindowTest.SensorReading
+import org.droolsassert.SlidingTimeWindowTest.TemperatureThreshold
 
 declare SensorReading @role (event) end
 

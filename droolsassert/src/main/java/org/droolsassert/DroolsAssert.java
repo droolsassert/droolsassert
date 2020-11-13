@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.droolsassert.jbehave.DroolsAssertSteps;
 import org.droolsassert.report.ActivationReportBuilder;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -90,6 +91,74 @@ import org.springframework.util.PathMatcher;
 /**
  * JUnit {@link TestRule} for declarative drools tests.
  * 
+ * <pre>
+ * &#64;DroolsSession(resources = {
+ *     "classpath&#42;:/org/droolsassert/rules.drl",
+ *     "classpath&#42;:/com/company/project/&#42;/&#123;regex:.&#42;.(drl|dsl|xlsx|gdst)&#125;",
+ *     "classpath&#42;:/com/company/project/&#42;/ruleUnderTest.rdslr" },
+ *     ignoreRules = &#123; "before", "after" &#125;,
+ *     logResources = true)
+ * public class DroolsAssertTest {
+ *     
+ *     &#64;Rule
+ *     public DroolsAssert drools = new DroolsAssert();
+ *     
+ *     &#64;Test
+ *     &#64;TestRules(expected = "atomic int rule")
+ *     public void testInt() {
+ *        drools.insertAndFire(new AtomicInteger());
+ *        assertEquals(1, drools.getObject(AtomicInteger.class).get());
+ *     }
+ * </pre>
+ * 
+ * You can omit rule object reference snippet if you can extend from {@code DroolsAssert}
+ * 
+ * <pre>
+ * &#64;DroolsSession("org/droolsassert/complexEventProcessing.drl")
+ * public class ComplexEventProcessingTest extends DroolsAssert {
+ *     
+ *     &#64;Rule
+ *     public DroolsAssert droolsAssert = this;
+ *     
+ *     &#64;Before
+ *         public void before() {
+ *         setGlobal("stdout", System.out);
+ *     }
+ * 
+ *     &#64;Test
+ *     &#64;TestRules(expected = "input call")
+ *         public void testAssertActivations() {
+ *         insertAndFire(new Dialing("11111", "22222"));
+ *     } 
+ *     
+ *     &#64;Test
+ *     public void testCallsConnectAndDisconnectLogic() {
+ *         Dialing caller1Dial = new Dialing("11111", "22222");
+ *         insertAndFire(caller1Dial);
+ *         assertRetracted(caller1Dial);
+ *         CallInProgress call = getObject(CallInProgress.class);
+ *         assertEquals("11111", call.callerNumber);
+ *     
+ *         advanceTime(5, MINUTES);
+ *         Dialing caller3Dial = new Dialing("33333", "22222");
+ *         insertAndFire(caller3Dial);
+ *         assertExist(caller3Dial);
+ *     
+ *         advanceTime(5, SECONDS);
+ *         assertExist(call, caller3Dial);
+ *     
+ *         advanceTime(5, SECONDS);
+ *         assertExist(call);
+ *         assertRetracted(caller3Dial);
+ *     
+ *         advanceTime(1, HOURS);
+ *         assertRetracted(call);
+ *     
+ *         assertAllRetracted();
+ *     }
+ * </pre>
+ * 
+ * @see DroolsAssertSteps
  * @see <a href=https://github.com/droolsassert/droolsassert>Documentation on GitHub</a>
  */
 public class DroolsAssert implements TestRule {
@@ -148,14 +217,16 @@ public class DroolsAssert implements TestRule {
 		if (kieBases.containsKey(droolsSessionMeta))
 			return kieBases.get(droolsSessionMeta);
 		
-		KieHelper kieHelper = new KieHelper();
-		kieHelper.setKieModuleModel(kieModule(builderConfiguration(droolsSessionMeta)));
-		for (Resource resource : getResources(true, droolsSessionMeta.logResources(), firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources())))
-			kieHelper.addResource(newUrlResource(resource.getURL()));
-		KieBase kieBase = kieHelper.build(baseConfiguration(droolsSessionMeta));
-		
-		kieBases.put(droolsSessionMeta, kieBase);
-		return kieBase;
+		synchronized (DroolsAssert.class) {
+			KieHelper kieHelper = new KieHelper();
+			kieHelper.setKieModuleModel(kieModule(builderConfiguration(droolsSessionMeta)));
+			for (Resource resource : getResources(true, droolsSessionMeta.logResources(), firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources())))
+				kieHelper.addResource(newUrlResource(resource.getURL()));
+			KieBase kieBase = kieHelper.build(baseConfiguration(droolsSessionMeta));
+			
+			kieBases.put(droolsSessionMeta, kieBase);
+			return kieBase;
+		}
 	}
 	
 	protected KieModuleModel kieModule(Properties properties) throws IOException {
