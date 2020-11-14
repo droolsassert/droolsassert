@@ -160,7 +160,7 @@ import org.springframework.util.PathMatcher;
  * </pre>
  * 
  * @see DroolsAssertSteps
- * @see <a href=https://github.com/droolsassert/droolsassert>Documentation on GitHub</a>
+ * @see <a href=https://github.com/droolsassert>Documentation on GitHub</a>
  */
 public class DroolsAssert implements TestRule {
 	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -864,8 +864,8 @@ public class DroolsAssert implements TestRule {
 		@Override
 		public void objectUpdated(ObjectUpdatedEvent event) {
 			out.println(formatTime() + " --> updated: " + (droolsSessionMeta.logFacts()
-					? format("%s >>> %s", factToString(event.getOldObject()), factToString(event.getObject()))
-					: event.getOldObject().getClass().getSimpleName()));
+					? factToString(event.getObject())
+					: event.getObject().getClass().getSimpleName()));
 		}
 	}
 }
