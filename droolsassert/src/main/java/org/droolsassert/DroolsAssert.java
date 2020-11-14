@@ -864,7 +864,7 @@ public class DroolsAssert implements TestRule {
 		@Override
 		public void objectUpdated(ObjectUpdatedEvent event) {
 			out.println(formatTime() + " --> updated: " + (droolsSessionMeta.logFacts()
-					? format("%s%nto: %s", factToString(event.getOldObject()), factToString(event.getObject()))
+					? format("%s >>> %s", factToString(event.getOldObject()), factToString(event.getObject()))
 					: event.getOldObject().getClass().getSimpleName()));
 		}
 	}
