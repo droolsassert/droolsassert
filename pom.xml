@@ -8,9 +8,9 @@
 
 	<name>DroolsAssert BOM</name>
 	<description>
-		Drools JUnit testing library
+		Drools unit and integration testing with JUnit and jbehave
 	</description>
-	<url>https://github.com/droolsassert/droolsassert</url>
+	<url>https://github.com/droolsassert</url>
 
 	<modules>
 		<module>da-utils</module>
@@ -56,11 +56,6 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>1.7.30</version>
-			</dependency>
-			<dependency>
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
 				<version>4.12</version>
@@ -104,16 +99,43 @@
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
 				<version>28.2-jre</version>
+				<exclusions>
+					<exclusion>
+						<groupId>com.google.j2objc</groupId>
+						<artifactId>j2objc-annotations</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>com.google.code.findbugs</groupId>
+						<artifactId>jsr305</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.checkerframework</groupId>
+						<artifactId>checker-qual</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>com.google.errorprone</groupId>
+						<artifactId>error_prone_annotations</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>com.google.guava</groupId>
+						<artifactId>listenablefuture</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>com.google.guava</groupId>
+						<artifactId>failureaccess</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-context</artifactId>
 				<version>4.3.18.RELEASE</version>
-			</dependency>
-			<dependency>
-				<groupId>commons-logging</groupId>
-				<artifactId>commons-logging</artifactId>
-				<version>1.2</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.springframework</groupId>
+						<artifactId>spring-aop</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>org.jfree</groupId>

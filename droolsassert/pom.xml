@@ -10,8 +10,9 @@
 	<artifactId>droolsassert</artifactId>
 	<name>DroolsAssert</name>
 	<description>
-		Drools JUnit testing library
+		Drools unit and integration testing with JUnit and jbehave
 	</description>
+	<url>https://github.com/droolsassert</url>
 
 	<dependencies>
 		<dependency>
@@ -50,10 +51,6 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
