@@ -293,7 +293,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Move clock forward and trigger any scheduled rules.<br>
+	 * Move clock forward and trigger any scheduled activations.<br>
 	 * Use second as a smallest time tick.
 	 */
 	public void advanceTime(long amount, TimeUnit unit) {
@@ -301,7 +301,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Move clock forward and trigger any scheduled rules.<br>
+	 * Move clock forward and trigger any scheduled activations.<br>
 	 * Use time unit as a smallest time tick, make specified amount of ticks.
 	 */
 	public void advanceTime(TimeUnit unit, long amount) {
@@ -384,11 +384,11 @@ public class DroolsAssert implements TestRule {
 				.filter(this::isEligibleForAssertion).collect(toList());
 		
 		if (!missing.isEmpty() && !extra.isEmpty())
-			fail(formatUnexpectedCollection("Activation", "not triggered", missing) + LF + formatUnexpectedCollection("Activation", "triggered", extra));
+			fail(formatUnexpectedCollection("Rule", "not activated", missing) + LF + formatUnexpectedCollection("\nRule", "activated", extra));
 		else if (!missing.isEmpty())
-			fail(formatUnexpectedCollection("Activation", "not triggered", missing));
+			fail(formatUnexpectedCollection("Rule", "not activated", missing));
 		else if (!extra.isEmpty())
-			fail(formatUnexpectedCollection("Activation", "triggered", extra));
+			fail(formatUnexpectedCollection("Rule", "activated", extra));
 		
 		for (Entry<String, Integer> actual : actualActiavtions.entrySet()) {
 			Integer expected = expectedActivations.get(actual.getKey());
@@ -398,9 +398,9 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Move clock forward until all listed rules will be triggered, fail if any was not triggered before threshold.<br>
+	 * Move clock forward until all listed rules will be activated, fail if any of the rules was not activated before threshold.<br>
 	 * Use second as a smallest time tick and a day as a threshold.<br>
-	 * It is imperative that all other activations which were part of the same agenda were also triggered, see below.
+	 * It is imperative that all other rules which are part of the same agenda will be also executed, see below.
 	 * <p>
 	 * <i>Drools Developer's Cookbook (c):</i><br>
 	 * People quite often misunderstand how Drools works internally. So, let's try to clarify how rules are "executed" really. Each time an object is inserted/updated/retracted in the working memory, or the facts are update/retracted within the rules, the rules are re-evaluated with the new working
@@ -411,32 +411,32 @@ public class DroolsAssert implements TestRule {
 	 * @see #awaitFor(TimeUnit, long, String...)
 	 * @see #triggerAllScheduledActivations()
 	 * @throws AssertionError
-	 *             if expected activation(s) was not be triggered within a day
+	 *             if expected rule was not activated within a day
 	 */
 	public void awaitFor(String... rulesToWait) {
 		awaitFor(SECONDS, DAYS.toSeconds(1), rulesToWait);
 	}
 	
 	/**
-	 * Move clock forward until any upcoming scheduled activation will be triggered, fail if no rule was triggered before threshold.<br>
+	 * Move clock forward until any rule will be activated, fail if no rule was activated before threshold.<br>
 	 * Use second as a smallest time tick and a day as a threshold.
 	 * 
 	 * @see #awaitFor(String...)
 	 * @throws AssertionError
-	 *             if no rule was triggered within a day
+	 *             if no rule was activated within a day
 	 */
 	public void awaitForAny() {
 		awaitFor(SECONDS, DAYS.toSeconds(1));
 	}
 	
 	/**
-	 * Move clock forward until all listed rules will be triggered, fail if any of the rule was not triggered before threshold.<br>
+	 * Move clock forward until all listed rules will be activated, fail if any of the rules was not activated before threshold.<br>
 	 * Use time unit as a smallest time tick, make specified amount of ticks at maximum.
 	 * 
 	 * @see #awaitFor(String...)
 	 * @see #triggerAllScheduledActivations()
 	 * @throws AssertionError
-	 *             if expected activation(s) will not be triggered within time period
+	 *             if expected rule was not activated within time period
 	 */
 	public void awaitFor(TimeUnit unit, long maxCount, String... rulesToWait) {
 		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
@@ -450,11 +450,11 @@ public class DroolsAssert implements TestRule {
 		
 		fail(rules.isEmpty()
 				? "Expected at least one scheduled activation"
-				: formatUnexpectedCollection("Activations", "not scheduled", subtract(rules, getNewActivations(activationsSnapshot).keySet())));
+				: formatUnexpectedCollection("Activation", "not scheduled", subtract(rules, getNewActivations(activationsSnapshot).keySet())));
 	}
 	
 	/**
-	 * Assert no activations will be triggered in future assuming no new facts
+	 * Assert no rules will be activated in future assuming no new facts
 	 * 
 	 * @see #triggerAllScheduledActivations()
 	 * @throws AssertionError
@@ -622,7 +622,7 @@ public class DroolsAssert implements TestRule {
 	 */
 	public int fireAllRules() {
 		if (droolsSessionMeta.log())
-			out.println(formatTime() + " --> fireAllRules");
+			log(formatTime() + " --> fireAllRules");
 		return session.fireAllRules();
 	}
 	
@@ -671,15 +671,15 @@ public class DroolsAssert implements TestRule {
 		List<Object> sortedFacts = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).collect(toList());
 		if (droolsSessionMeta.keepFactsHistory())
 			sort(sortedFacts, (o1, o2) -> factsHistory.get(o1).compareTo(factsHistory.get(o2)));
-		out.println(format("%s Facts (%s):", formatTime(), sortedFacts.size()));
+		log(format("%s Facts (%s):", formatTime(), sortedFacts.size()));
 		for (Object fact : sortedFacts)
-			out.println(factToString(fact));
+			log(factToString(fact));
 	}
 	
 	public void printPerformanceStatistic() {
-		out.println(format("%s Performance Statistic, total activations %s:", formatTime(), activations.values().stream().mapToInt(Integer::intValue).sum()));
+		log(format("%s Performance Statistic, total activations %s:", formatTime(), activations.values().stream().mapToInt(Integer::intValue).sum()));
 		rulesChrono.getPerfStat().values()
-				.forEach(s -> out.printf("%s - min: %.2f avg: %.2f max: %.2f activations: %d%n", s.getDomain(), s.getMinTimeMs(), s.getAvgTimeMs(), s.getMaxTimeMs(), s.getLeapsCount()));
+				.forEach(s -> log(format("%s - min: %.2f avg: %.2f max: %.2f activations: %d", s.getDomain(), s.getMinTimeMs(), s.getAvgTimeMs(), s.getMaxTimeMs(), s.getLeapsCount())));
 	}
 	
 	@Override
@@ -835,37 +835,42 @@ public class DroolsAssert implements TestRule {
 						: (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS_SSS : DDD_HH_MM_SS_SSS));
 	}
 	
+	protected void log(String message) {
+		out.println(message);
+	}
+	
 	private class LoggingAgendaEventListener extends DefaultAgendaEventListener {
 		@Override
 		public void beforeMatchFired(BeforeMatchFiredEvent event) {
 			String ruleName = event.getMatch().getRule().getName();
 			activations.put(ruleName, firstNonNull(activations.get(ruleName), INTEGER_ZERO) + 1);
 			if (droolsSessionMeta.log())
-				out.printf("%s <-- '%s' has been activated by the tuple %s%n", formatTime(), ruleName, tupleToString(event.getMatch().getObjects()));
+				log(format("%s <-- '%s' has been activated by the tuple %s", formatTime(), ruleName, tupleToString(event.getMatch().getObjects())));
 		}
 	}
 	
 	private class LoggingWorkingMemoryEventListener extends DefaultRuleRuntimeEventListener {
 		@Override
 		public void objectInserted(ObjectInsertedEvent event) {
-			Object fact = event.getObject();
-			if (droolsSessionMeta.keepFactsHistory() && !factsHistory.containsKey(fact))
-				factsHistory.put(fact, factsHistory.size());
+			Object object = event.getObject();
+			if (droolsSessionMeta.keepFactsHistory() && !factsHistory.containsKey(object))
+				factsHistory.put(object, factsHistory.size());
 			
-			out.println(formatTime() + " --> inserted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
+			log(" --> inserted: ", object);
 		}
 		
 		@Override
 		public void objectDeleted(ObjectDeletedEvent event) {
-			Object fact = event.getOldObject();
-			out.println(formatTime() + " --> retracted: " + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
+			log(" --> retracted: ", event.getOldObject());
 		}
 		
 		@Override
 		public void objectUpdated(ObjectUpdatedEvent event) {
-			out.println(formatTime() + " --> updated: " + (droolsSessionMeta.logFacts()
-					? factToString(event.getObject())
-					: event.getObject().getClass().getSimpleName()));
+			log(" --> updated: ", event.getObject());
+		}
+		
+		private void log(String action, Object fact) {
+			DroolsAssert.this.log(formatTime() + action + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
 		}
 	}
 }
