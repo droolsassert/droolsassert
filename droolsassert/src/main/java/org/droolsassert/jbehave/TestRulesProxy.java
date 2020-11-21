@@ -1,5 +1,6 @@
 package org.droolsassert.jbehave;
 
+import static java.lang.reflect.Proxy.newProxyInstance;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
 import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
@@ -7,7 +8,15 @@ import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCod
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
+import org.droolsassert.TestRules;
+
 public class TestRulesProxy implements InvocationHandler {
+	
+	public static TestRules newTestRulesProxy(TestRulesProxy invocationHandler) {
+		return (TestRules) newProxyInstance(TestRulesProxy.class.getClassLoader(),
+				new Class[] { TestRules.class },
+				invocationHandler);
+	}
 	
 	String[] ignore = new String[0];
 	String ignoreSource = EMPTY;

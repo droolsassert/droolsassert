@@ -4,8 +4,8 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static org.drools.core.impl.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
 import static org.junit.Assert.assertEquals;
 
-import org.droolsassert.SpringIntegrationTest.Weather;
 import org.droolsassert.SpringIntegration2Test.AppConfig;
+import org.droolsassert.SpringIntegrationTest.Weather;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,7 +26,6 @@ import org.springframework.web.client.RestTemplate;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = { AppConfig.class })
-@DroolsSession
 public class SpringIntegration2Test {
 	
 	@Autowired
@@ -36,6 +35,7 @@ public class SpringIntegration2Test {
 	
 	@Rule
 	public DroolsAssert drools = new DroolsAssert() {
+		@Override
 		protected KieSession newSession(DroolsSession droolsSessionMeta) {
 			KieSessionConfiguration config = newKnowledgeSessionConfiguration();
 			config.setProperty("drools.clockType", "pseudo");

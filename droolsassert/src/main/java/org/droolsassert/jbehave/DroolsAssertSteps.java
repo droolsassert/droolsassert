@@ -4,7 +4,6 @@ import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
-import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -16,6 +15,8 @@ import static org.droolsassert.DroolsAssertUtils.getResources;
 import static org.droolsassert.DroolsAssertUtils.getRulesCountFromSource;
 import static org.droolsassert.DroolsAssertUtils.getRulesFromSource;
 import static org.droolsassert.DroolsAssertUtils.parseCountOfRules;
+import static org.droolsassert.jbehave.DroolsSessionProxy.newDroolsSessionProxy;
+import static org.droolsassert.jbehave.TestRulesProxy.newTestRulesProxy;
 import static org.droolsassert.util.JsonUtils.fromJson;
 import static org.droolsassert.util.JsonUtils.fromYaml;
 import static org.junit.Assert.assertEquals;
@@ -32,8 +33,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.droolsassert.DroolsAssert;
-import org.droolsassert.DroolsSession;
-import org.droolsassert.TestRules;
 import org.droolsassert.util.MvelProcessor;
 import org.jbehave.core.annotations.Alias;
 import org.jbehave.core.annotations.Aliases;
@@ -258,9 +257,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter
 		if (!ignore.isEmpty())
 			testRulesMeta.ignore = ignore.toArray(new String[0]);
 		
-		drools.init(
-				(DroolsSession) newProxyInstance(getClass().getClassLoader(), new Class[] { DroolsSession.class }, droolsSessionMeta),
-				(TestRules) newProxyInstance(getClass().getClassLoader(), new Class[] { TestRules.class }, testRulesMeta));
+		drools.init(newDroolsSessionProxy(droolsSessionMeta), newTestRulesProxy(testRulesMeta));
 		drools.getActivationReportBuilder().setReportName(story.getPath() + "." + scenario.getTitle());
 		globals.entrySet().forEach(e -> drools.setGlobal(e.getKey(), e.getValue()));
 	}

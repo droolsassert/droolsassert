@@ -14,6 +14,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.io.FileUtils.forceMkdir;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.LF;
@@ -27,6 +28,7 @@ import static org.droolsassert.DroolsAssertUtils.getExpectedCount;
 import static org.droolsassert.DroolsAssertUtils.getResources;
 import static org.droolsassert.DroolsAssertUtils.getRulesCountFromSource;
 import static org.droolsassert.DroolsAssertUtils.getRulesFromSource;
+import static org.droolsassert.jbehave.DroolsSessionProxy.newDroolsSessionProxy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -60,6 +62,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.droolsassert.jbehave.DroolsAssertSteps;
+import org.droolsassert.jbehave.DroolsSessionProxy;
 import org.droolsassert.report.ActivationReportBuilder;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -112,7 +115,7 @@ import org.springframework.util.PathMatcher;
  *     }
  * </pre>
  * 
- * You can omit rule object reference snippet if you can extend from {@code DroolsAssert}
+ * You can omit rule object references if you extend from {@code DroolsAssert}
  * 
  * <pre>
  * &#64;DroolsSession("org/droolsassert/complexEventProcessing.drl")
@@ -122,13 +125,13 @@ import org.springframework.util.PathMatcher;
  *     public DroolsAssert droolsAssert = this;
  *     
  *     &#64;Before
- *         public void before() {
+ *     public void before() {
  *         setGlobal("stdout", System.out);
  *     }
  * 
  *     &#64;Test
  *     &#64;TestRules(expected = "input call")
- *         public void testAssertActivations() {
+ *     public void testAssertActivations() {
  *         insertAndFire(new Dialing("11111", "22222"));
  *     } 
  *     
@@ -190,14 +193,14 @@ public class DroolsAssert implements TestRule {
 	 * Can be called multiple times paired with {@link #destroy()}
 	 */
 	public void init(DroolsSession droolsSessionMeta, TestRules testRulesMeta) {
-		this.droolsSessionMeta = droolsSessionMeta;
+		this.droolsSessionMeta = defaultIfNull(droolsSessionMeta, newDroolsSessionProxy(new DroolsSessionProxy()));
 		this.testRulesMeta = testRulesMeta;
-		this.session = newSession(droolsSessionMeta);
+		this.session = newSession(this.droolsSessionMeta);
 		
 		agenda = session.getAgenda();
 		clock = session.getSessionClock();
 		session.addEventListener(new LoggingAgendaEventListener());
-		if (droolsSessionMeta.log())
+		if (this.droolsSessionMeta.log())
 			session.addEventListener(new LoggingWorkingMemoryEventListener());
 		rulesChrono = rulesChrono();
 		session.addEventListener(rulesChrono);
@@ -684,10 +687,7 @@ public class DroolsAssert implements TestRule {
 	
 	@Override
 	public Statement apply(Statement base, Description description) {
-		init(
-				checkNotNull(description.getTestClass().getAnnotation(DroolsSession.class), "Missing @DroolsSession definition"),
-				description.getAnnotation(TestRules.class));
-		
+		init(description.getTestClass().getAnnotation(DroolsSession.class), description.getAnnotation(TestRules.class));
 		activationReportBuilder.setReportName(description.getClassName() + "." + description.getMethodName());
 		
 		return new Statement() {

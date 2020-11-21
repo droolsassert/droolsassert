@@ -1,5 +1,6 @@
 package org.droolsassert.jbehave;
 
+import static java.lang.reflect.Proxy.newProxyInstance;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
 import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
@@ -7,7 +8,15 @@ import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCod
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
+import org.droolsassert.DroolsSession;
+
 public class DroolsSessionProxy implements InvocationHandler {
+	
+	public static DroolsSession newDroolsSessionProxy(DroolsSessionProxy invocationHandler) {
+		return (DroolsSession) newProxyInstance(DroolsSessionProxy.class.getClassLoader(),
+				new Class[] { DroolsSession.class },
+				invocationHandler);
+	}
 	
 	String[] resources = new String[0];
 	String[] sessionProperties = new String[0];
