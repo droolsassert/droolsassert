@@ -38,26 +38,24 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
 
 ## Examples
 
-[Dummy assertions](https://github.com/droolsassert/droolsassert/wiki/1.1-Dummy-assertions)  
-[Complex event processing](https://github.com/droolsassert/droolsassert/wiki/1.2-Complex-event-processing)  
-[Spring integration test 1](https://github.com/droolsassert/droolsassert/wiki/1.3-Spring-integration-test-1)  
-[Spring integration test 2](https://github.com/droolsassert/droolsassert/wiki/1.4-Spring-integration-test-2)  
-[Extend it with your application specific utilities](https://github.com/droolsassert/droolsassert/wiki/2.1-Extension-example)  
-[Gather performance statistic](https://github.com/droolsassert/droolsassert/wiki/2.2-Performance-stats)  
-[Activation report](https://github.com/droolsassert/droolsassert/wiki/2.3-Activation-report) <img src="wiki-data/new.png"/>  
-[Run tests in parallel](https://github.com/droolsassert/droolsassert/wiki/2.4-Parallel-run) <img src="wiki-data/new.png"/>  
-[Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/3.1-Jbehave-integration)  
-[Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/3.2-Jbehave-Spring-example)  
-[Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/3.3-Jbehave-extention)  
-[JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/3.4-JUnit-vs-jbehave)  
+[Dummy assertions](https://github.com/droolsassert/droolsassert/wiki/Dummy-assertions)  
+[Complex event processing](https://github.com/droolsassert/droolsassert/wiki/Complex-event-processing)  
+[Spring integration test](https://github.com/droolsassert/droolsassert/wiki/Spring-integration-test)  
+[Extend it with your application specific utilities](https://github.com/droolsassert/droolsassert/wiki/Extension-example)  
+[Gather performance statistic](https://github.com/droolsassert/droolsassert/wiki/Performance-stats)  
+[Activation report](https://github.com/droolsassert/droolsassert/wiki/Activation-report)  
+[State transition report](https://github.com/droolsassert/droolsassert/wiki/State-transition-report) <img src="wiki-data/new.png"/>  
+[Run tests in parallel](https://github.com/droolsassert/droolsassert/wiki/Parallel-run)  
+[Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/Jbehave-integration)  
+[Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/Jbehave-Spring-example)  
+[Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/Jbehave-extention)  
+[JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/JUnit-vs-jbehave)  
 
 ## Latest maven build
 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.2.3</version>
+        <version>2.3.0</version>
         <scope>test</scope>
     </dependency>
-
-[![Analytics](https://ga-beacon.appspot.com/UA-160010393-1/droolsassert?pixel)](https://github.com/igrigorik/ga-beacon)
