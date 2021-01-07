@@ -60,7 +60,7 @@ public class ExtensionTest {
 		}
 		
 		@Override
-		protected String factToString(Object fact) {
+		public String factToString(Object fact) {
 			return fact instanceof Throwable ? getStackTrace((Throwable) fact) : fact.getClass().getSimpleName() + SPACE + toYaml(fact);
 		}
 	}

@@ -1,4 +1,4 @@
-package org.droolsassert.report;
+package org.droolsassert.listeners;
 
 import static java.io.File.pathSeparator;
 import static java.lang.Integer.parseInt;
@@ -6,10 +6,12 @@ import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.lang.System.getProperty;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.stream.Collectors.toSet;
-import static org.apache.commons.io.FileUtils.forceMkdir;
 import static org.apache.commons.io.FileUtils.forceMkdirParent;
 import static org.apache.commons.io.IOUtils.readLines;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.droolsassert.DroolsAssertUtils.COUNT_OF_RULES;
+import static org.droolsassert.DroolsAssertUtils.directory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,22 +43,22 @@ import org.kie.api.runtime.KieSession;
  * Define system property to enable activation reports
  * 
  * <pre>
- * -Ddroolsassert.activationReport[=[&lt;directory_path&gt;][&lt;path_separator&gt;][&lt;file_path&gt;]]
+ * -Ddroolsassert.activationReport[=&lt;directory_path&gt;[&lt;path_separator&gt;][&lt;file_path&gt;]]
  * </pre>
  * 
  * <b>directory_path</b> - directory for reports per test, default
  * 
  * <pre>
- * target/droolsassert/activationReports/
+ * target / droolsassert / activationReports
  * </pre>
  * 
  * <b>file_path</b> - consolidated report file path, default
  * 
  * <pre>
- * target/droolsassert/activationReport.txt
+ * ${directory_path}/activationReport.txt
  * </pre>
  */
-public class ActivationReportBuilder {
+public class ActivationReportBuilder implements DroolsassertListener {
 	
 	private static String systemProperty = getProperty("droolsassert.activationReport");
 	
@@ -71,42 +73,45 @@ public class ActivationReportBuilder {
 			return;
 		this.session = session;
 		this.activations = activations;
-		initializeReportFiles();
 	}
 	
-	private void initializeReportFiles() {
-		if (systemProperty.isEmpty()) {
-			reportsDirectory = new File("target/droolsassert/activationReports/");
-			consolidatedReport = new File("target/droolsassert/activationReport.txt");
-		} else {
-			for (String path : systemProperty.split(pathSeparator)) {
-				File file = new File(path);
-				if (file.isDirectory())
-					reportsDirectory = file;
-				else
-					consolidatedReport = file;
-			}
-		}
+	@Override
+	public boolean enabled() {
+		if (systemProperty == null)
+			return false;
+		if (reportsDirectory == null)
+			initialize();
+		return true;
+	}
+	
+	@Override
+	public void beforeScenario(String test, String scenario) {
+		this.reportName = (test + "#" + scenario).replace('/', '.');
+	}
+	
+	@Override
+	public void afterScenario() {
+		buildReport();
+		buildConsolidatedReport();
+	}
+	
+	private void initialize() {
+		if ("true".equals(systemProperty))
+			systemProperty = EMPTY;
+		String[] params = systemProperty.split(pathSeparator);
+		reportsDirectory = directory(new File(defaultIfEmpty(params[0], "target/droolsassert/activationReport")));
+		consolidatedReport = new File(params.length > 1 ? params[1] : reportsDirectory + ".txt");
+		
 		synchronized (ActivationReportBuilder.class) {
 			try {
-				if (reportsDirectory != null && !reportsDirectory.exists())
-					forceMkdir(reportsDirectory);
-				if (consolidatedReport != null && !consolidatedReport.exists()) {
+				if (!consolidatedReport.exists()) {
 					forceMkdirParent(consolidatedReport);
 					consolidatedReport.createNewFile();
 				}
 			} catch (IOException e) {
-				throw new RuntimeException("Cannot initialize reports file-system", e);
+				throw new DroolsAssertException("Cannot initialize reports file system", e);
 			}
 		}
-	}
-	
-	public void buildReports() {
-		if (systemProperty == null)
-			return;
-		
-		buildReport();
-		buildConsolidatedReport();
 	}
 	
 	private void buildReport() {
@@ -175,9 +180,5 @@ public class ActivationReportBuilder {
 				.filter(e -> e.getValue() > 0)
 				.map(e -> e.getKey())
 				.collect(toSet());
-	}
-	
-	public void setReportName(String reportName) {
-		this.reportName = reportName.replaceAll("[\\/]", ".");
 	}
 }

@@ -72,7 +72,6 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 				recordTimeSeries();
 			}
 		}, 0, aggregationPeriodMs);
-		
 	}
 	
 	public void recordTimeSeries() {

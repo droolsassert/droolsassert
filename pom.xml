@@ -91,6 +91,11 @@
 				<version>2.6</version>
 			</dependency>
 			<dependency>
+				<groupId>jgraph</groupId>
+				<artifactId>jgraph</artifactId>
+				<version>5.13.0.0</version>
+			</dependency>
+			<dependency>
 				<groupId>org.kie</groupId>
 				<artifactId>kie-spring</artifactId>
 				<version>7.28.0.Final</version>

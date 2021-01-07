@@ -8,7 +8,7 @@ Given drools session classpath:/org/droolsassert/complex name * ${with}(*)[or].d
 
 Scenario: test int
 Given new session for scenario
-	ignore * ${with}(and)[??]
+	ignore * ${with}(and)[??]<>
 Given variable atomicInteger is new AtomicInteger()
 Given variable atomicLong is new AtomicLong()
 When insert and fire atomicInteger, atomicLong

@@ -2,17 +2,25 @@ package org.droolsassert;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Integer.parseInt;
+import static java.lang.Long.MAX_VALUE;
 import static java.lang.System.out;
 import static java.nio.charset.Charset.defaultCharset;
+import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.io.FileUtils.forceMkdir;
 import static org.apache.commons.io.IOUtils.readLines;
 import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.join;
 
+import java.io.File;
 import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -22,10 +30,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
+import org.kie.api.time.SessionPseudoClock;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 public final class DroolsAssertUtils {
+	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
+	protected static final DateTimeFormatter HH_MM_SS_SSS = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+	protected static final DateTimeFormatter DDD_HH_MM_SS = DateTimeFormatter.ofPattern("DDD HH:mm:ss");
+	protected static final DateTimeFormatter DDD_HH_MM_SS_SSS = DateTimeFormatter.ofPattern("DDD HH:mm:ss.SSS");
+	protected static final long DAY_MILLISECONDS = DAYS.toMillis(1);
 	public static final Pattern COUNT_OF_RULES = compile("(?<count>\\d+)\\s+(?<rule>.+)");
 	public static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	
@@ -47,6 +61,16 @@ public final class DroolsAssertUtils {
 		if (logResources)
 			resources.forEach(resource -> out.println(resource));
 		return resources;
+	}
+	
+	public static File directory(File file) {
+		try {
+			if (!file.exists())
+				forceMkdir(file);
+			return file;
+		} catch (IOException e) {
+			throw new DroolsAssertException("Cannot create directory", e);
+		}
 	}
 	
 	public static Map<String, Integer> getExpectedCount(Object[] params) {
@@ -99,5 +123,14 @@ public final class DroolsAssertUtils {
 				return param;
 		}
 		return new String[0];
+	}
+	
+	public static String formatTime(SessionPseudoClock clock) {
+		synchronized (clock) {
+			return LocalDateTime.ofInstant(Instant.ofEpochMilli(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()), UTC)
+					.format(clock.getCurrentTime() == MAX_VALUE ? DDD_HH_MM_SS_SSS : clock.getCurrentTime() % 1000 == 0
+							? (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS : DDD_HH_MM_SS)
+							: (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS_SSS : DDD_HH_MM_SS_SSS));
+		}
 	}
 }

@@ -31,6 +31,7 @@ public class DroolsSessionProxy implements InvocationHandler {
 	boolean keepFactsHistory = true;
 	boolean logFacts = true;
 	boolean log = true;
+	boolean showStateTransitionPopup = false;
 	
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -62,6 +63,8 @@ public class DroolsSessionProxy implements InvocationHandler {
 			return logFacts;
 		case "log":
 			return log;
+		case "showStateTransitionPopup":
+			return showStateTransitionPopup;
 		case "hashCode":
 			return hashCode();
 		case "equals":

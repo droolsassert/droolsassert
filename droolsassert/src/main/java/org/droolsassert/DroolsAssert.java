@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
 import static java.lang.System.out;
-import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.sort;
@@ -18,12 +17,14 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.LF;
+import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.StringUtils.joinWith;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.apache.commons.lang3.math.NumberUtils.INTEGER_ZERO;
 import static org.droolsassert.DroolsAssertUtils.firstNonEmpty;
+import static org.droolsassert.DroolsAssertUtils.formatTime;
 import static org.droolsassert.DroolsAssertUtils.getExpectedCount;
 import static org.droolsassert.DroolsAssertUtils.getResources;
 import static org.droolsassert.DroolsAssertUtils.getRulesCountFromSource;
@@ -41,9 +42,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,7 +61,10 @@ import java.util.function.Supplier;
 
 import org.droolsassert.jbehave.DroolsAssertSteps;
 import org.droolsassert.jbehave.DroolsSessionProxy;
-import org.droolsassert.report.ActivationReportBuilder;
+import org.droolsassert.listeners.ActivationReportBuilder;
+import org.droolsassert.listeners.DroolsassertListener;
+import org.droolsassert.listeners.LoggingListener;
+import org.droolsassert.listeners.StateTransitionBuilder;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -72,12 +73,13 @@ import org.kie.api.KieBaseConfiguration;
 import org.kie.api.KieServices;
 import org.kie.api.builder.model.KieModuleModel;
 import org.kie.api.command.Command;
+import org.kie.api.event.process.ProcessEventListener;
+import org.kie.api.event.rule.AgendaEventListener;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
 import org.kie.api.event.rule.DefaultRuleRuntimeEventListener;
-import org.kie.api.event.rule.ObjectDeletedEvent;
 import org.kie.api.event.rule.ObjectInsertedEvent;
-import org.kie.api.event.rule.ObjectUpdatedEvent;
+import org.kie.api.event.rule.RuleRuntimeEventListener;
 import org.kie.api.runtime.KieSession;
 import org.kie.api.runtime.KieSessionConfiguration;
 import org.kie.api.runtime.ObjectFilter;
@@ -166,11 +168,6 @@ import org.springframework.util.PathMatcher;
  * @see <a href=https://github.com/droolsassert>Documentation on GitHub</a>
  */
 public class DroolsAssert implements TestRule {
-	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
-	protected static final DateTimeFormatter HH_MM_SS_SSS = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
-	protected static final DateTimeFormatter DDD_HH_MM_SS = DateTimeFormatter.ofPattern("DDD HH:mm:ss");
-	protected static final DateTimeFormatter DDD_HH_MM_SS_SSS = DateTimeFormatter.ofPattern("DDD HH:mm:ss.SSS");
-	protected static final long DAY_MILLISECONDS = DAYS.toMillis(1);
 	protected static final PathMatcher nameMatcher = new AntPathMatcher("\n");
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
@@ -185,7 +182,7 @@ public class DroolsAssert implements TestRule {
 	protected Set<String> ignored;
 	protected Map<Object, Integer> factsHistory;
 	protected RulesChronoAgendaEventListener rulesChrono;
-	protected ActivationReportBuilder activationReportBuilder;
+	protected List<DroolsassertListener> listeners;
 	
 	/**
 	 * Initializes new drools session based on meta data.<br>
@@ -199,24 +196,28 @@ public class DroolsAssert implements TestRule {
 		
 		agenda = session.getAgenda();
 		clock = session.getSessionClock();
-		session.addEventListener(new LoggingAgendaEventListener());
-		if (this.droolsSessionMeta.log())
-			session.addEventListener(new LoggingWorkingMemoryEventListener());
+		session.addEventListener(new ActivationsTracker());
+		if (this.droolsSessionMeta.keepFactsHistory())
+			session.addEventListener(new FactsHistoryTracker());
 		rulesChrono = rulesChrono();
-		session.addEventListener(rulesChrono);
-		
 		activations = new LinkedHashMap<>();
 		activationsSnapshot = new LinkedHashMap<>();
 		initializeIgnoredActivations();
 		factsHistory = new IdentityHashMap<>();
-		activationReportBuilder = new ActivationReportBuilder(session, activations);
+		
+		listeners = listeners();
+		listeners.stream().filter(AgendaEventListener.class::isInstance).forEach(r -> session.addEventListener((AgendaEventListener) r));
+		listeners.stream().filter(RuleRuntimeEventListener.class::isInstance).forEach(r -> session.addEventListener((RuleRuntimeEventListener) r));
+		listeners.stream().filter(ProcessEventListener.class::isInstance).forEach(r -> session.addEventListener((ProcessEventListener) r));
+
+		session.addEventListener(rulesChrono);
 	}
 	
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
 		try {
 			return kieBase(droolsSessionMeta).newKieSession(sessionConfiguration(droolsSessionMeta), null);
 		} catch (IOException e) {
-			throw new IllegalStateException("Cannot create new session", e);
+			throw new DroolsAssertException("Cannot create new session", e);
 		}
 	}
 	
@@ -625,7 +626,7 @@ public class DroolsAssert implements TestRule {
 	 */
 	public int fireAllRules() {
 		if (droolsSessionMeta.log())
-			log(formatTime() + " --> fireAllRules");
+			log("--> fireAllRules");
 		return session.fireAllRules();
 	}
 	
@@ -674,21 +675,26 @@ public class DroolsAssert implements TestRule {
 		List<Object> sortedFacts = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).collect(toList());
 		if (droolsSessionMeta.keepFactsHistory())
 			sort(sortedFacts, (o1, o2) -> factsHistory.get(o1).compareTo(factsHistory.get(o2)));
-		log(format("%s Facts (%s):", formatTime(), sortedFacts.size()));
-		for (Object fact : sortedFacts)
-			log(factToString(fact));
+		
+		StringBuilder sb = new StringBuilder(format("Facts (%s):", sortedFacts.size()));
+		for (Object fact : sortedFacts) {
+			sb.append("\n");
+			sb.append(factToString(fact));
+		}
+		log(sb.toString());
 	}
 	
 	public void printPerformanceStatistic() {
-		log(format("%s Performance Statistic, total activations %s:", formatTime(), activations.values().stream().mapToInt(Integer::intValue).sum()));
+		StringBuilder sb = new StringBuilder(format("Performance Statistic, total activations %s:", activations.values().stream().mapToInt(Integer::intValue).sum()));
 		rulesChrono.getPerfStat().values()
-				.forEach(s -> log(format("%s - min: %.2f avg: %.2f max: %.2f activations: %d", s.getDomain(), s.getMinTimeMs(), s.getAvgTimeMs(), s.getMaxTimeMs(), s.getLeapsCount())));
+				.forEach(s -> sb.append(format("%n%s - min: %.2f avg: %.2f max: %.2f activations: %d", s.getDomain(), s.getMinTimeMs(), s.getAvgTimeMs(), s.getMaxTimeMs(), s.getLeapsCount())));
+		log(sb.toString());
 	}
 	
 	@Override
 	public Statement apply(Statement base, Description description) {
 		init(description.getTestClass().getAnnotation(DroolsSession.class), description.getAnnotation(TestRules.class));
-		activationReportBuilder.setReportName(description.getClassName() + "." + description.getMethodName());
+		listeners.forEach(l -> l.beforeScenario(description.getClassName(), description.getMethodName()));
 		
 		return new Statement() {
 			@Override
@@ -705,7 +711,7 @@ public class DroolsAssert implements TestRule {
 		} catch (Throwable th) {
 			errors.add(th);
 		} finally {
-			activationReportBuilder.buildReports();
+			listeners.forEach(DroolsassertListener::afterScenario);
 		}
 		if (testRulesMeta != null) {
 			try {
@@ -808,69 +814,50 @@ public class DroolsAssert implements TestRule {
 		this.rulesChrono = rulesChrono;
 	}
 	
-	public ActivationReportBuilder getActivationReportBuilder() {
-		return activationReportBuilder;
+	/**
+	 * Another integration point to {@link DroolsAssert}. Override to specify set of listeners being registered.<br>
+	 * Listener can optionally implement one or few of {@link AgendaEventListener}, {@link RuleRuntimeEventListener}, {@link ProcessEventListener} which will cause the listener to be subscribed for respective session notifications<br>
+	 */
+	protected List<DroolsassertListener> listeners() {
+		return asList(
+				new LoggingListener(droolsSessionMeta, this),
+				new ActivationReportBuilder(session, activations),
+				new StateTransitionBuilder(droolsSessionMeta, clock))
+						.stream().filter(DroolsassertListener::enabled).collect(toList());
+	}
+	
+	public List<DroolsassertListener> getListeners() {
+		return listeners;
 	}
 	
 	protected boolean isEligibleForAssertion(String rule) {
 		return !ignored.stream().filter(pattern -> nameMatcher.match(pattern, rule)).findFirst().isPresent();
 	}
 	
-	protected String factToString(Object fact) {
+	public String factToString(Object fact) {
 		return fact instanceof String ? (String) fact : reflectionToString(fact, SHORT_PREFIX_STYLE);
-	}
-	
-	protected String tupleToString(List<Object> tuple) {
-		return "" + tuple.stream().map(o -> o.getClass().getSimpleName()).collect(toList());
 	}
 	
 	protected final String formatUnexpectedCollection(String entityName, String message, Collection<String> entities) {
 		return format("%s%s %s:%n%s", entityName, entities.size() == 1 ? " was" : "s were", message, join(entities, LF));
 	}
 	
-	protected final String formatTime() {
-		return LocalDateTime.ofInstant(Instant.ofEpochMilli(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()), UTC)
-				.format(clock.getCurrentTime() == MAX_VALUE ? DDD_HH_MM_SS_SSS : clock.getCurrentTime() % 1000 == 0
-						? (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS : DDD_HH_MM_SS)
-						: (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS_SSS : DDD_HH_MM_SS_SSS));
+	public void log(String message) {
+		out.println(formatTime(clock) + SPACE + message);
 	}
 	
-	protected void log(String message) {
-		out.println(message);
-	}
-	
-	private class LoggingAgendaEventListener extends DefaultAgendaEventListener {
+	private class ActivationsTracker extends DefaultAgendaEventListener {
 		@Override
 		public void beforeMatchFired(BeforeMatchFiredEvent event) {
 			String ruleName = event.getMatch().getRule().getName();
 			activations.put(ruleName, firstNonNull(activations.get(ruleName), INTEGER_ZERO) + 1);
-			if (droolsSessionMeta.log())
-				log(format("%s <-- '%s' has been activated by the tuple %s", formatTime(), ruleName, tupleToString(event.getMatch().getObjects())));
 		}
 	}
 	
-	private class LoggingWorkingMemoryEventListener extends DefaultRuleRuntimeEventListener {
+	private class FactsHistoryTracker extends DefaultRuleRuntimeEventListener {
 		@Override
 		public void objectInserted(ObjectInsertedEvent event) {
-			Object object = event.getObject();
-			if (droolsSessionMeta.keepFactsHistory() && !factsHistory.containsKey(object))
-				factsHistory.put(object, factsHistory.size());
-			
-			log(" --> inserted: ", object);
-		}
-		
-		@Override
-		public void objectDeleted(ObjectDeletedEvent event) {
-			log(" --> retracted: ", event.getOldObject());
-		}
-		
-		@Override
-		public void objectUpdated(ObjectUpdatedEvent event) {
-			log(" --> updated: ", event.getObject());
-		}
-		
-		private void log(String action, Object fact) {
-			DroolsAssert.this.log(formatTime() + action + (droolsSessionMeta.logFacts() ? factToString(fact) : fact.getClass().getSimpleName()));
+			factsHistory.putIfAbsent(event.getObject(), factsHistory.size());
 		}
 	}
 }

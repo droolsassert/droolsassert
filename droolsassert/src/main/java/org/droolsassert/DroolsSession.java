@@ -7,6 +7,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.droolsassert.listeners.StateTransitionBuilder;
 import org.kie.api.KieBaseConfiguration;
 import org.kie.api.runtime.KieSessionConfiguration;
 import org.kie.internal.builder.KnowledgeBuilderConfiguration;
@@ -120,9 +121,16 @@ public @interface DroolsSession {
 	
 	/**
 	 * Enable / disable all logging.<br>
-	 * You may want to disable all logging for performance analysis
-	 * <br>
+	 * You may want to disable all logging for performance analysis <br>
 	 * Default - true (enable)
 	 */
 	boolean log() default true;
+	
+	/**
+	 * Enable / disable state transition report on pop-up window.<br>
+	 * On development phase it may be helpful to visualize state transition. Close the dialog to continue test execution.<br>
+	 * You can enable non-interactive reports using system property, see {@link StateTransitionBuilder} <br>
+	 * Default - false (disable)
+	 */
+	boolean showStateTransitionPopup() default false;
 }

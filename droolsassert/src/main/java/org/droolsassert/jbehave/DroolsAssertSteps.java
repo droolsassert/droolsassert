@@ -33,6 +33,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.droolsassert.DroolsAssert;
+import org.droolsassert.DroolsAssertException;
+import org.droolsassert.listeners.DroolsassertListener;
 import org.droolsassert.util.MvelProcessor;
 import org.jbehave.core.annotations.Alias;
 import org.jbehave.core.annotations.Aliases;
@@ -258,7 +260,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter
 			testRulesMeta.ignore = ignore.toArray(new String[0]);
 		
 		drools.init(newDroolsSessionProxy(droolsSessionMeta), newTestRulesProxy(testRulesMeta));
-		drools.getActivationReportBuilder().setReportName(story.getPath() + "." + scenario.getTitle());
+		drools.getListeners().forEach(builder -> builder.beforeScenario(story.getPath(), scenario.getTitle()));
 		globals.entrySet().forEach(e -> drools.setGlobal(e.getKey(), e.getValue()));
 	}
 	
@@ -540,8 +542,10 @@ public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter
 			default:
 				throw new IllegalArgumentException("Not supported mime type " + mime);
 			}
+		} catch (IllegalArgumentException e) {
+			throw e;
 		} catch (Exception e) {
-			throw new RuntimeException(format("Cannot resolve %s from mime '%s', expression: '%s'", type, mime, expression), e);
+			throw new DroolsAssertException(format("Cannot resolve %s from mime '%s', expression: '%s'", type, mime, expression), e);
 		}
 	}
 	
@@ -606,7 +610,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter
 	@Override
 	public void afterScenario() {
 		if (drools.getSession() != null) {
-			drools.getActivationReportBuilder().buildReports();
+			drools.getListeners().forEach(DroolsassertListener::afterScenario);
 			drools.destroy();
 		}
 	}
