@@ -79,14 +79,14 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
  * Define system property to enable the report
  * 
  * <pre>
- * -Ddroolsassert.stateTransitionReport[=&lt;image_format&gt;[&lt;path_separator&gt;][&lt;directory_path&gt;]]
+ * -Ddroolsassert.stateTransitionReport[=&lt;image_format&gt;[&lt;path_separator&gt;&lt;directory_path&gt;]]
  * </pre>
  * 
  * <b>image_format</b> - graph output image format, default png<br>
  * <b>directory_path</b> - directory for reports per test, default
  * 
  * <pre>
- * target / droolsassert / stateTransitions
+ * target/droolsassert/stateTransitionReports
  * </pre>
  */
 public class StateTransitionBuilder extends DefaultAgendaEventListener implements DroolsassertListener, RuleRuntimeEventListener {

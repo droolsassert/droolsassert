@@ -43,13 +43,13 @@ import org.kie.api.runtime.KieSession;
  * Define system property to enable activation reports
  * 
  * <pre>
- * -Ddroolsassert.activationReport[=&lt;directory_path&gt;[&lt;path_separator&gt;][&lt;file_path&gt;]]
+ * -Ddroolsassert.activationReport[=&lt;directory_path&gt;[&lt;path_separator&gt;&lt;file_path&gt;]]
  * </pre>
  * 
  * <b>directory_path</b> - directory for reports per test, default
  * 
  * <pre>
- * target / droolsassert / activationReports
+ * target/droolsassert/activationReport
  * </pre>
  * 
  * <b>file_path</b> - consolidated report file path, default
