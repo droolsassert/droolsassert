@@ -21,7 +21,7 @@ import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static org.droolsassert.DroolsAssertUtils.directory;
 import static org.droolsassert.DroolsAssertUtils.formatTime;
-import static org.droolsassert.util.JsonUtils.toJson;
+import static org.droolsassert.util.JsonUtils.toYaml;
 import static org.jgraph.graph.GraphConstants.ARROW_CLASSIC;
 import static org.jgraph.graph.GraphConstants.setAutoSize;
 import static org.jgraph.graph.GraphConstants.setBackground;
@@ -50,6 +50,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import org.drools.core.common.InternalFactHandle;
+import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.droolsassert.DroolsAssertException;
 import org.droolsassert.DroolsSession;
 import org.jgraph.JGraph;
@@ -68,7 +70,6 @@ import org.kie.api.event.rule.ObjectInsertedEvent;
 import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.event.rule.RuleRuntimeEventListener;
 import org.kie.api.time.SessionPseudoClock;
-import org.kie.internal.definition.rule.InternalRule;
 
 import com.jgraph.layout.JGraphFacade;
 import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
@@ -86,7 +87,7 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
  * <b>directory_path</b> - directory for reports per test, default
  * 
  * <pre>
- * target/droolsassert/stateTransitionReports
+ * target/droolsassert/stateTransitionReport
  * </pre>
  */
 public class StateTransitionBuilder extends DefaultAgendaEventListener implements DroolsassertListener, RuleRuntimeEventListener {
@@ -164,7 +165,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 			systemProperty = EMPTY;
 		String[] params = trimToEmpty(systemProperty).split(pathSeparator);
 		format = defaultIfEmpty(params[0], "png");
-		reportsDirectory = directory(new File(params.length > 1 ? params[1] : "target/droolsassert/stateTransitionReports"));
+		reportsDirectory = directory(new File(params.length > 1 ? params[1] : "target/droolsassert/stateTransitionReport"));
 	}
 	
 	private void writeToFile(JGraph graph) {
@@ -202,14 +203,15 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	@Override
 	public void beforeMatchFired(BeforeMatchFiredEvent event) {
-		InternalRule rule = (InternalRule) event.getMatch().getRule();
+		RuleImpl rule = (RuleImpl) event.getMatch().getRule();
 		int ruleId = identityHashCode(rule);
 		if (!lastRuleTriggerCount.containsKey(ruleId))
 			lastRuleTriggerCount.putIfAbsent(ruleId, new AtomicInteger());
 		int triggerCount = lastRuleTriggerCount.get(ruleId).incrementAndGet();
 		
 		String ruleMeta = format("%s/%s/%s", rule.getAgendaGroup(), rule.getSalienceValue(), triggerCount);
-		DefaultGraphCell ruleCell = newCell(newCellLabel(rule.getName(), ruleMeta, formatTime(clock)), CellType.Rule);
+		String flags = rule.getTimer() == null ? "" : "T";
+		DefaultGraphCell ruleCell = newCell(newLabel(CellType.Rule, rule.getName(), ruleMeta, formatTime(clock), flags), CellType.Rule);
 		lastObjectCell.put(ruleId, ruleCell);
 		
 		synchronized (StateTransitionBuilder.class) {
@@ -225,20 +227,21 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	@Override
 	public void objectInserted(ObjectInsertedEvent event) {
-		objectUpdated(event.getObject(), event.getRule(), CellType.UpdatedFact);
+		objectUpdated((InternalFactHandle) event.getFactHandle(), event.getRule(), CellType.UpdatedFact);
 	}
 	
 	@Override
 	public void objectUpdated(ObjectUpdatedEvent event) {
-		objectUpdated(event.getObject(), event.getRule(), CellType.UpdatedFact);
+		objectUpdated((InternalFactHandle) event.getFactHandle(), event.getRule(), CellType.UpdatedFact);
 	}
 	
 	@Override
 	public void objectDeleted(ObjectDeletedEvent event) {
-		objectUpdated(event.getOldObject(), event.getRule(), CellType.DeletedFact);
+		objectUpdated((InternalFactHandle) event.getFactHandle(), event.getRule(), CellType.DeletedFact);
 	}
 	
-	private void objectUpdated(Object fact, Rule rule, CellType cellType) {
+	private void objectUpdated(InternalFactHandle factHandle, Rule rule, CellType cellType) {
+		Object fact = factHandle.getObject();
 		int factId = identityHashCode(fact);
 		if (!lastObjectState.containsKey(factId))
 			lastObjectState.putIfAbsent(factId, new AtomicInteger());
@@ -246,12 +249,13 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		String stateId = format("#%s-%s", factId, cellType == CellType.DeletedFact ? state : state.incrementAndGet());
 		
 		try {
-			writeStringToFile(new File(reportsDirectory, getReportName() + "/" + stateId), objectStateDump(fact), defaultCharset());
+			writeStringToFile(new File(reportsDirectory, format("%s/%s.txt", getReportName(), stateId)), objectStateDump(fact), defaultCharset());
 		} catch (IOException e) {
 			throw new DroolsAssertException("Cannot write object state to file", e);
 		}
 		
-		DefaultGraphCell cell = newCell(newCellLabel(fact.getClass().getSimpleName(), stateId, formatTime(clock)), cellType);
+		String flags = factHandle.isEvent() ? "E" : "";
+		DefaultGraphCell cell = newCell(newLabel(cellType, fact.getClass().getSimpleName(), stateId, formatTime(clock), flags), cellType);
 		lastObjectCell.put(factId, cell);
 		
 		synchronized (StateTransitionBuilder.class) {
@@ -266,7 +270,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	}
 	
 	protected String objectStateDump(Object fact) {
-		return toJson(fact, true);
+		return toYaml(fact);
 	}
 	
 	private JGraph newGraph() {
@@ -300,23 +304,37 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		return edge;
 	}
 	
-	private String newCellLabel(String line1, String line2, String line3) {
+	private String newLabel(CellType cellType, String line1, String line2, String line3, String flags) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<html>");
-		sb.append("<table style='padding: 0px; width:100%'>");
-		sb.append("<tr style='padding: 0px'>");
+		sb.append("<table style='width:100%'>");
+		sb.append("<tr>");
 		sb.append("<td style='padding: 0px; text-align: center; font-family:tahoma,serif; font-size:11px; font-weight: normal'>");
 		sb.append(escapeHtml4(line1));
 		sb.append("</td>");
 		sb.append("</tr>");
-		sb.append("<tr style='padding: 0px'>");
-		sb.append("<td style='padding: 0px; text-align: center; font-family:verdana; font-size:8px; font-weight: normal'>");
+		sb.append("<tr>");
+		sb.append("<td style='padding: 0px; text-align: center; font-family:verdana; font-size:8px; font-weight: lighter'>");
 		sb.append(escapeHtml4(line2));
 		sb.append("</td>");
 		sb.append("</tr>");
-		sb.append("<tr style='padding: 0px'>");
-		sb.append("<td style='padding: 0px; margin: -5; text-align: center; font-family:verdana; font-size:8px; font-weight: normal'>");
-		sb.append(escapeHtml4(line3));
+		sb.append("<tr style=''>");
+		sb.append("<td style='padding: 0px;'>");
+		
+		sb.append("<table style='margin-top: -7; margin-bottom: -7; margin-left: -4; margin-right: -4; width:100%;'>");
+		sb.append("<tr>");
+		sb.append(format("<td style='padding: 0px; font-family:verdana; font-size:8px; font-weight: normal; color: %s'>", cellType.background));
+		sb.append(flags);
+		sb.append("</td>");
+		sb.append("<td style='padding: 0px; font-family:verdana; font-size:8px; font-weight: lighter; width: 100%; text-align: center;'>");
+		sb.append(line3);
+		sb.append("</td>");
+		sb.append("<td style='padding: 0px; font-family:verdana; font-size:8px; font-weight: normal; color: red'>");
+		sb.append(flags);
+		sb.append("</td>");
+		sb.append("</tr>");
+		sb.append("</table>");
+		
 		sb.append("</td>");
 		sb.append("</tr>");
 		sb.append("</table>");
