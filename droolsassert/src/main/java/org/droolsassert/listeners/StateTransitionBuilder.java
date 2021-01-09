@@ -258,11 +258,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		AtomicInteger state = lastObjectState.get(factId);
 		String stateId = format("#%s-%s", factId, cellType == CellType.DeletedFact ? state : state.incrementAndGet());
 		
-		try {
-			writeStringToFile(new File(reportsDirectory, format("%s/%s.txt", getReportName(), stateId)), objectStateDump(fact), defaultCharset());
-		} catch (IOException e) {
-			throw new DroolsAssertException("Cannot write object state to file", e);
-		}
+		writeToFile(fact, stateId);
 		
 		String flags = factHandle.isEvent() ? "E" : "";
 		DefaultGraphCell cell = newCell(newLabel(cellType, fact.getClass().getSimpleName(), stateId, formatTime(clock), flags), cellType);
@@ -276,6 +272,15 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 				graph.getGraphLayoutCache().setVisible(cell, true);
 				graph.getGraphLayoutCache().insert(newEdge(lastObjectCell.get(identityHashCode(rule)), cell));
 			}
+		}
+	}
+	
+	private void writeToFile(Object fact, String stateId) {
+		try {
+			String fileName = format("%s/%s%s.txt", getReportName(), fact.getClass().getSimpleName(), stateId);
+			writeStringToFile(new File(reportsDirectory, fileName), objectStateDump(fact), defaultCharset());
+		} catch (IOException e) {
+			throw new DroolsAssertException("Cannot write object state to file", e);
 		}
 	}
 	

@@ -61,6 +61,6 @@ public class LoggingListener extends DefaultAgendaEventListener implements Drool
 	}
 	
 	protected String tupleToString(List<Object> tuple) {
-		return "" + tuple.stream().map(o -> format("%s(#%s)", o.getClass().getSimpleName(), identityHashCode(o))).collect(toList());
+		return "" + tuple.stream().map(o -> format("%s#%s", o.getClass().getSimpleName(), identityHashCode(o))).collect(toList());
 	}
 }
