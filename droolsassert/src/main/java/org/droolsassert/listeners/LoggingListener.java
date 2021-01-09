@@ -3,6 +3,7 @@ package org.droolsassert.listeners;
 import static java.lang.String.format;
 import static java.lang.System.identityHashCode;
 import static java.util.stream.Collectors.toList;
+import static org.droolsassert.DroolsAssertUtils.getRuleActivatedBy;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class LoggingListener extends DefaultAgendaEventListener implements Drool
 	
 	@Override
 	public void beforeMatchFired(BeforeMatchFiredEvent event) {
-		droolsassert.log(format("<-- '%s' has been activated by the tuple %s", event.getMatch().getRule().getName(), tupleToString(event.getMatch().getObjects())));
+		droolsassert.log(format("<-- '%s' activated by %s", event.getMatch().getRule().getName(), tupleToString(getRuleActivatedBy(event.getMatch()))));
 	}
 	
 	@Override

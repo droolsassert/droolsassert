@@ -21,6 +21,7 @@ import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static org.droolsassert.DroolsAssertUtils.directory;
 import static org.droolsassert.DroolsAssertUtils.formatTime;
+import static org.droolsassert.DroolsAssertUtils.getRuleActivatedBy;
 import static org.droolsassert.util.JsonUtils.toYaml;
 import static org.jgraph.graph.GraphConstants.ARROW_CLASSIC;
 import static org.jgraph.graph.GraphConstants.setAutoSize;
@@ -225,7 +226,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		
 		synchronized (StateTransitionBuilder.class) {
 			graph.getGraphLayoutCache().insert(ruleCell);
-			event.getMatch().getObjects().stream()
+			getRuleActivatedBy(event.getMatch()).stream()
 					.map(o -> lastObjectCell.get(identityHashCode(o)))
 					.filter(Objects::nonNull).forEach(objectCell -> {
 						graph.getGraphLayoutCache().setVisible(objectCell, true);

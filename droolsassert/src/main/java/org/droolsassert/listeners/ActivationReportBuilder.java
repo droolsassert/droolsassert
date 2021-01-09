@@ -25,6 +25,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 
 import org.droolsassert.DroolsAssertException;
+import org.kie.api.definition.rule.Query;
 import org.kie.api.runtime.KieSession;
 
 /**
@@ -171,6 +172,7 @@ public class ActivationReportBuilder implements DroolsassertListener {
 	private Set<String> knownRules() {
 		return session.getKieBase().getKiePackages().stream()
 				.flatMap(p -> p.getRules().stream())
+				.filter(r -> !Query.class.isInstance(r))
 				.map(rule -> rule.getName())
 				.collect(toSet());
 	}

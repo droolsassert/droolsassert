@@ -30,6 +30,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
+import org.drools.core.spi.Activation;
+import org.kie.api.runtime.rule.Match;
 import org.kie.api.time.SessionPseudoClock;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -44,6 +46,14 @@ public final class DroolsAssertUtils {
 	public static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 	
 	private DroolsAssertUtils() {
+	}
+	
+	public static List<Object> getRuleActivatedBy(Match match) {
+		Object triggerObject = ((Activation<?>) match).getPropagationContext().getFactHandle().getObject();
+		List<Object> result = new ArrayList<>(match.getObjects());
+		if (!result.contains(triggerObject))
+			result.add(0, triggerObject);
+		return result;
 	}
 	
 	public static List<Resource> getResources(boolean mandatory, boolean logResources, String... locations) {
