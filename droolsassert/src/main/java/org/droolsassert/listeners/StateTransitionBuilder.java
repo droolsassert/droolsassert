@@ -209,9 +209,18 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 			lastRuleTriggerCount.putIfAbsent(ruleId, new AtomicInteger());
 		int triggerCount = lastRuleTriggerCount.get(ruleId).incrementAndGet();
 		
-		String ruleMeta = format("%s/%s/%s", rule.getAgendaGroup(), rule.getSalienceValue(), triggerCount);
+		StringBuilder ruleMeta = new StringBuilder(rule.getAgendaGroup())
+				.append("|").append(rule.getSalienceValue());
+		if (rule.isSalienceDynamic())
+			ruleMeta.append("D");
+		if (rule.isNoLoop())
+			ruleMeta.append("|NL");
+		if (rule.isLockOnActive())
+			ruleMeta.append("|LOA");
+		ruleMeta.append("|").append(triggerCount);
+		
 		String flags = rule.getTimer() == null ? "" : "T";
-		DefaultGraphCell ruleCell = newCell(newLabel(CellType.Rule, rule.getName(), ruleMeta, formatTime(clock), flags), CellType.Rule);
+		DefaultGraphCell ruleCell = newCell(newLabel(CellType.Rule, rule.getName(), ruleMeta.toString(), formatTime(clock), flags), CellType.Rule);
 		lastObjectCell.put(ruleId, ruleCell);
 		
 		synchronized (StateTransitionBuilder.class) {
