@@ -12,8 +12,8 @@ global java.io.PrintStream stdout
 rule 'input call'
     when
         $dial: Dialing()
-        not CallInProgress(this.callerNumber == $dial.calleeNumber)
-        not CallInProgress(this.calleeNumber == $dial.calleeNumber)
+        not CallInProgress(callerNumber == $dial.calleeNumber)
+        not CallInProgress(calleeNumber == $dial.calleeNumber)
     then
         insert (new CallInProgress($dial.callerNumber, $dial.calleeNumber))
         retract ($dial)
@@ -23,10 +23,10 @@ rule 'drop dial-up if callee is talking'
     timer (7001)
     when
         $dial: Dialing()
-        (CallInProgress(this.callerNumber == $dial.calleeNumber)
-            or CallInProgress(this.calleeNumber == $dial.calleeNumber))
+        (CallInProgress(callerNumber == $dial.calleeNumber)
+            or CallInProgress(calleeNumber == $dial.calleeNumber))
     then
-        insert (new CallDropped($dial.callerNumber, 'callee is busy'))
+        insert (new CallDropped($dial.callerNumber, $dial.calleeNumber, 'callee is busy'))
 end
 
 rule 'drop the call if caller is talking more than permitted time'
@@ -34,14 +34,13 @@ rule 'drop the call if caller is talking more than permitted time'
     when
         $callInProgress : CallInProgress()
     then
-        insert (new CallDropped($callInProgress.callerNumber, 'call timed out'))
+        insert (new CallDropped($callInProgress.callerNumber, $callInProgress.calleeNumber, 'call timed out'))
 end
 
 rule 'call in progress dropped'
     when
         $callDropped: CallDropped()
-        ($callInProgress : CallInProgress(this.callerNumber == $callDropped.number)
-            or $callInProgress : CallInProgress(this.calleeNumber == $callDropped.number))
+        $callInProgress : CallInProgress($callDropped.pair contains callerNumber, $callDropped.pair contains calleeNumber)
     then
         stdout.println('Call ' + $callInProgress.callerNumber + ' dropped due to ' + $callDropped.reason)
         retract ($callInProgress)
@@ -50,8 +49,7 @@ end
 rule 'input call dropped'
     when
         $callDropped: CallDropped() 
-        ($dial : Dialing(this.callerNumber == $callDropped.number)
-            or $dial : Dialing(this.calleeNumber == $callDropped.number))
+        $dial : Dialing($callDropped.pair contains callerNumber, $callDropped.pair contains calleeNumber)
     then
         stdout.println('Dial-up ' + $dial.callerNumber + ' dropped due to ' + $callDropped.reason)
         retract ($dial)

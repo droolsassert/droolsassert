@@ -5,6 +5,9 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,6 +45,36 @@ public class ComplexEventProcessingTest {
 		
 		drools.advanceTime(1, HOURS);
 		drools.assertRetracted(call);
+		
+		drools.assertAllRetracted();
+	}
+	
+	@Test
+	public void testCallsConnectAndDisconnectLogic2() {
+		Dialing caller1Dial = new Dialing("11111", "22222");
+		drools.insertAndFire(caller1Dial);
+		drools.assertRetracted(caller1Dial);
+		CallInProgress call = drools.getObject(CallInProgress.class);
+		assertEquals("11111", call.callerNumber);
+		
+		drools.advanceTime(5, MINUTES);
+		Dialing caller3Dial = new Dialing("33333", "22222");
+		drools.insertAndFire(caller3Dial);
+		drools.assertExist(caller3Dial);
+		
+		drools.advanceTime(5, SECONDS);
+		drools.assertExist(call, caller3Dial);
+		CallDropped callDropped = new CallDropped("11111", "22222", "Dismissed");
+		drools.insertAndFire(callDropped);
+		drools.assertRetracted(call, caller3Dial, callDropped);
+		CallInProgress call2 = drools.getObject(CallInProgress.class);
+		drools.assertExist(call2);
+		
+		drools.advanceTime(10, SECONDS);
+		drools.assertExist(call2);
+		
+		drools.advanceTime(1, HOURS);
+		drools.assertRetracted(call2);
 		
 		drools.assertAllRetracted();
 	}
@@ -183,11 +216,12 @@ public class ComplexEventProcessingTest {
 	}
 	
 	public static class CallDropped {
-		public String number;
+		public List<String> pair = new ArrayList<>();
 		public String reason;
 		
-		public CallDropped(String number, String reason) {
-			this.number = number;
+		public CallDropped(String callerNumber, String calleeNumber, String reason) {
+			pair.add(calleeNumber);
+			pair.add(callerNumber);
 			this.reason = reason;
 		}
 	}

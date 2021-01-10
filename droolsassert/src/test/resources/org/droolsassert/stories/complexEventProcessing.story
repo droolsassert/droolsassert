@@ -36,6 +36,36 @@ Then retracted call
 Then retracted all facts
 
 
+Scenario: test calls connect and disconnect logic 2
+Given new session for scenario
+Given variable caller1Dial is new Dialing('11111', '22222')
+When insert and fire caller1Dial
+Then retracted caller1Dial
+Given variable call as CallInProgress object from the session
+Then assert call.callerNumber is '11111'
+
+When advance time for 5 minutes
+Given variable caller3Dial as new Dialing('33333', '22222')
+When insert and fire caller3Dial
+Then exist caller3Dial
+
+When advance time for 5 seconds
+Then exist call, caller3Dial
+Given variable callDropped is new CallDropped('11111', '22222', 'Dismissed')
+When insert and fire callDropped
+Then retracted call, caller3Dial, callDropped
+Given variable call2 as CallInProgress object from the session
+Then exist call2
+
+When advance time for 10 seconds
+Then exist call2
+
+When advance time for 1 hour
+Then retracted call2
+
+Then retracted all facts
+
+
 Scenario: test calls connect and disconnect logic stick to events
 Given new session for scenario
 Given variable caller1Dial as new Dialing('11111', '22222')

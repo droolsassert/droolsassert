@@ -5,6 +5,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 
+import org.droolsassert.ComplexEventProcessingTest.CallDropped;
 import org.droolsassert.ComplexEventProcessingTest.CallInProgress;
 import org.droolsassert.ComplexEventProcessingTest.Dialing;
 import org.junit.Before;
@@ -44,6 +45,36 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 		
 		advanceTime(1, HOURS);
 		assertRetracted(call);
+		
+		assertAllRetracted();
+	}
+	
+	@Test
+	public void testCallsConnectAndDisconnectLogic2() {
+		Dialing caller1Dial = new Dialing("11111", "22222");
+		insertAndFire(caller1Dial);
+		assertRetracted(caller1Dial);
+		CallInProgress call = getObject(CallInProgress.class);
+		assertEquals("11111", call.callerNumber);
+		
+		advanceTime(5, MINUTES);
+		Dialing caller3Dial = new Dialing("33333", "22222");
+		insertAndFire(caller3Dial);
+		assertExist(caller3Dial);
+		
+		advanceTime(5, SECONDS);
+		assertExist(call, caller3Dial);
+		CallDropped callDropped = new CallDropped("11111", "22222", "Dismissed");
+		insertAndFire(callDropped);
+		assertRetracted(call, caller3Dial, callDropped);
+		CallInProgress call2 = getObject(CallInProgress.class);
+		assertExist(call2);
+		
+		advanceTime(10, SECONDS);
+		assertExist(call2);
+		
+		advanceTime(1, HOURS);
+		assertRetracted(call2);
 		
 		assertAllRetracted();
 	}

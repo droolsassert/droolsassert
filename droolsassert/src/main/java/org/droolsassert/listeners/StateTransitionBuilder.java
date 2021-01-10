@@ -116,7 +116,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	private String test;
 	private String scenario;
 	private JGraph graph;
-	private Thread eventDispatchThread;
+	private volatile Thread eventDispatchThread;
 	
 	private Map<Integer, AtomicInteger> lastObjectState;
 	private Map<Integer, DefaultGraphCell> lastObjectCell;
