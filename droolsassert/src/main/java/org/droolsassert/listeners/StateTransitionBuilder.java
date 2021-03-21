@@ -7,7 +7,6 @@ import static java.awt.event.KeyEvent.VK_ESCAPE;
 import static java.io.File.pathSeparator;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
-import static java.lang.System.identityHashCode;
 import static java.lang.Thread.currentThread;
 import static java.nio.charset.Charset.defaultCharset;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
@@ -19,9 +18,15 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
+import static org.drools.core.common.EqualityKey.JUSTIFIED;
 import static org.droolsassert.DroolsAssertUtils.directory;
 import static org.droolsassert.DroolsAssertUtils.formatTime;
 import static org.droolsassert.DroolsAssertUtils.getRuleActivatedBy;
+import static org.droolsassert.DroolsAssertUtils.getRuleLogicialDependencies;
+import static org.droolsassert.listeners.StateTransitionBuilder.CellType.DeletedFact;
+import static org.droolsassert.listeners.StateTransitionBuilder.CellType.InsertedFact;
+import static org.droolsassert.listeners.StateTransitionBuilder.CellType.Rule;
+import static org.droolsassert.listeners.StateTransitionBuilder.CellType.UpdatedFact;
 import static org.droolsassert.util.JsonUtils.toYaml;
 import static org.jgraph.graph.GraphConstants.ARROW_CLASSIC;
 import static org.jgraph.graph.GraphConstants.setAutoSize;
@@ -40,8 +45,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,7 +67,6 @@ import org.jgraph.graph.DefaultGraphModel;
 import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphLayoutCache;
 import org.jgraph.graph.GraphModel;
-import org.kie.api.definition.rule.Rule;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
 import org.kie.api.event.rule.ObjectDeletedEvent;
@@ -93,7 +96,8 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
  */
 public class StateTransitionBuilder extends DefaultAgendaEventListener implements DroolsassertListener, RuleRuntimeEventListener {
 	
-	private enum CellType {
+	public enum CellType {
+		InsertedFact("#c8edc2", "#42b52f"),
 		UpdatedFact("#c8edc2", "#42b52f"),
 		DeletedFact("#ebebeb", "#9e9e9e"),
 		Rule("#c7e7ff", "#4eb3fc");
@@ -118,9 +122,9 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	private JGraph graph;
 	private volatile Thread eventDispatchThread;
 	
-	private Map<Integer, AtomicInteger> lastObjectState;
-	private Map<Integer, DefaultGraphCell> lastObjectCell;
-	private Map<Integer, AtomicInteger> lastRuleTriggerCount;
+	private IdentityHashMap<Object, AtomicInteger> lastObjectState;
+	private IdentityHashMap<Object, DefaultGraphCell> lastObjectCell;
+	private IdentityHashMap<Object, AtomicInteger> lastRuleTriggerCount;
 	private AtomicInteger adgeCounter;
 	
 	public StateTransitionBuilder(DroolsSession droolsSessionMeta, SessionPseudoClock clock) {
@@ -143,9 +147,9 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		this.scenario = scenario;
 		directory(new File(reportsDirectory, getReportName()));
 		
-		lastObjectState = new HashMap<>();
-		lastObjectCell = new HashMap<>();
-		lastRuleTriggerCount = new HashMap<>();
+		lastObjectState = new IdentityHashMap<>();
+		lastObjectCell = new IdentityHashMap<>();
+		lastRuleTriggerCount = new IdentityHashMap<>();
 		adgeCounter = new AtomicInteger();
 		graph = newGraph();
 	}
@@ -205,10 +209,9 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	@Override
 	public void beforeMatchFired(BeforeMatchFiredEvent event) {
 		RuleImpl rule = (RuleImpl) event.getMatch().getRule();
-		int ruleId = identityHashCode(rule);
-		if (!lastRuleTriggerCount.containsKey(ruleId))
-			lastRuleTriggerCount.putIfAbsent(ruleId, new AtomicInteger());
-		int triggerCount = lastRuleTriggerCount.get(ruleId).incrementAndGet();
+		if (!lastRuleTriggerCount.containsKey(rule))
+			lastRuleTriggerCount.putIfAbsent(rule, new AtomicInteger());
+		int triggerCount = lastRuleTriggerCount.get(rule).incrementAndGet();
 		
 		StringBuilder ruleMeta = new StringBuilder(rule.getAgendaGroup())
 				.append("|").append(rule.getSalienceValue());
@@ -221,58 +224,84 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		ruleMeta.append("|").append(triggerCount);
 		
 		String flags = rule.getTimer() == null ? "" : "T";
-		DefaultGraphCell ruleCell = newCell(newLabel(CellType.Rule, rule.getName(), ruleMeta.toString(), formatTime(clock), flags), CellType.Rule);
-		lastObjectCell.put(ruleId, ruleCell);
+		DefaultGraphCell ruleCell = newCell(newLabel(Rule, rule.getName(), ruleMeta.toString(), formatTime(clock), flags), Rule);
+		lastObjectCell.put(rule, ruleCell);
 		
 		synchronized (StateTransitionBuilder.class) {
-			graph.getGraphLayoutCache().insert(ruleCell);
+			getView().insert(ruleCell);
 			getRuleActivatedBy(event.getMatch()).stream()
-					.map(o -> lastObjectCell.get(identityHashCode(o)))
+					.map(o -> lastObjectCell.get(o))
 					.filter(Objects::nonNull).forEach(objectCell -> {
-						graph.getGraphLayoutCache().setVisible(objectCell, true);
-						graph.getGraphLayoutCache().insert(newEdge(objectCell, ruleCell));
+						getView().setVisible(objectCell, true);
+						getView().insert(newEdge(objectCell, ruleCell));
+					});
+			getRuleLogicialDependencies(event.getMatch()).stream()
+					.flatMap(o -> lastObjectCell.entrySet().stream().filter(e -> e.getKey().equals(o)).map(e -> e.getValue()))
+					.forEach(objectCell -> {
+						getView().setVisible(objectCell, true);
+						getView().insert(newEdge(ruleCell, objectCell));
 					});
 		}
 	}
 	
 	@Override
 	public void objectInserted(ObjectInsertedEvent event) {
-		objectUpdated((InternalFactHandle) event.getFactHandle(), event.getRule(), CellType.UpdatedFact);
+		objectUpdated((InternalFactHandle) event.getFactHandle(), (RuleImpl) event.getRule(), InsertedFact);
 	}
 	
 	@Override
 	public void objectUpdated(ObjectUpdatedEvent event) {
-		objectUpdated((InternalFactHandle) event.getFactHandle(), event.getRule(), CellType.UpdatedFact);
+		objectUpdated((InternalFactHandle) event.getFactHandle(), (RuleImpl) event.getRule(), UpdatedFact);
 	}
 	
 	@Override
 	public void objectDeleted(ObjectDeletedEvent event) {
-		objectUpdated((InternalFactHandle) event.getFactHandle(), event.getRule(), CellType.DeletedFact);
+		objectUpdated((InternalFactHandle) event.getFactHandle(), (RuleImpl) event.getRule(), DeletedFact);
 	}
 	
-	private void objectUpdated(InternalFactHandle factHandle, Rule rule, CellType cellType) {
-		Object fact = factHandle.getObject();
-		int factId = identityHashCode(fact);
-		if (!lastObjectState.containsKey(factId))
-			lastObjectState.putIfAbsent(factId, new AtomicInteger());
-		AtomicInteger state = lastObjectState.get(factId);
-		String stateId = format("#%s-%s", factId, cellType == CellType.DeletedFact ? state : state.incrementAndGet());
+	private void objectUpdated(InternalFactHandle fh, RuleImpl rule, CellType cellType) {
+		Object fact = fh.getObject();
+		if (!lastObjectState.containsKey(fact))
+			lastObjectState.putIfAbsent(fact, new AtomicInteger());
+		AtomicInteger state = lastObjectState.get(fact);
+		String flags = fh.isEvent() ? "E" : "";
+		if (isJustified(fh))
+			flags += "J";
 		
+		String stateId = format("#%s-%s", fh.getIdentityHashCode(), cellType == DeletedFact ? state : state.incrementAndGet());
 		writeToFile(fact, stateId);
-		
-		String flags = factHandle.isEvent() ? "E" : "";
 		DefaultGraphCell cell = newCell(newLabel(cellType, fact.getClass().getSimpleName(), stateId, formatTime(clock), flags), cellType);
-		lastObjectCell.put(factId, cell);
+		DefaultGraphCell previousStateCell = /* cellType == DeletedFact ? lastObjectCell.remove(fact) :*/ lastObjectCell.put(fact, cell);
 		
 		synchronized (StateTransitionBuilder.class) {
-			graph.getGraphLayoutCache().insert(cell);
-			graph.getGraphLayoutCache().setVisible(cell, false);
+			getView().insert(cell);
+			getView().setVisible(cell, false);
 			
 			if (rule != null) {
-				graph.getGraphLayoutCache().setVisible(cell, true);
-				graph.getGraphLayoutCache().insert(newEdge(lastObjectCell.get(identityHashCode(rule)), cell));
+				getView().setVisible(cell, true);
+				getView().insert(newEdge(lastObjectCell.get(rule), cell));
+			} else if (previousStateCell != null) {
+				getView().setVisible(cell, true);
+				getView().setVisible(previousStateCell, true);
+				getView().insert(newEdge(previousStateCell, cell));
 			}
 		}
+	}
+	
+	public GraphLayoutCache getView() {
+		return graph.getGraphLayoutCache();
+	}
+	
+	/**
+	 * When the Drools engine logically inserts an object during a rule execution, the Drools engine justifies the object by executing the rule. For each logical insertion, only
+	 * one equal object can exist, and each subsequent equal logical insertion increases the justification counter for that logical insertion. A justification is removed when the
+	 * conditions of the rule become untrue. When no more justifications exist, the logical object is automatically deleted.
+	 * 
+	 * @param fh
+	 * @return
+	 */
+	private boolean isJustified(InternalFactHandle fh) {
+		return fh.getEqualityKey() != null && fh.getEqualityKey().getStatus() == JUSTIFIED;
 	}
 	
 	private void writeToFile(Object fact, String stateId) {

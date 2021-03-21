@@ -7,6 +7,7 @@ import static java.lang.System.out;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.sort;
+import static java.util.Objects.isNull;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -59,6 +60,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.drools.core.common.InternalFactHandle;
 import org.droolsassert.jbehave.DroolsAssertSteps;
 import org.droolsassert.jbehave.DroolsSessionProxy;
 import org.droolsassert.listeners.ActivationReportBuilder;
@@ -141,7 +143,7 @@ import org.springframework.util.PathMatcher;
  *     public void testCallsConnectAndDisconnectLogic() {
  *         Dialing caller1Dial = new Dialing("11111", "22222");
  *         insertAndFire(caller1Dial);
- *         assertRetracted(caller1Dial);
+ *         assertDeleted(caller1Dial);
  *         CallInProgress call = getObject(CallInProgress.class);
  *         assertEquals("11111", call.callerNumber);
  *     
@@ -155,12 +157,12 @@ import org.springframework.util.PathMatcher;
  *     
  *         advanceTime(5, SECONDS);
  *         assertExist(call);
- *         assertRetracted(caller3Dial);
+ *         assertDeleted(caller3Dial);
  *     
  *         advanceTime(1, HOURS);
- *         assertRetracted(call);
+ *         assertDeleted(call);
  *     
- *         assertAllRetracted();
+ *         assertAllDeleted();
  *     }
  * </pre>
  * 
@@ -209,7 +211,7 @@ public class DroolsAssert implements TestRule {
 		listeners.stream().filter(AgendaEventListener.class::isInstance).forEach(r -> session.addEventListener((AgendaEventListener) r));
 		listeners.stream().filter(RuleRuntimeEventListener.class::isInstance).forEach(r -> session.addEventListener((RuleRuntimeEventListener) r));
 		listeners.stream().filter(ProcessEventListener.class::isInstance).forEach(r -> session.addEventListener((ProcessEventListener) r));
-
+		
 		session.addEventListener(rulesChrono);
 	}
 	
@@ -280,7 +282,7 @@ public class DroolsAssert implements TestRule {
 	 * Returns all objects of the class if found
 	 */
 	public <T> List<T> getObjects(Class<T> clazz, Predicate<T> filter) {
-		retractExpiredEvents();
+		deleteExpiredEvents();
 		return (List<T>) session.getEntryPoints().stream()
 				.flatMap(e -> e.getObjects(obj -> clazz.isInstance(obj)).stream())
 				.map(obj -> clazz.cast(obj))
@@ -292,8 +294,38 @@ public class DroolsAssert implements TestRule {
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> List<T> getObjects(ObjectFilter filter) {
-		retractExpiredEvents();
+		deleteExpiredEvents();
 		return (List<T>) session.getEntryPoints().stream().flatMap(e -> e.getObjects(filter).stream()).collect(toList());
+	}
+	
+	public InternalFactHandle getFactHandle(Object o) {
+		return session.getEntryPoints().stream()
+				.map(e -> e.getFactHandle(o))
+				.filter(h -> !isNull(h))
+				.map(InternalFactHandle.class::cast)
+				.findFirst().orElse(null);
+	}
+	
+	public InternalFactHandle getFactHandle(Class<?> clazz) {
+		return getFactHandle(getObject(clazz));
+	}
+	
+	public List<InternalFactHandle> getFactHandles(Class<?> clazz) {
+		return getObjects(clazz).stream()
+				.map(this::getFactHandle)
+				.collect(toList());
+	}
+	
+	public <T> List<InternalFactHandle> getFactHandles(Class<T> clazz, Predicate<T> filter) {
+		return getObjects(clazz, filter).stream()
+				.map(this::getFactHandle)
+				.collect(toList());
+	}
+	
+	public List<InternalFactHandle> getFactHandles(ObjectFilter filter) {
+		return getObjects(filter).stream()
+				.map(this::getFactHandle)
+				.collect(toList());
 	}
 	
 	/**
@@ -407,9 +439,11 @@ public class DroolsAssert implements TestRule {
 	 * It is imperative that all other rules which are part of the same agenda will be also executed, see below.
 	 * <p>
 	 * <i>Drools Developer's Cookbook (c):</i><br>
-	 * People quite often misunderstand how Drools works internally. So, let's try to clarify how rules are "executed" really. Each time an object is inserted/updated/retracted in the working memory, or the facts are update/retracted within the rules, the rules are re-evaluated with the new working
-	 * memory state. If a rule matches, it generates an Activation object. This Activation object is stored inside the Agenda until the fireAllRules() method is invoked. These objects are also evaluated when the WorkingMemory state changes to be possibly cancelled. Finally, when the fireAllRules()
-	 * method is invoked the Agenda is cleared, executing the associated rule consequence of each Activation object.
+	 * People quite often misunderstand how Drools works internally. So, let's try to clarify how rules are "executed" really. Each time an object is inserted/updated/deleted in
+	 * the working memory, or the facts are update/deleted within the rules, the rules are re-evaluated with the new working memory state. If a rule matches, it generates an
+	 * Activation object. This Activation object is stored inside the Agenda until the fireAllRules() method is invoked. These objects are also evaluated when the WorkingMemory
+	 * state changes to be possibly cancelled. Finally, when the fireAllRules() method is invoked the Agenda is cleared, executing the associated rule consequence of each
+	 * Activation object.
 	 * 
 	 * @see #awaitForAny()
 	 * @see #awaitFor(TimeUnit, long, String...)
@@ -489,7 +523,7 @@ public class DroolsAssert implements TestRule {
 		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
 	}
 	
-	protected final void retractExpiredEvents() {
+	protected final void deleteExpiredEvents() {
 		clock.advanceTime(1, MILLISECONDS);
 		session.fireAllRules();
 		clock.advanceTime(-1, MILLISECONDS);
@@ -523,18 +557,18 @@ public class DroolsAssert implements TestRule {
 			assertTrue(formatUnexpectedCollection("Fact", "never inserted into the session", unknown), unknown.isEmpty());
 		}
 		
-		retractExpiredEvents();
+		deleteExpiredEvents();
 		session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).forEach(obj -> identityMap.remove(obj));
-		List<String> retracted = identityMap.keySet().stream().map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Fact", "removed from the session", retracted), retracted.isEmpty());
+		List<String> deleted = identityMap.keySet().stream().map(this::factToString).collect(toList());
+		assertTrue(formatUnexpectedCollection("Fact", "removed from the session", deleted), deleted.isEmpty());
 	}
 	
 	/**
-	 * Asserts object(s) retracted from knowledge base in all partitions.
+	 * Asserts object(s) deleted from knowledge base in all partitions.
 	 * 
 	 * @throws AssertionError
 	 */
-	public void assertRetracted(Object... objects) {
+	public void assertDeleted(Object... objects) {
 		Map<Object, Void> identityMap = new IdentityHashMap<>();
 		stream(objects).forEach(obj -> identityMap.put(obj, null));
 		
@@ -543,21 +577,21 @@ public class DroolsAssert implements TestRule {
 			assertTrue(formatUnexpectedCollection("Fact", "never inserted into the session", unknown), unknown.isEmpty());
 		}
 		
-		retractExpiredEvents();
-		List<String> notRetracted = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream())
+		deleteExpiredEvents();
+		List<String> notDeleted = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream())
 				.filter(obj -> identityMap.containsKey(obj)).map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Fact", "not retracted from the session", notRetracted), notRetracted.isEmpty());
+		assertTrue(formatUnexpectedCollection("Fact", "not deleted from the session", notDeleted), notDeleted.isEmpty());
 	}
 	
 	/**
-	 * Asserts all objects were retracted from knowledge base in all partitions.
+	 * Asserts all objects were deleted from knowledge base in all partitions.
 	 * 
 	 * @throws AssertionError
 	 */
-	public void assertAllRetracted() {
-		retractExpiredEvents();
+	public void assertAllDeleted() {
+		deleteExpiredEvents();
 		List<String> facts = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Fact", "not retracted from the session", facts), facts.isEmpty());
+		assertTrue(formatUnexpectedCollection("Fact", "not deleted from the session", facts), facts.isEmpty());
 	}
 	
 	/**
@@ -566,7 +600,7 @@ public class DroolsAssert implements TestRule {
 	 * @throws AssertionError
 	 */
 	public void assertFactsCount(long factsCount) {
-		retractExpiredEvents();
+		deleteExpiredEvents();
 		assertEquals(factsCount, session.getEntryPoints().stream().mapToLong(e -> e.getFactCount()).sum());
 	}
 	
@@ -622,6 +656,90 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
+	 * Update all objects by their handles
+	 * 
+	 * @see EntryPoint#update(FactHandle, Object)
+	 */
+	public void update(FactHandle... handles) {
+		update(asList(handles));
+	}
+	
+	/**
+	 * Update all objects by their handles
+	 * 
+	 * @see EntryPoint#update(FactHandle, Object)
+	 */
+	public void update(Collection<FactHandle> handles) {
+		for (EntryPoint entryPoint : session.getEntryPoints()) {
+			for (FactHandle factHandle : handles) {
+				if (entryPoint.getObject(factHandle) != null) {
+					entryPoint.update(factHandle, ((InternalFactHandle) factHandle).getObject());
+					continue;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Update all objects by their handles
+	 * 
+	 * @see EntryPoint#update(FactHandle, Object)
+	 */
+	public void update(Object... objects) {
+		for (EntryPoint entryPoint : session.getEntryPoints()) {
+			for (Object object : objects) {
+				FactHandle factHandle = entryPoint.getFactHandle(object);
+				if (factHandle != null) {
+					entryPoint.update(factHandle, object);
+					continue;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Delete all objects by their handles
+	 * 
+	 * @see EntryPoint#delete(FactHandle)
+	 */
+	public void delete(FactHandle... handles) {
+		delete(asList(handles));
+	}
+	
+	/**
+	 * Delete all objects by their handles
+	 * 
+	 * @see EntryPoint#delete(FactHandle)
+	 */
+	public void delete(Collection<FactHandle> handles) {
+		for (EntryPoint entryPoint : session.getEntryPoints()) {
+			for (FactHandle factHandle : handles) {
+				if (entryPoint.getObject(factHandle) != null) {
+					entryPoint.delete(factHandle);
+					continue;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Delete all objects by their handles
+	 * 
+	 * @see EntryPoint#delete(FactHandle)
+	 */
+	public void delete(Object... objects) {
+		for (EntryPoint entryPoint : session.getEntryPoints()) {
+			for (Object object : objects) {
+				FactHandle factHandle = entryPoint.getFactHandle(object);
+				if (factHandle != null) {
+					entryPoint.delete(factHandle);
+					continue;
+				}
+			}
+		}
+	}
+	
+	/**
 	 * @see KieSession#fireAllRules()
 	 */
 	public int fireAllRules() {
@@ -671,7 +789,7 @@ public class DroolsAssert implements TestRule {
 	 * @see DroolsSession#keepFactsHistory()
 	 */
 	public void printFacts() {
-		retractExpiredEvents();
+		deleteExpiredEvents();
 		List<Object> sortedFacts = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).collect(toList());
 		if (droolsSessionMeta.keepFactsHistory())
 			sort(sortedFacts, (o1, o2) -> factsHistory.get(o1).compareTo(factsHistory.get(o2)));
@@ -816,7 +934,8 @@ public class DroolsAssert implements TestRule {
 	
 	/**
 	 * Another integration point to {@link DroolsAssert}. Override to specify set of listeners being registered.<br>
-	 * Listener can optionally implement one or few of {@link AgendaEventListener}, {@link RuleRuntimeEventListener}, {@link ProcessEventListener} which will cause the listener to be subscribed for respective session notifications<br>
+	 * Listener can optionally implement one or few of {@link AgendaEventListener}, {@link RuleRuntimeEventListener}, {@link ProcessEventListener} which will cause the listener to
+	 * be subscribed for respective session notifications<br>
 	 */
 	protected List<DroolsassertListener> listeners() {
 		return asList(

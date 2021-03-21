@@ -2,7 +2,6 @@ package org.droolsassert.listeners;
 
 import static java.io.File.pathSeparator;
 import static java.lang.Integer.parseInt;
-import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.lang.System.getProperty;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.stream.Collectors.toSet;
@@ -25,6 +24,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 
 import org.droolsassert.DroolsAssertException;
+import org.droolsassert.util.AlphanumComparator;
 import org.kie.api.definition.rule.Query;
 import org.kie.api.runtime.KieSession;
 
@@ -119,7 +119,7 @@ public class ActivationReportBuilder implements DroolsassertListener {
 		if (reportsDirectory == null)
 			return;
 		
-		TreeMap<String, Integer> reportData = new TreeMap<>(CASE_INSENSITIVE_ORDER);
+		TreeMap<String, Integer> reportData = new TreeMap<>(new AlphanumComparator());
 		knownRules().forEach(rule -> reportData.put(rule, 0));
 		reportData.putAll(activations);
 		
@@ -131,7 +131,7 @@ public class ActivationReportBuilder implements DroolsassertListener {
 		if (consolidatedReport == null)
 			return;
 		
-		TreeMap<String, Integer> consolidatedReportData = new TreeMap<>(CASE_INSENSITIVE_ORDER);
+		TreeMap<String, Integer> consolidatedReportData = new TreeMap<>(new AlphanumComparator());
 		knownRules().forEach(rule -> consolidatedReportData.put(rule, 0));
 		
 		synchronized (ActivationReportBuilder.class) {

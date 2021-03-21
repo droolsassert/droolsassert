@@ -1,13 +1,17 @@
 package org.droolsassert;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.kie.api.runtime.rule.FactHandle;
 
 @DroolsSession(resources = {
 		"classpath*:/org/droolsassert/rules.drl",
@@ -85,5 +89,62 @@ public class DroolsAssertTest {
 	@Test
 	public void testPrintFactsSkippedWhenHistoryIsDisabled() {
 		drools.printFacts();
+	}
+	
+	@Test
+	public void testGetFactHandle() {
+		drools.insertAndFire(new AtomicInteger());
+		assertNotNull(drools.getFactHandle(AtomicInteger.class));
+		
+		drools.insertAndFireAt("entrypoint", new AtomicLong());
+		assertNotNull(drools.getFactHandle(AtomicLong.class));
+		
+		drools.insertAndFire(new AtomicLong());
+		assertEquals(2, drools.getFactHandles(AtomicLong.class).size());
+		assertEquals(2, drools.getFactHandles(AtomicLong.class, (l) -> l.get() > 0).size());
+		assertEquals(2, drools.getFactHandles((Object o) -> o instanceof AtomicLong).size());
+	}
+	
+	@Test
+	public void testUpdate() {
+		AtomicInteger atomicInteger = new AtomicInteger(8);
+		drools.insertAndFire(atomicInteger);
+		drools.assertActivated("atomic int rule");
+		
+		atomicInteger.incrementAndGet();
+		drools.advanceTime(1, SECONDS);
+		drools.assertActivated();
+		drools.update(atomicInteger);
+		drools.advanceTime(1, SECONDS);
+		drools.assertActivated("atomic int rule", "increment 10");
+		
+		drools.update(drools.getFactHandle(atomicInteger));
+		drools.advanceTime(1, SECONDS);
+		drools.assertActivated("atomic int rule");
+	}
+	
+	@Test
+	public void testDelete() {
+		AtomicInteger atomicInteger = new AtomicInteger();
+		drools.insertAndFire(atomicInteger);
+		assertEquals(1, drools.getFactHandles(AtomicInteger.class).size());
+		drools.delete(atomicInteger);
+		assertEquals(0, drools.getFactHandles(AtomicInteger.class).size());
+		
+		List<FactHandle> handles = drools.insertAndFire(new AtomicInteger());
+		assertEquals(1, drools.getFactHandles(AtomicInteger.class).size());
+		drools.delete(handles);
+		assertEquals(0, drools.getFactHandles(AtomicInteger.class).size());
+		
+		handles = drools.insertAndFire(new AtomicInteger());
+		assertEquals(1, drools.getFactHandles(AtomicInteger.class).size());
+		drools.delete(handles.get(0));
+		assertEquals(0, drools.getFactHandles(AtomicInteger.class).size());
+		
+		AtomicLong atomicLong = new AtomicLong();
+		drools.insertAndFireAt("entrypoint", atomicLong);
+		assertEquals(1, drools.getFactHandles(AtomicLong.class).size());
+		drools.delete(atomicLong);
+		assertEquals(0, drools.getFactHandles(AtomicLong.class).size());
 	}
 }

@@ -92,6 +92,11 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.mvel</groupId>
+			<artifactId>mvel2</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.jbehave</groupId>
 			<artifactId>jbehave-spring</artifactId>
 		</dependency>

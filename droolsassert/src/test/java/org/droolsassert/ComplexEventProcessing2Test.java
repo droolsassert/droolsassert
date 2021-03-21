@@ -27,7 +27,7 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 	public void testCallsConnectAndDisconnectLogic() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		insertAndFire(caller1Dial);
-		assertRetracted(caller1Dial);
+		assertDeleted(caller1Dial);
 		CallInProgress call = getObject(CallInProgress.class);
 		assertEquals("11111", call.callerNumber);
 		
@@ -41,19 +41,19 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 		
 		advanceTime(5, SECONDS);
 		assertExist(call);
-		assertRetracted(caller3Dial);
+		assertDeleted(caller3Dial);
 		
 		advanceTime(1, HOURS);
-		assertRetracted(call);
+		assertDeleted(call);
 		
-		assertAllRetracted();
+		assertAllDeleted();
 	}
 	
 	@Test
 	public void testCallsConnectAndDisconnectLogic2() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		insertAndFire(caller1Dial);
-		assertRetracted(caller1Dial);
+		assertDeleted(caller1Dial);
 		CallInProgress call = getObject(CallInProgress.class);
 		assertEquals("11111", call.callerNumber);
 		
@@ -66,7 +66,7 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 		assertExist(call, caller3Dial);
 		CallDropped callDropped = new CallDropped("11111", "22222", "Dismissed");
 		insertAndFire(callDropped);
-		assertRetracted(call, caller3Dial, callDropped);
+		assertDeleted(call, caller3Dial, callDropped);
 		CallInProgress call2 = getObject(CallInProgress.class);
 		assertExist(call2);
 		
@@ -74,9 +74,9 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 		assertExist(call2);
 		
 		advanceTime(1, HOURS);
-		assertRetracted(call2);
+		assertDeleted(call2);
 		
-		assertAllRetracted();
+		assertAllDeleted();
 	}
 	
 	@Test
@@ -84,7 +84,7 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		insertAndFire(caller1Dial);
 		assertActivated("input call");
-		assertRetracted(caller1Dial);
+		assertDeleted(caller1Dial);
 		CallInProgress call = getObject(CallInProgress.class);
 		assertEquals("11111", call.callerNumber);
 		
@@ -96,16 +96,16 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 		awaitFor("drop dial-up if callee is talking");
 		assertActivated("drop dial-up if callee is talking", "input call dropped");
 		assertExist(call);
-		assertRetracted(caller3Dial);
+		assertDeleted(caller3Dial);
 		
 		awaitFor("drop the call if caller is talking more than permitted time");
 		assertActivatedCount(
 				1, "drop the call if caller is talking more than permitted time",
 				1, "call in progress dropped");
-		assertRetracted(call);
+		assertDeleted(call);
 		
 		assertNoScheduledActivations();
-		assertAllRetracted();
+		assertAllDeleted();
 	}
 	
 	@Test
@@ -167,13 +167,13 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 	public void testAwaitForScheduledActivations() {
 		Dialing caller1Dial = new Dialing("11111", "22222");
 		insertAndFire(caller1Dial);
-		assertRetracted(caller1Dial);
+		assertDeleted(caller1Dial);
 		CallInProgress call = getObject(CallInProgress.class);
 		assertEquals("11111", call.callerNumber);
 		
 		awaitFor("drop the call if caller is talking more than permitted time");
 		assertNoScheduledActivations();
-		assertAllRetracted();
+		assertAllDeleted();
 		
 		Dialing caller3Dial = new Dialing("33333", "22222");
 		insertAndFire(caller3Dial);
@@ -181,7 +181,7 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 				2, "input call",
 				1, "drop the call if caller is talking more than permitted time",
 				1, "call in progress dropped");
-		assertRetracted(caller3Dial);
+		assertDeleted(caller3Dial);
 		call = getObject(CallInProgress.class);
 		assertEquals("33333", call.callerNumber);
 		

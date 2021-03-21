@@ -1,0 +1,24 @@
+package org.droolsassert;
+dialect 'mvel'
+
+import org.droolsassert.InsertLogicalTest.SensorData
+import org.droolsassert.InsertLogicalTest.SensorAlarm
+import org.droolsassert.InsertLogicalTest.RedLightOn
+
+declare SensorData @role(event) @expires(1h1ms) end
+
+global java.io.PrintStream stdout
+
+rule 'alarm sin is negative'
+    when
+        $data: SensorData(sensorId == 'sin', value < 0) over window:length(2)
+    then
+        insertLogical (new SensorAlarm($data.sensorId, "negative value"))
+end
+
+rule 'alarm cos is negative'
+    when
+        $data: SensorData(sensorId == 'cos', value < 0) over window:length(2)
+    then
+        insertLogical (new SensorAlarm($data.sensorId, "negative value"))
+end

@@ -42,7 +42,7 @@ public @interface TestRules {
 	String[] expectedCount() default {};
 	
 	/**
-	 * Rules activations count are asserted in a line delimited resource file.<br>
+	 * Rules activations count in a line delimited resource file.<br>
 	 * This overrides {@link #expectedSource}
 	 * 
 	 * <pre>

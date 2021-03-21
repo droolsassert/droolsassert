@@ -353,12 +353,12 @@ public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter
 		drools.assertFactsCount(count);
 	}
 	
-	@Then("retracted $variables")
-	public void thenAssertRetracted(String variables) {
+	@Then("deleted $variables")
+	public void thenAssertDeleted(String variables) {
 		if ("all facts".equals(variables))
-			drools.assertAllRetracted();
+			drools.assertAllDeleted();
 		else
-			drools.assertRetracted(evalVariables(variables));
+			drools.assertDeleted(evalVariables(variables));
 	}
 	
 	/**

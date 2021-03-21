@@ -1,7 +1,7 @@
 package org.droolsassert;
 
-import org.droolsassert.BackwardChainingTest.Fact;
-import org.droolsassert.BackwardChainingTest.Result;
+import org.droolsassert.BackwardChainingTest.Fact
+import org.droolsassert.BackwardChainingTest.Result
 
 global Result result;
 

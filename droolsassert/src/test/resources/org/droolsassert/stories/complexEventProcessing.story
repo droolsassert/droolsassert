@@ -14,7 +14,7 @@ Scenario: test calls connect and disconnect logic
 Given new session for scenario
 Given variable caller1Dial is new Dialing('11111', '22222')
 When insert and fire caller1Dial
-Then retracted caller1Dial
+Then deleted caller1Dial
 Given variable call as CallInProgress object from the session
 Then assert call.callerNumber is '11111'
 
@@ -28,19 +28,19 @@ Then exist call, caller3Dial
 
 When advance time for 5 seconds
 Then exist call
-Then retracted caller3Dial
+Then deleted caller3Dial
 
 When advance time for 1 hour
-Then retracted call
+Then deleted call
 
-Then retracted all facts
+Then deleted all facts
 
 
 Scenario: test calls connect and disconnect logic 2
 Given new session for scenario
 Given variable caller1Dial is new Dialing('11111', '22222')
 When insert and fire caller1Dial
-Then retracted caller1Dial
+Then deleted caller1Dial
 Given variable call as CallInProgress object from the session
 Then assert call.callerNumber is '11111'
 
@@ -53,7 +53,7 @@ When advance time for 5 seconds
 Then exist call, caller3Dial
 Given variable callDropped is new CallDropped('11111', '22222', 'Dismissed')
 When insert and fire callDropped
-Then retracted call, caller3Dial, callDropped
+Then deleted call, caller3Dial, callDropped
 Given variable call2 as CallInProgress object from the session
 Then exist call2
 
@@ -61,9 +61,9 @@ When advance time for 10 seconds
 Then exist call2
 
 When advance time for 1 hour
-Then retracted call2
+Then deleted call2
 
-Then retracted all facts
+Then deleted all facts
 
 
 Scenario: test calls connect and disconnect logic stick to events
@@ -71,7 +71,7 @@ Given new session for scenario
 Given variable caller1Dial as new Dialing('11111', '22222')
 When insert and fire caller1Dial
 Then activated input call
-Then retracted caller1Dial
+Then deleted caller1Dial
 Given variable call as CallInProgress object from the session
 Then assert call.callerNumber equals '11111'
 
@@ -83,16 +83,16 @@ Then exist call, caller3Dial
 When await for 'drop dial-up if callee is talking'
 Then activated 'drop dial-up if callee is talking', 'input call dropped'
 Then exist call
-Then retracted caller3Dial
+Then deleted caller3Dial
 
 When await for 'drop the call if caller is talking more than permitted time'
 Then count of activated are
     1 drop the call if caller is talking more than permitted time
     1 call in progress dropped
-Then retracted call
+Then deleted call
 
 Then there are no scheduled activations
-Then retracted all facts
+Then deleted all facts
 
 
 Scenario: test assert activations

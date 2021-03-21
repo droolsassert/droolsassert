@@ -1,8 +1,8 @@
 package org.droolsassert;
 dialect 'mvel'
 
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicInteger
 
 rule 'before'
     salience 1
@@ -24,6 +24,20 @@ rule 'atomic long rule'
         $atomicLong: AtomicLong()
     then
         $atomicLong.incrementAndGet()
+end
+
+rule 'atomic long from entrypoint'
+    when
+        $atomicLong: AtomicLong() from entry-point entrypoint
+    then
+        $atomicLong.incrementAndGet()
+end
+
+rule 'increment 10'
+    when
+        $atomicInteger: AtomicInteger(intValue == 10)
+    then
+        $atomicInteger.incrementAndGet()
 end
 
 rule 'after'

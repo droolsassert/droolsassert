@@ -1,0 +1,61 @@
+package org.droolsassert;
+dialect 'mvel'
+
+import java.util.concurrent.atomic.AtomicInteger
+import org.droolsassert.LogicalEventsTest.Event
+import org.droolsassert.LogicalEventsTest.AdminEvent
+
+global java.io.PrintStream stdout
+
+rule 'negative integer'
+    when
+        $int: AtomicInteger(intValue < 0)
+    then
+        insertLogical(new Event("negative integer"))
+end
+
+rule 'increment positive if no negative values'
+    lock-on-active true
+    when
+        $positive: AtomicInteger(intValue > 0)
+        not Event()
+    then
+        $positive.incrementAndGet();
+        update($positive);
+end
+
+rule 'reset negative integers'
+    when
+        AdminEvent(message == 'reset negative values')
+        $negative: AtomicInteger(intValue < 0)
+    then
+        stdout.println("Resetting negative values");
+       	$negative.set(0)
+        update($negative);
+end
+
+rule 'update logical event'
+    when
+        AdminEvent(message == 'update logical event')
+        $event: Event()
+    then
+        stdout.println("Updating logical event");
+       	$event.setMessage("Updated logical event");
+        update($event);
+end
+
+rule 'delete logical event'
+    when
+        AdminEvent(message == 'delete logical event')
+        $event: Event()
+    then
+        stdout.println("Deleting logical event");
+        delete($event);
+end
+
+rule 'no negative integer'
+    when
+        not Event(message == "negative integer")
+    then
+        stdout.println("No negative values");
+end

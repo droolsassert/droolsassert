@@ -11,6 +11,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import org.droolsassert.util.AlphanumComparator;
 import org.droolsassert.util.PerfStat;
 import org.droolsassert.util.Stat;
 import org.jfree.data.time.Second;
@@ -101,10 +102,14 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 	}
 	
 	public TreeMap<String, TimeSeries> getRulesMaxChart() {
-		return new TreeMap<>(rulesMaxChart);
+		TreeMap<String, TimeSeries> sorted = new TreeMap<>(new AlphanumComparator());
+		sorted.putAll(rulesMaxChart);
+		return sorted;
 	}
 	
 	public TreeMap<String, TimeSeries> getRulesAvgChart() {
-		return new TreeMap<>(rulesAvgChart);
+		TreeMap<String, TimeSeries> sorted = new TreeMap<>(new AlphanumComparator());
+		sorted.putAll(rulesAvgChart);
+		return sorted;
 	}
 }

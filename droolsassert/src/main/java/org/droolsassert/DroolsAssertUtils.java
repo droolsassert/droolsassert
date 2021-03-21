@@ -23,14 +23,19 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
+import org.drools.core.common.LogicalDependency;
 import org.drools.core.spi.Activation;
+import org.drools.core.spi.Tuple;
+import org.drools.core.util.LinkedList;
 import org.kie.api.runtime.rule.Match;
 import org.kie.api.time.SessionPseudoClock;
 import org.springframework.core.io.Resource;
@@ -49,11 +54,25 @@ public final class DroolsAssertUtils {
 	}
 	
 	public static List<Object> getRuleActivatedBy(Match match) {
-		Object triggerObject = ((Activation<?>) match).getPropagationContext().getFactHandle().getObject();
+		Object triggerObject = ((Activation) match).getPropagationContext().getFactHandle().getObject();
 		List<Object> result = new ArrayList<>(match.getObjects());
 		if (!result.contains(triggerObject))
 			result.add(0, triggerObject);
 		return result;
+	}
+	
+	public static Set<Object> getRuleLogicialDependencies(Match match) {
+		Set<Object> logicalDependencies = new HashSet<>();
+		Tuple tuple = (Tuple) match;
+		do {
+			LinkedList list = ((Activation) tuple).getLogicalDependencies();
+			if (list != null) {
+				for (LogicalDependency node = (LogicalDependency) list.getFirst(); node != null; node = (LogicalDependency) node.getNext())
+					logicalDependencies.add(node.getObject());
+			}
+			tuple = tuple.getHandlePrevious();
+		} while (tuple != null);
+		return logicalDependencies;
 	}
 	
 	public static List<Resource> getResources(boolean mandatory, boolean logResources, String... locations) {

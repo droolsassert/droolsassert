@@ -53,7 +53,9 @@ public class PerfStat {
 	 * Performance statistic for all domains
 	 */
 	public static TreeMap<String, StatImpl> getPerfStat() {
-		return new TreeMap<>(stats);
+		TreeMap<String, StatImpl> sorted = new TreeMap<>(new AlphanumComparator());
+		sorted.putAll(stats);
+		return sorted;
 	}
 	
 	/**

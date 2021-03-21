@@ -30,21 +30,21 @@ public class TemporalReasoningTest {
 		drools.insertAndFireAt("MonitoringStream", heartbeat2);
 		drools.assertExist(heartbeat1, heartbeat2);
 		drools.advanceTime(5, SECONDS);
-		drools.assertRetracted(heartbeat1);
+		drools.assertDeleted(heartbeat1);
 		drools.assertExist(heartbeat2);
 		
 		Heartbeat heartbeat3 = new Heartbeat(3);
 		drools.insertAndFireAt("MonitoringStream", heartbeat3);
 		drools.assertExist(heartbeat2, heartbeat3);
 		drools.advanceTime(5, SECONDS);
-		drools.assertRetracted(heartbeat2);
+		drools.assertDeleted(heartbeat2);
 		drools.assertExist(heartbeat3);
 		
 		Heartbeat heartbeat4 = new Heartbeat(4);
 		drools.insertAndFireAt("MonitoringStream", heartbeat4);
 		drools.assertExist(heartbeat3, heartbeat4);
 		drools.advanceTime(5, SECONDS);
-		drools.assertRetracted(heartbeat3);
+		drools.assertDeleted(heartbeat3);
 		drools.assertExist(heartbeat4);
 		
 		drools.assertFactsCount(1);

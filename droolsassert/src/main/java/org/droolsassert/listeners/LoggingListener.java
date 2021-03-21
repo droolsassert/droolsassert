@@ -3,10 +3,12 @@ package org.droolsassert.listeners;
 import static java.lang.String.format;
 import static java.lang.System.identityHashCode;
 import static java.util.stream.Collectors.toList;
+import static org.drools.core.common.EqualityKey.JUSTIFIED;
 import static org.droolsassert.DroolsAssertUtils.getRuleActivatedBy;
 
 import java.util.List;
 
+import org.drools.core.common.InternalFactHandle;
 import org.droolsassert.DroolsAssert;
 import org.droolsassert.DroolsSession;
 import org.kie.api.event.rule.BeforeMatchFiredEvent;
@@ -43,12 +45,14 @@ public class LoggingListener extends DefaultAgendaEventListener implements Drool
 	
 	@Override
 	public void objectInserted(ObjectInsertedEvent event) {
-		log("--> inserted", event.getObject());
+		InternalFactHandle fh = (InternalFactHandle) event.getFactHandle();
+		boolean justified = fh.getEqualityKey() != null && fh.getEqualityKey().getStatus() == JUSTIFIED;
+		log("--> inserted" + (justified ? " logical " + event.getObject().hashCode() : ""), event.getObject());
 	}
 	
 	@Override
 	public void objectDeleted(ObjectDeletedEvent event) {
-		log("--> retracted", event.getOldObject());
+		log("--> deleted", event.getOldObject());
 	}
 	
 	@Override

@@ -16,7 +16,7 @@ rule 'input call'
         not CallInProgress(calleeNumber == $dial.calleeNumber)
     then
         insert (new CallInProgress($dial.callerNumber, $dial.calleeNumber))
-        retract ($dial)
+        delete ($dial)
 end
 
 rule 'drop dial-up if callee is talking'
@@ -43,7 +43,7 @@ rule 'call in progress dropped'
         $callInProgress : CallInProgress($callDropped.pair contains callerNumber, $callDropped.pair contains calleeNumber)
     then
         stdout.println('Call ' + $callInProgress.callerNumber + ' dropped due to ' + $callDropped.reason)
-        retract ($callInProgress)
+        delete ($callInProgress)
 end
 
 rule 'input call dropped'
@@ -52,5 +52,5 @@ rule 'input call dropped'
         $dial : Dialing($callDropped.pair contains callerNumber, $callDropped.pair contains calleeNumber)
     then
         stdout.println('Dial-up ' + $dial.callerNumber + ' dropped due to ' + $callDropped.reason)
-        retract ($dial)
+        delete ($dial)
 end

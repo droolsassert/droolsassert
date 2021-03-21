@@ -1,13 +1,13 @@
 package org.droolsassert;
 
-import java.lang.Integer;
-import java.lang.Thread;
+import java.lang.Integer
+import java.lang.Thread
 
 rule 'sleep method'
     when
         $value: Integer()
     then
-        retract ($value);
+        delete ($value);
         Thread.sleep($value);
 end
 

@@ -19,21 +19,21 @@ Given variable heartbeat2 is new Heartbeat(2)
 When insert into MonitoringStream and fire heartbeat2
 Then exist heartbeat1, heartbeat2
 When advance time for 5 seconds
-Then retracted heartbeat1
+Then deleted heartbeat1
 Then exist heartbeat2
 
 Given variable heartbeat3 is new Heartbeat(3)
 When insert into MonitoringStream and fire heartbeat3
 Then exist heartbeat2, heartbeat3
 When advance time for 5 seconds
-Then retracted heartbeat2
+Then deleted heartbeat2
 Then exist heartbeat3
 
 Given variable heartbeat4 is new Heartbeat(4)
 When insert into MonitoringStream and fire heartbeat4
 Then exist heartbeat3, heartbeat4
 When advance time for 5 seconds
-Then retracted heartbeat3
+Then deleted heartbeat3
 Then exist heartbeat4
 
 Then count of facts is 1

@@ -51,7 +51,8 @@ public class MvelProcessor extends PatternProcessor {
 	
 	@Override
 	protected String resolve(Matcher matcher) {
-		return "" + evaluate(defaultIfEmpty(matcher.group("long"), matcher.group("short")));
+		String expression = defaultIfEmpty(matcher.group("long"), matcher.group("short"));
+		return String.valueOf(executionContext.containsKey(expression) ? executionContext.get(expression) : evaluate(expression));
 	}
 	
 	@SuppressWarnings("unchecked")
