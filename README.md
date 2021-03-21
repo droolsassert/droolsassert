@@ -1,3 +1,10 @@
+**Please vote for drools jiras to help me finish some lovely stuff for you**
+* [DROOLS-5406](https://issues.redhat.com/browse/DROOLS-5406)
+* [DROOLS-5971](https://issues.redhat.com/browse/DROOLS-5971)
+* [DROOLS-6072](https://issues.redhat.com/browse/DROOLS-6072)
+* [DROOLS-6080](https://issues.redhat.com/browse/DROOLS-6080)
+* [DROOLS-6081](https://issues.redhat.com/browse/DROOLS-6081)
+
 ## Goal
 
 Relieve Drools JUnit testing 
