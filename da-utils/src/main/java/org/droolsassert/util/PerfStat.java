@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getProperty;
 import static javax.management.ObjectName.quote;
+import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 import static org.droolsassert.util.JmxUtils.registerMBean;
 
 import java.util.Map;
@@ -53,7 +54,7 @@ public class PerfStat {
 	 * Performance statistic for all domains
 	 */
 	public static TreeMap<String, StatImpl> getPerfStat() {
-		TreeMap<String, StatImpl> sorted = new TreeMap<>(new AlphanumComparator());
+		TreeMap<String, StatImpl> sorted = new TreeMap<>(ALPHANUM_COMPARATOR);
 		sorted.putAll(stats);
 		return sorted;
 	}

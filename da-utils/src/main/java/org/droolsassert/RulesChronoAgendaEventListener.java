@@ -1,12 +1,12 @@
 package org.droolsassert;
 
+import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 import static org.droolsassert.util.PerfStat.AGGREGATION_PERIOD_MS;
 
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.droolsassert.util.AlphanumComparator;
 import org.droolsassert.util.PerfStat;
 import org.droolsassert.util.Stat;
 import org.kie.api.event.rule.AfterMatchFiredEvent;
@@ -63,7 +63,7 @@ public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 	}
 	
 	public TreeMap<String, Stat> getPerfStat() {
-		TreeMap<String, Stat> result = new TreeMap<>(new AlphanumComparator());
+		TreeMap<String, Stat> result = new TreeMap<>(ALPHANUM_COMPARATOR);
 		for (Entry<String, PerfStat> e : rulesStat.entrySet())
 			result.put(e.getKey(), e.getValue().getStat());
 		return result;

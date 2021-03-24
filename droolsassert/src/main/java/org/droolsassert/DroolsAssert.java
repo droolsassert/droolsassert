@@ -672,10 +672,8 @@ public class DroolsAssert implements TestRule {
 	public void update(Collection<FactHandle> handles) {
 		for (EntryPoint entryPoint : session.getEntryPoints()) {
 			for (FactHandle factHandle : handles) {
-				if (entryPoint.getObject(factHandle) != null) {
+				if (entryPoint.getObject(factHandle) != null)
 					entryPoint.update(factHandle, ((InternalFactHandle) factHandle).getObject());
-					continue;
-				}
 			}
 		}
 	}
@@ -689,10 +687,8 @@ public class DroolsAssert implements TestRule {
 		for (EntryPoint entryPoint : session.getEntryPoints()) {
 			for (Object object : objects) {
 				FactHandle factHandle = entryPoint.getFactHandle(object);
-				if (factHandle != null) {
+				if (factHandle != null)
 					entryPoint.update(factHandle, object);
-					continue;
-				}
 			}
 		}
 	}
@@ -714,10 +710,8 @@ public class DroolsAssert implements TestRule {
 	public void delete(Collection<FactHandle> handles) {
 		for (EntryPoint entryPoint : session.getEntryPoints()) {
 			for (FactHandle factHandle : handles) {
-				if (entryPoint.getObject(factHandle) != null) {
+				if (entryPoint.getObject(factHandle) != null)
 					entryPoint.delete(factHandle);
-					continue;
-				}
 			}
 		}
 	}
@@ -731,10 +725,8 @@ public class DroolsAssert implements TestRule {
 		for (EntryPoint entryPoint : session.getEntryPoints()) {
 			for (Object object : objects) {
 				FactHandle factHandle = entryPoint.getFactHandle(object);
-				if (factHandle != null) {
+				if (factHandle != null)
 					entryPoint.delete(factHandle);
-					continue;
-				}
 			}
 		}
 	}

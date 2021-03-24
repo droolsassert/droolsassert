@@ -11,6 +11,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.droolsassert.DroolsAssertUtils.COUNT_OF_RULES;
 import static org.droolsassert.DroolsAssertUtils.directory;
+import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,7 +25,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 
 import org.droolsassert.DroolsAssertException;
-import org.droolsassert.util.AlphanumComparator;
 import org.kie.api.definition.rule.Query;
 import org.kie.api.runtime.KieSession;
 
@@ -119,7 +119,7 @@ public class ActivationReportBuilder implements DroolsassertListener {
 		if (reportsDirectory == null)
 			return;
 		
-		TreeMap<String, Integer> reportData = new TreeMap<>(new AlphanumComparator());
+		TreeMap<String, Integer> reportData = new TreeMap<>(ALPHANUM_COMPARATOR);
 		knownRules().forEach(rule -> reportData.put(rule, 0));
 		reportData.putAll(activations);
 		
@@ -131,7 +131,7 @@ public class ActivationReportBuilder implements DroolsassertListener {
 		if (consolidatedReport == null)
 			return;
 		
-		TreeMap<String, Integer> consolidatedReportData = new TreeMap<>(new AlphanumComparator());
+		TreeMap<String, Integer> consolidatedReportData = new TreeMap<>(ALPHANUM_COMPARATOR);
 		knownRules().forEach(rule -> consolidatedReportData.put(rule, 0));
 		
 		synchronized (ActivationReportBuilder.class) {

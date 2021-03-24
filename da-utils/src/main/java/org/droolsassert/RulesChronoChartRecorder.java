@@ -3,6 +3,7 @@ package org.droolsassert;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 
 import java.util.Map.Entry;
 import java.util.Timer;
@@ -11,7 +12,6 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import org.droolsassert.util.AlphanumComparator;
 import org.droolsassert.util.PerfStat;
 import org.droolsassert.util.Stat;
 import org.jfree.data.time.Second;
@@ -102,13 +102,13 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 	}
 	
 	public TreeMap<String, TimeSeries> getRulesMaxChart() {
-		TreeMap<String, TimeSeries> sorted = new TreeMap<>(new AlphanumComparator());
+		TreeMap<String, TimeSeries> sorted = new TreeMap<>(ALPHANUM_COMPARATOR);
 		sorted.putAll(rulesMaxChart);
 		return sorted;
 	}
 	
 	public TreeMap<String, TimeSeries> getRulesAvgChart() {
-		TreeMap<String, TimeSeries> sorted = new TreeMap<>(new AlphanumComparator());
+		TreeMap<String, TimeSeries> sorted = new TreeMap<>(ALPHANUM_COMPARATOR);
 		sorted.putAll(rulesAvgChart);
 		return sorted;
 	}

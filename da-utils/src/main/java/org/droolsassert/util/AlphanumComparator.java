@@ -6,6 +6,7 @@ import java.util.Comparator;
 
 public class AlphanumComparator implements Comparator<String> {
 	
+	public static final AlphanumComparator ALPHANUM_COMPARATOR = new AlphanumComparator();
 	private static char[] upperCaseCache = new char[(int) pow(2, 16)];
 	private boolean nullIsLess;
 	
@@ -83,7 +84,7 @@ public class AlphanumComparator implements Comparator<String> {
 		return ch >= 48 && ch <= 57;
 	}
 	
-	public char toUpperCase(char ch) {
+	private char toUpperCase(char ch) {
 		char cached = upperCaseCache[ch];
 		if (cached == 0) {
 			cached = Character.toUpperCase(ch);

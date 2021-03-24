@@ -3,6 +3,7 @@ package org.droolsassert.util;
 import static java.util.Arrays.asList;
 import static java.util.Collections.shuffle;
 import static java.util.Collections.sort;
+import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.util.List;
@@ -92,7 +93,7 @@ public class AlphanumComparatorTest {
 	@Test
 	public void logicTest() throws InterruptedException {
 		shuffle(list);
-		sort(list, new AlphanumComparator());
+		sort(list, ALPHANUM_COMPARATOR);
 		assertArrayEquals(sorted.toArray(), list.toArray());
 	}
 }
