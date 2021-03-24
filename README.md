@@ -1,4 +1,4 @@
-**Please vote for drools jiras to help me finish some lovely stuff for you**
+**Please vote for drools jiras to help me finish some cool stuff for you**
 * [DROOLS-5406](https://issues.redhat.com/browse/DROOLS-5406)
 * [DROOLS-5971](https://issues.redhat.com/browse/DROOLS-5971)
 * [DROOLS-6072](https://issues.redhat.com/browse/DROOLS-6072)
