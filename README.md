@@ -15,7 +15,7 @@ The goal of unit testing is to isolate each part of the program and show that th
 
 ## Approach
 
-Unit test is about taking minimum piece of code and test all possible usecases defining specification. With integration tests your goal is not all possible usecases but integration of several units that work together. Do the same with rules. Segregate rules by business meaning and purpose. Simplest 'unit under the test' could be file with single or [high cohesion](https://stackoverflow.com/questions/10830135/what-is-high-cohesion-and-how-to-use-it-make-it) set of rules and what is required for it to work (if any), like common DSL definition file or decision table. For integration test you could take meaningful subset or all rules of the system. 
+Unit test is about taking minimum piece of code and test all possible usecases defining specification. With integration tests your goal is not all possible usecases but integration of several units that work together. Do the same with rules. Segregate rules by business meaning and purpose. Simplest 'unit under the test' could be file with single or [high cohesion](https://stackoverflow.com/q/10830135/448078) set of rules and what is required for it to work (if any), like common DSL definition file or decision table. For integration test you could take meaningful subset or all rules of the system. 
 
 ## Usage
 
@@ -63,6 +63,6 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.3.3</version>
+        <version>2.3.4</version>
         <scope>test</scope>
     </dependency>
