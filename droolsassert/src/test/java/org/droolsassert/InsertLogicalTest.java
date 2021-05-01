@@ -24,7 +24,8 @@ public class InsertLogicalTest extends DroolsAssert {
 	
 	@Test
 	public void testInsertLogical() throws InterruptedException {
-		for (double i = 0; i < 3 * PI; i += PI / 6) {
+		advanceTime(3, HOURS);
+		for (double i = 0; i > -3 * PI; i -= PI / 6) {
 			insertAndFire(new SensorData("sin", sin(i)));
 			insertAndFire(new SensorData("cos", cos(i)));
 			advanceTime(1, HOURS);
@@ -36,9 +37,10 @@ public class InsertLogicalTest extends DroolsAssert {
 	
 	@Test
 	public void testInsertStated() throws InterruptedException {
-		int h = 0;
-		for (double i = 0; i < 3 * PI; i += PI / 6) {
-			if (h == 5)
+		advanceTime(3, HOURS);
+		int h = 3;
+		for (double i = 0; i > -3 * PI; i -= PI / 6) {
+			if (h == 8)
 				// https://issues.redhat.com/browse/DROOLS-6072
 				insertAndFire(new SensorAlarm("cos", "negative value"));
 			insertAndFire(new SensorData("sin", sin(i)));
