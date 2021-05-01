@@ -9,6 +9,7 @@ import static java.lang.String.format;
 import static java.lang.System.getProperty;
 import static java.lang.Thread.currentThread;
 import static java.nio.charset.Charset.defaultCharset;
+import static java.util.stream.Collectors.toList;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.SwingUtilities.invokeLater;
@@ -18,11 +19,11 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
-import static org.drools.core.common.EqualityKey.JUSTIFIED;
 import static org.droolsassert.DroolsAssertUtils.directory;
 import static org.droolsassert.DroolsAssertUtils.formatTime;
 import static org.droolsassert.DroolsAssertUtils.getRuleActivatedBy;
 import static org.droolsassert.DroolsAssertUtils.getRuleLogicialDependencies;
+import static org.droolsassert.DroolsAssertUtils.isJustified;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.DeletedFact;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.InsertedFact;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.Rule;
@@ -272,7 +273,14 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		String stateId = format("#%s-%s", fh.getIdentityHashCode(), cellType == DeletedFact ? state : state.incrementAndGet());
 		writeToFile(fact, stateId);
 		DefaultGraphCell cell = newCell(newLabel(cellType, fact.getClass().getSimpleName(), stateId, formatTime(clock), flags), cellType);
-		DefaultGraphCell previousStateCell = lastObjectCell.put(fact, cell);
+		DefaultGraphCell previousStateCell;
+		if (cellType == DeletedFact) {
+			previousStateCell = lastObjectCell.remove(fact);
+			if (isJustified(fh))
+				lastObjectCell.keySet().stream().filter(e -> e.equals(fact)).collect(toList()).forEach(lastObjectCell::remove);
+		} else {
+			previousStateCell = lastObjectCell.put(fact, cell);
+		}
 		
 		synchronized (StateTransitionBuilder.class) {
 			getView().insert(cell);
@@ -291,18 +299,6 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	public GraphLayoutCache getView() {
 		return graph.getGraphLayoutCache();
-	}
-	
-	/**
-	 * When the Drools engine logically inserts an object during a rule execution, the Drools engine justifies the object by executing the rule. For each logical insertion, only
-	 * one equal object can exist, and each subsequent equal logical insertion increases the justification counter for that logical insertion. A justification is removed when the
-	 * conditions of the rule become untrue. When no more justifications exist, the logical object is automatically deleted.
-	 * 
-	 * @param fh
-	 * @return
-	 */
-	private boolean isJustified(InternalFactHandle fh) {
-		return fh.getEqualityKey() != null && fh.getEqualityKey().getStatus() == JUSTIFIED;
 	}
 	
 	private void writeToFile(Object fact, String stateId) {

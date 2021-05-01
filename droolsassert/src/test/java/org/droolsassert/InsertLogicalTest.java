@@ -39,6 +39,7 @@ public class InsertLogicalTest extends DroolsAssert {
 		int h = 0;
 		for (double i = 0; i < 3 * PI; i += PI / 6) {
 			if (h == 5)
+				// https://issues.redhat.com/browse/DROOLS-6072
 				insertAndFire(new SensorAlarm("cos", "negative value"));
 			insertAndFire(new SensorData("sin", sin(i)));
 			insertAndFire(new SensorData("cos", cos(i)));

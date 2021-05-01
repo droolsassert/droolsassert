@@ -3,8 +3,8 @@ package org.droolsassert.listeners;
 import static java.lang.String.format;
 import static java.lang.System.identityHashCode;
 import static java.util.stream.Collectors.toList;
-import static org.drools.core.common.EqualityKey.JUSTIFIED;
 import static org.droolsassert.DroolsAssertUtils.getRuleActivatedBy;
+import static org.droolsassert.DroolsAssertUtils.isJustified;
 
 import java.util.List;
 
@@ -46,8 +46,7 @@ public class LoggingListener extends DefaultAgendaEventListener implements Drool
 	@Override
 	public void objectInserted(ObjectInsertedEvent event) {
 		InternalFactHandle fh = (InternalFactHandle) event.getFactHandle();
-		boolean justified = fh.getEqualityKey() != null && fh.getEqualityKey().getStatus() == JUSTIFIED;
-		log("--> inserted" + (justified ? " logical " + event.getObject().hashCode() : ""), event.getObject());
+		log("--> inserted" + (isJustified(fh) ? " logical " + event.getObject().hashCode() : ""), event.getObject());
 	}
 	
 	@Override

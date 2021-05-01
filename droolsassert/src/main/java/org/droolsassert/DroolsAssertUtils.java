@@ -15,6 +15,7 @@ import static org.apache.commons.io.FileUtils.forceMkdir;
 import static org.apache.commons.io.IOUtils.readLines;
 import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.join;
+import static org.drools.core.common.EqualityKey.JUSTIFIED;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
+import org.drools.core.common.InternalFactHandle;
 import org.drools.core.common.LogicalDependency;
 import org.drools.core.spi.Activation;
 import org.drools.core.spi.Tuple;
@@ -59,6 +61,19 @@ public final class DroolsAssertUtils {
 		if (!result.contains(triggerObject))
 			result.add(0, triggerObject);
 		return result;
+	}
+	
+	/**
+	 * When the Drools engine logically inserts an object during a rule execution, the Drools engine justifies the object by executing the rule. For each logical insertion, only
+	 * one equal object can exist, and each subsequent equal logical insertion increases the justification counter for that logical insertion. A justification is removed when the
+	 * conditions of the rule become untrue. When no more justifications exist, the logical object is automatically deleted.
+	 * 
+	 * @param fh
+	 * @return
+	 */
+	// https://issues.redhat.com/browse/DROOLS-6072
+	public static boolean isJustified(InternalFactHandle fh) {
+		return fh.getEqualityKey() != null && fh.getEqualityKey().getStatus() == JUSTIFIED;
 	}
 	
 	public static Set<Object> getRuleLogicialDependencies(Match match) {
