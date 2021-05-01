@@ -94,6 +94,7 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
  * target/droolsassert/stateTransitionReport
  * </pre>
  */
+// TODO: implement statistic box on a graph view how many objects and of which types left in a session
 public class StateTransitionBuilder extends DefaultAgendaEventListener implements DroolsassertListener, RuleRuntimeEventListener {
 	
 	public enum CellType {
@@ -271,7 +272,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		String stateId = format("#%s-%s", fh.getIdentityHashCode(), cellType == DeletedFact ? state : state.incrementAndGet());
 		writeToFile(fact, stateId);
 		DefaultGraphCell cell = newCell(newLabel(cellType, fact.getClass().getSimpleName(), stateId, formatTime(clock), flags), cellType);
-		DefaultGraphCell previousStateCell = /* cellType == DeletedFact ? lastObjectCell.remove(fact) :*/ lastObjectCell.put(fact, cell);
+		DefaultGraphCell previousStateCell = lastObjectCell.put(fact, cell);
 		
 		synchronized (StateTransitionBuilder.class) {
 			getView().insert(cell);

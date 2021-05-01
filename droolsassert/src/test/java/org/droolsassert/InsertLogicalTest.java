@@ -11,7 +11,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-@DroolsSession(resources = "org/droolsassert/insertLogical.drl", showStateTransitionPopup = true)
+@DroolsSession("org/droolsassert/insertLogical.drl")
 public class InsertLogicalTest extends DroolsAssert {
 	
 	@Rule

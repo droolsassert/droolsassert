@@ -14,7 +14,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-@DroolsSession(resources = "org/droolsassert/logicalEvents.drl", showStateTransitionPopup = true)
+@DroolsSession("org/droolsassert/logicalEvents.drl")
 public class LogicalEventsTest extends DroolsAssert {
 	
 	@Rule
@@ -40,16 +40,23 @@ public class LogicalEventsTest extends DroolsAssert {
 	public void testPositiveValueWasIncrementedBecauseNegativeValuesWereReset() {
 		AtomicInteger positive = new AtomicInteger(1);
 		
+		AtomicInteger negative = new AtomicInteger(-1);
+		insertAndFire(negative);
+		advanceTime(1, SECONDS);
 		insertAndFire(new AtomicInteger(-1));
+		advanceTime(1, SECONDS);
+		negative.addAndGet(2);
+		update(negative);
 		advanceTime(1, SECONDS);
 		insertAndFire(positive);
 		advanceTime(1, SECONDS);
 		insertAndFire(new AdminEvent("reset negative values"));
 		
 		assertEquals(2, positive.get());
+		assertEquals(2, negative.get());
 	}
 	
-	@Test
+	// @Test
 	// https://issues.redhat.com/browse/DROOLS-5971
 	public void testUpdateLogicalEvent() {
 		AtomicInteger positive = new AtomicInteger(1);
@@ -76,7 +83,7 @@ public class LogicalEventsTest extends DroolsAssert {
 		assertEquals(2, positive.get());
 	}
 	
-	@Test
+	// @Test
 	// https://issues.redhat.com/browse/DROOLS-6072
 	public void testStage() {
 		AtomicInteger positive = new AtomicInteger(1);
@@ -93,7 +100,7 @@ public class LogicalEventsTest extends DroolsAssert {
 		assertEquals(1, positive.get());
 	}
 	
-	@Test
+	// @Test
 	// https://issues.redhat.com/browse/DROOLS-6080
 	public void testUnstage() {
 		AtomicInteger positive = new AtomicInteger(1);
