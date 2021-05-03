@@ -15,6 +15,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.SwingUtilities.invokeLater;
 import static javax.swing.WindowConstants.DISPOSE_ON_CLOSE;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
+import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
@@ -126,6 +127,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	private IdentityHashMap<Object, AtomicInteger> lastObjectState;
 	private IdentityHashMap<Object, DefaultGraphCell> lastObjectCell;
+	private IdentityHashMap<Object, DefaultGraphCell> lastRemovedCell;
 	private IdentityHashMap<Object, AtomicInteger> lastRuleTriggerCount;
 	private AtomicInteger adgeCounter;
 	
@@ -151,6 +153,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		
 		lastObjectState = new IdentityHashMap<>();
 		lastObjectCell = new IdentityHashMap<>();
+		lastRemovedCell = new IdentityHashMap<>();
 		lastRuleTriggerCount = new IdentityHashMap<>();
 		adgeCounter = new AtomicInteger();
 		graph = newGraph();
@@ -232,7 +235,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		synchronized (StateTransitionBuilder.class) {
 			getView().insert(ruleCell);
 			getRuleActivatedBy(event.getMatch()).stream()
-					.map(o -> lastObjectCell.get(o))
+					.map(this::getLastKnownObjectCell)
 					.filter(Objects::nonNull).forEach(objectCell -> {
 						getView().setVisible(objectCell, true);
 						getView().insert(newEdge(objectCell, ruleCell));
@@ -276,6 +279,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		DefaultGraphCell previousStateCell;
 		if (cellType == DeletedFact) {
 			previousStateCell = lastObjectCell.remove(fact);
+			lastRemovedCell.put(fact, cell);
 			if (isJustified(fh))
 				lastObjectCell.keySet().stream().filter(e -> e.equals(fact)).collect(toList()).forEach(lastObjectCell::remove);
 		} else {
@@ -299,6 +303,10 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	public GraphLayoutCache getView() {
 		return graph.getGraphLayoutCache();
+	}
+	
+	private DefaultGraphCell getLastKnownObjectCell(Object object) {
+		return firstNonNull(lastObjectCell.get(object), lastRemovedCell.get(object));
 	}
 	
 	private void writeToFile(Object fact, String stateId) {
