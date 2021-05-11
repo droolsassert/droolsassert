@@ -37,9 +37,25 @@ import org.apache.commons.lang3.time.StopWatch;
  */
 public class PerfStat {
 	
-	public static final String DOMAIN = getProperty("perfstat.domain", "org.droolsassert.perf");
-	public static final long AGGREGATION_PERIOD_MS = parseLong(getProperty("perfstat.aggregationPeriodMs", "4000"));
+	private static String jmxDomain = getProperty("perfstat.domain", "perfstat");
+	private static long defaultAggregationPeriodMs = parseLong(getProperty("perfstat.aggregationPeriodMs", "4000"));
 	private static final ConcurrentHashMap<String, StatImpl> stats = new ConcurrentHashMap<>();
+	
+	public static String getJmxDomain() {
+		return jmxDomain;
+	}
+	
+	public static void setJmxDomain(String jmxDomain) {
+		PerfStat.jmxDomain = jmxDomain;
+	}
+	
+	public static long getDefaultAggregationPeriodMs() {
+		return defaultAggregationPeriodMs;
+	}
+	
+	public static void setDefaultAggregationPeriodMs(long defaultAggregationPeriodMs) {
+		PerfStat.defaultAggregationPeriodMs = defaultAggregationPeriodMs;
+	}
 	
 	/**
 	 * Performance statistic for domain
@@ -94,7 +110,7 @@ public class PerfStat {
 	private long aggregationPeriodMs;
 	
 	public PerfStat(String domain) {
-		this(domain, AGGREGATION_PERIOD_MS);
+		this(domain, defaultAggregationPeriodMs);
 	}
 	
 	public PerfStat(String domain, long aggregationPeriodMs) {
@@ -117,7 +133,7 @@ public class PerfStat {
 			if (stat == null) {
 				stat = new StatImpl(domain);
 				stats.put(domain, stat);
-				registerMBean(format("%s:type=%s", DOMAIN, quote(domain)), stat, Stat.class);
+				registerMBean(format("%s:type=%s", jmxDomain, quote(domain)), stat, Stat.class);
 			}
 		}
 	}
