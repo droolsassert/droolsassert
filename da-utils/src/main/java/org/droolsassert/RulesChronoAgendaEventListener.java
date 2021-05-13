@@ -17,6 +17,7 @@ import org.kie.api.event.rule.DefaultAgendaEventListener;
 /**
  * Collect live performance statistic for rules (then block) as aggregated {@code Serializable} result.<br>
  * Statistic domains are JVM global, you can use unique session prefix as a namespace if needed.<br>
+ * <i>Note:</i> Register at most one instance per session
  * 
  * @see RulesChronoChartRecorder
  * @see PerfStat

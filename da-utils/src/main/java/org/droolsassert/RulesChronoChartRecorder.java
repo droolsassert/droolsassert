@@ -4,6 +4,8 @@ import static java.lang.Double.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static java.lang.System.getProperty;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.Executors.newScheduledThreadPool;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.droolsassert.RulesChronoChartRecorder.DataType.GlobalAvg;
 import static org.droolsassert.RulesChronoChartRecorder.DataType.GlobalMax;
@@ -20,10 +22,10 @@ import static org.droolsassert.util.PerfStat.getDefaultAggregationPeriodMs;
 import java.util.EnumSet;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.droolsassert.util.PerfStat;
@@ -31,12 +33,15 @@ import org.droolsassert.util.Stat;
 import org.jfree.data.time.Second;
 import org.jfree.data.time.TimeSeries;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 /**
  * Collect live performance statistic for rules (then block) as aggregated result and jfree chart {@code TimeSeries}.<br>
  * Suitable for real environment and statistic delivery at the end of the flow or exposed by rest API etc.<br>
  * Statistic domains are JVM global, you can use unique session prefix as a namespace if needed.<br>
  * <i>Note:</i> This class creates single background thread (for all instances) which will stop gracefully when last instance will be garbage collected.<br>
- * <i>Note:</i> You mast call {@link #schedule()} as a last step of instance initialization
+ * <i>Note:</i> You mast call {@link #schedule()} as a last step of instance initialization.<br>
+ * <i>Note:</i> Register at most one instance per session
  * 
  * @see RulesChronoAgendaEventListener
  * @see PerfStat
@@ -47,7 +52,7 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 		RulesMax, RulesAvg, RulesMin, GlobalMax, GlobalAvg, GlobalMin
 	}
 	
-	public static enum ThresholdType {
+	enum ThresholdType {
 		Max, Avg, Min;
 		
 		private volatile double threshold;
@@ -56,22 +61,23 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 		private boolean check(double value) {
 			if (localThreshold == 0)
 				localThreshold = threshold;
-			return value > threshold;
+			return value > localThreshold;
 		}
 	}
 	
 	public static final int RETENTION_PERIOD_MIN = parseInt(getProperty("org.droolsassert.RulesChronoChartRecorder.retentionPeriodMin", "180"));
+	private static final ScheduledExecutorService EXECUTOR = newScheduledThreadPool(0, new ThreadFactoryBuilder().setNameFormat("RulesChronoChartRecorder%s").setDaemon(true).build());
+	private volatile ScheduledFuture<?> scheduled;
 	protected final ConcurrentHashMap<String, TimeSeries> rulesMaxChart = new ConcurrentHashMap<>();
 	protected final ConcurrentHashMap<String, TimeSeries> rulesAvgChart = new ConcurrentHashMap<>();
 	protected final ConcurrentHashMap<String, TimeSeries> rulesMinChart = new ConcurrentHashMap<>();
 	protected TimeSeries globalMaxChart = new TimeSeries("globalMax");
 	protected TimeSeries globalAvgChart = new TimeSeries("globalAvg");
 	protected TimeSeries globalMinChart = new TimeSeries("globalMin");
-	protected final Timer timer = new Timer(getClass().getSimpleName(), true);
 	protected long retentionPeriodSec = MINUTES.toSeconds(RETENTION_PERIOD_MIN);
 	private EnumSet<DataType> dataTypes = EnumSet.allOf(DataType.class);
 	private EnumSet<ThresholdType> thresholdTypes = EnumSet.noneOf(ThresholdType.class);
-	private volatile boolean recording;
+	private volatile boolean recordingStarted;
 	
 	/**
 	 * Creates {@link RulesChronoChartRecorder} with no session prefix and default aggregation period
@@ -111,23 +117,40 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 	/**
 	 * Start gather chart data only if threshold value reached
 	 */
-	public RulesChronoChartRecorder withThreshold(ThresholdType thresholdType, double threshold) {
-		thresholdType.threshold = threshold;
-		thresholdTypes.add(thresholdType);
+	public RulesChronoChartRecorder withMaxThreshold(double threshold) {
+		Max.threshold = threshold;
+		thresholdTypes.add(Max);
+		return this;
+	}
+	
+	/**
+	 * Start gather chart data only if threshold value reached
+	 */
+	public RulesChronoChartRecorder withAvgThreshold(double threshold) {
+		Avg.threshold = threshold;
+		thresholdTypes.add(Avg);
+		return this;
+	}
+	
+	/**
+	 * Start gather chart data only if threshold value reached
+	 */
+	public RulesChronoChartRecorder withMinThreshold(double threshold) {
+		Min.threshold = threshold;
+		thresholdTypes.add(Min);
 		return this;
 	}
 	
 	public RulesChronoChartRecorder schedule() {
-		timer.scheduleAtFixedRate(new TimerTask() {
-			@Override
-			public void run() {
-				recordTimeSeries();
-			}
-		}, 0, aggregationPeriodMs);
+		scheduled = EXECUTOR.scheduleAtFixedRate(() -> recordTimeSeries(), 0, aggregationPeriodMs, MILLISECONDS);
 		return this;
 	}
 	
-	private void recordTimeSeries() {
+	public void unschedule() {
+		scheduled.cancel(false);
+	}
+	
+	protected void recordTimeSeries() {
 		Second period = new Second();
 		double globalMax = 0;
 		double globalTotal = 0;
@@ -144,7 +167,7 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 					continue;
 				}
 				initTimeSeries(rule, stat);
-				recording = true;
+				recordingStarted = true;
 			}
 			if (dataTypes.contains(RulesMax))
 				rulesMaxChart.get(rule).addOrUpdate(period, stat.getMaxTimeSampleMs());
@@ -161,7 +184,7 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 				globalMin = stat.getMinTimeSampleMs();
 		}
 		
-		if (!recording)
+		if (!recordingStarted)
 			return;
 		
 		if (dataTypes.contains(GlobalMax))
@@ -216,6 +239,10 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 		return globalMinChart;
 	}
 	
+	public boolean isRecordingStarted() {
+		return recordingStarted;
+	}
+
 	@Override
 	public void reset() {
 		rulesMaxChart.clear();
@@ -227,7 +254,7 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 		globalAvgChart.setMaximumItemAge(retentionPeriodSec);
 		globalMinChart = new TimeSeries("globalMin");
 		globalMinChart.setMaximumItemAge(retentionPeriodSec);
-		recording = false;
+		recordingStarted = false;
 		super.reset();
 	}
 }
