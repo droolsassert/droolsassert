@@ -19,6 +19,7 @@ import static org.droolsassert.RulesChronoChartRecorder.ThresholdType.Min;
 import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 import static org.droolsassert.util.PerfStat.getDefaultAggregationPeriodMs;
 
+import java.lang.ref.WeakReference;
 import java.util.EnumSet;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -37,11 +38,10 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * Collect live performance statistic for rules (then block) as aggregated result and jfree chart {@code TimeSeries}.<br>
- * Suitable for real environment and statistic delivery at the end of the flow or exposed by rest API etc.<br>
- * Statistic domains are JVM global, you can use unique session prefix as a namespace if needed.<br>
- * <i>Note:</i> This class creates single background thread (for all instances) which will stop gracefully when last instance will be garbage collected.<br>
- * <i>Note:</i> You mast call {@link #schedule()} as a last step of instance initialization.<br>
- * <i>Note:</i> Register at most one instance per session
+ * Suitable for prod environment and statistic delivery at the end of the flow or exposing via rest API etc.<br>
+ * <br>
+ * <i>Note:</i> This class creates thread pool executor with single background thread (for all instances) with core pool size 0 (thread will stop if no statistic is gathered).<br>
+ * Executor holds week reference to the recorder and scheduled periodic statistic gathering will be automatically cancelled when recorder is not in use any more.
  * 
  * @see RulesChronoAgendaEventListener
  * @see PerfStat
@@ -67,7 +67,6 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 	
 	public static final int RETENTION_PERIOD_MIN = parseInt(getProperty("org.droolsassert.RulesChronoChartRecorder.retentionPeriodMin", "180"));
 	private static final ScheduledExecutorService EXECUTOR = newScheduledThreadPool(0, new ThreadFactoryBuilder().setNameFormat("RulesChronoChartRecorder%s").setDaemon(true).build());
-	private volatile ScheduledFuture<?> scheduled;
 	protected final ConcurrentHashMap<String, TimeSeries> rulesMaxChart = new ConcurrentHashMap<>();
 	protected final ConcurrentHashMap<String, TimeSeries> rulesAvgChart = new ConcurrentHashMap<>();
 	protected final ConcurrentHashMap<String, TimeSeries> rulesMinChart = new ConcurrentHashMap<>();
@@ -93,6 +92,7 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 	 */
 	public RulesChronoChartRecorder(long aggregationPeriodMs) {
 		super(aggregationPeriodMs);
+		scheduleRecording(aggregationPeriodMs);
 	}
 	
 	/**
@@ -141,13 +141,16 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 		return this;
 	}
 	
-	public RulesChronoChartRecorder schedule() {
-		scheduled = EXECUTOR.scheduleAtFixedRate(() -> recordTimeSeries(), 0, aggregationPeriodMs, MILLISECONDS);
+	@Override
+	public RulesChronoChartRecorder withPackageName(boolean usePackageName) {
+		super.withPackageName(usePackageName);
 		return this;
 	}
 	
-	public void unschedule() {
-		scheduled.cancel(false);
+	@Override
+	public RulesChronoChartRecorder withSessionPrefix(String sessionPrefix) {
+		super.withSessionPrefix(sessionPrefix);
+		return this;
 	}
 	
 	protected void recordTimeSeries() {
@@ -242,7 +245,7 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 	public boolean isRecordingStarted() {
 		return recordingStarted;
 	}
-
+	
 	@Override
 	public void reset() {
 		rulesMaxChart.clear();
@@ -256,5 +259,33 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 		globalMinChart.setMaximumItemAge(retentionPeriodSec);
 		recordingStarted = false;
 		super.reset();
+	}
+	
+	private void scheduleRecording(long aggregationPeriodMs) {
+		SelfDiscardWrapper wrapper = new SelfDiscardWrapper(this);
+		ScheduledFuture<?> scheduled = EXECUTOR.scheduleAtFixedRate(wrapper, 0, aggregationPeriodMs, MILLISECONDS);
+		wrapper.setScheduled(scheduled);
+	}
+	
+	private static class SelfDiscardWrapper implements Runnable {
+		private final WeakReference<RulesChronoChartRecorder> ref;
+		private volatile ScheduledFuture<?> scheduled;
+		
+		private SelfDiscardWrapper(RulesChronoChartRecorder referent) {
+			this.ref = new WeakReference<RulesChronoChartRecorder>(referent);
+		}
+		
+		@Override
+		public void run() {
+			RulesChronoChartRecorder referent = ref.get();
+			if (referent == null)
+				scheduled.cancel(false);
+			else
+				referent.recordTimeSeries();
+		}
+		
+		private void setScheduled(ScheduledFuture<?> scheduled) {
+			this.scheduled = scheduled;
+		}
 	}
 }

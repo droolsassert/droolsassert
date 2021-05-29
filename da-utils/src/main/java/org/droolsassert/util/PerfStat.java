@@ -1,10 +1,11 @@
 package org.droolsassert.util;
 
 import static java.lang.Long.parseLong;
-import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getProperty;
-import static javax.management.ObjectName.quote;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNoneEmpty;
+import static org.apache.commons.lang3.StringUtils.replaceChars;
 import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 import static org.droolsassert.util.JmxUtils.registerMBean;
 
@@ -16,10 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.time.StopWatch;
 
 /**
- * Performance statistic per domain. Exposed via MBean server to monitor in real-time.
+ * Performance statistic per type (optional) and name. Exposed via MBean server to monitor in real-time with default 4s aggregation time (jvisualvm mbean charts refresh interval).
+ * Output statistic from this VM or deliver serializable and merge from several VMs.
  * 
  * <pre>
- * private PerfStat methodPerf = new PerfStat("business.domain.method") 
+ * private PerfStat methodPerf = new PerfStat("type", "name") 
  * ...
  * 
  *     public void myMethod() {
@@ -39,7 +41,7 @@ public class PerfStat {
 	
 	private static String jmxDomain = getProperty("perfstat.domain", "perfstat");
 	private static long defaultAggregationPeriodMs = parseLong(getProperty("perfstat.aggregationPeriodMs", "4000"));
-	private static final ConcurrentHashMap<String, StatImpl> stats = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<String, Map<String, StatImpl>> stats = new ConcurrentHashMap<>();
 	
 	public static String getJmxDomain() {
 		return jmxDomain;
@@ -58,50 +60,72 @@ public class PerfStat {
 	}
 	
 	/**
-	 * Performance statistic for domain
+	 * Performance statistic for name (if type was not used)
 	 * 
-	 * @param domain
+	 * @param name
 	 */
-	public static Stat getPerfStat(String domain) {
-		return stats.get(domain);
+	public static Stat getPerfStat(String name) {
+		return getPerfStat(EMPTY, name);
 	}
 	
 	/**
-	 * Performance statistic for all domains
+	 * Performance statistic for type and name
+	 * 
+	 * @param name
 	 */
-	public static TreeMap<String, StatImpl> getPerfStat() {
-		TreeMap<String, StatImpl> sorted = new TreeMap<>(ALPHANUM_COMPARATOR);
-		sorted.putAll(stats);
+	public static Stat getPerfStat(String type, String name) {
+		return stats.get(type).get(name);
+	}
+	
+	/**
+	 * Performance statistic for all types and names
+	 */
+	public static TreeMap<String, TreeMap<String, StatImpl>> getPerfStat() {
+		TreeMap<String, TreeMap<String, StatImpl>> sorted = new TreeMap<>(ALPHANUM_COMPARATOR);
+		stats.entrySet().forEach(e -> {
+			TreeMap<String, StatImpl> sortedNames = new TreeMap<>(ALPHANUM_COMPARATOR);
+			sortedNames.putAll(e.getValue());
+			sorted.put(e.getKey(), sortedNames);
+		});
 		return sorted;
 	}
 	
 	/**
 	 * You may want to merge performance statistic from other JVMs
 	 */
-	public static void merge(Map<String, StatImpl> rhsStats) {
+	public static void merge(Map<String, Map<String, StatImpl>> rhsStatsByType) {
 		synchronized (stats) {
-			for (Entry<String, StatImpl> rhsStat : rhsStats.entrySet()) {
-				StatImpl lhs = stats.get(rhsStat.getKey());
-				StatImpl rhs = rhsStat.getValue();
-				if (lhs == null) {
-					stats.put(rhsStat.getKey(), rhs);
-					continue;
+			for (Entry<String, Map<String, StatImpl>> rhsStatsByName : rhsStatsByType.entrySet()) {
+				Map<String, StatImpl> lhsStatsByName = stats.get(rhsStatsByName.getKey());
+				if (lhsStatsByName == null) {
+					lhsStatsByName = new ConcurrentHashMap<>();
+					stats.put(rhsStatsByName.getKey(), lhsStatsByName);
 				}
-				lhs.leapsCount += rhs.leapsCount;
-				lhs.totalTimeNs += rhs.totalTimeNs;
-				if (rhs.minTimeMs < lhs.minTimeMs)
-					lhs.minTimeMs = rhs.minTimeMs;
-				if (rhs.maxTimeMs > lhs.maxTimeMs)
-					lhs.maxTimeMs = rhs.maxTimeMs;
+				for (Entry<String, StatImpl> rhsStat : rhsStatsByName.getValue().entrySet()) {
+					StatImpl lhs = lhsStatsByName.get(rhsStat.getKey());
+					StatImpl rhs = rhsStat.getValue();
+					if (lhs == null) {
+						lhsStatsByName.put(rhsStat.getKey(), rhs);
+						continue;
+					}
+					lhs.leapsCount += rhs.leapsCount;
+					lhs.totalTimeNs += rhs.totalTimeNs;
+					if (rhs.minTimeMs < lhs.minTimeMs)
+						lhs.minTimeMs = rhs.minTimeMs;
+					if (rhs.maxTimeMs > lhs.maxTimeMs)
+						lhs.maxTimeMs = rhs.maxTimeMs;
+				}
 			}
 		}
 	}
 	
 	/**
-	 * Reset statistic for all domains
+	 * Reset statistic for all types and names
 	 */
 	public static void resetAll() {
-		stats.values().forEach(StatImpl::reset);
+		stats.values().stream()
+				.flatMap(m -> m.values().stream())
+				.forEach(StatImpl::reset);
 	}
 	
 	private ThreadLocal<StopWatch> stopWatch = ThreadLocal.withInitial(() -> new StopWatch());
@@ -109,15 +133,32 @@ public class PerfStat {
 	private long lastAggregationTimeMs = currentTimeMillis();
 	private long aggregationPeriodMs;
 	
-	public PerfStat(String domain) {
-		this(domain, defaultAggregationPeriodMs);
+	public PerfStat(String name) {
+		this(EMPTY, name, defaultAggregationPeriodMs);
 	}
 	
-	public PerfStat(String domain, long aggregationPeriodMs) {
+	public PerfStat(String type, String name) {
+		this(type, name, defaultAggregationPeriodMs);
+	}
+	
+	public PerfStat(String name, long aggregationPeriodMs) {
+		this(EMPTY, name, aggregationPeriodMs);
+	}
+	
+	public PerfStat(String type, String name, long aggregationPeriodMs) {
 		this.aggregationPeriodMs = aggregationPeriodMs;
-		stat = stats.get(domain);
+		if (type == null)
+			type = EMPTY;
+		
+		Map<String, StatImpl> statsByName = stats.get(type);
+		if (statsByName == null) {
+			statsByName = new ConcurrentHashMap<>();
+			stats.put(type, statsByName);
+		}
+		
+		stat = statsByName.get(name);
 		if (stat == null)
-			initStat(domain);
+			initStat(type, name);
 		stat.peersCount.incrementAndGet();
 	}
 	
@@ -127,13 +168,29 @@ public class PerfStat {
 		super.finalize();
 	}
 	
-	private void initStat(String domain) {
+	private void initStat(String type, String name) {
 		synchronized (stats) {
-			stat = stats.get(domain);
+			Map<String, StatImpl> statsByName = stats.get(type);
+			if (statsByName == null) {
+				statsByName = new ConcurrentHashMap<>();
+				stats.put(type, statsByName);
+			}
+			
+			stat = statsByName.get(name);
 			if (stat == null) {
-				stat = new StatImpl(domain);
-				stats.put(domain, stat);
-				registerMBean(format("%s:type=%s", jmxDomain, quote(domain)), stat, Stat.class);
+				stat = new StatImpl(name);
+				statsByName.put(name, stat);
+				
+				StringBuilder objName = new StringBuilder(jmxDomain);
+				objName.append(":");
+				if (isNoneEmpty(type)) {
+					objName.append("type=");
+					objName.append(replaceChars(type, "*?\\\n", ""));
+					objName.append(",");
+				}
+				objName.append("name=");
+				objName.append(replaceChars(name, "*?\\\n", ""));
+				registerMBean(objName.toString(), stat, Stat.class);
 			}
 		}
 	}
@@ -169,7 +226,7 @@ public class PerfStat {
 	}
 	
 	/**
-	 * Stop to measure execution time for current thread, update performance statistic for the domain.<br>
+	 * Stop to measure execution time for current thread, update performance statistic for the name.<br>
 	 * If stop was not executed for some reason and then start will be called again <i>by the same thread</i> then current leap will be counted as failed.
 	 */
 	public long stop() {

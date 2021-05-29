@@ -32,7 +32,7 @@ public class RulesChronoTest {
 	@Ignore
 	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoChartRecorder() {
-		drools.setRulesChrono(new RulesChronoChartRecorder(5000).schedule());
+		drools.setRulesChrono(new RulesChronoChartRecorder(5000));
 		
 		for (int i = 1; i <= 110; i++)
 			drools.insertAndFire(randomFunction(i));

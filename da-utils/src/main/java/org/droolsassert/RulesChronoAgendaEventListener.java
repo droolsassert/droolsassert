@@ -16,8 +16,6 @@ import org.kie.api.event.rule.DefaultAgendaEventListener;
 
 /**
  * Collect live performance statistic for rules (then block) as aggregated {@code Serializable} result.<br>
- * Statistic domains are JVM global, you can use unique session prefix as a namespace if needed.<br>
- * <i>Note:</i> Register at most one instance per session
  * 
  * @see RulesChronoChartRecorder
  * @see PerfStat
@@ -54,7 +52,9 @@ public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 	}
 	
 	/**
-	 * Include unique session prefix to qualify same rules in different sessions, not used by default
+	 * Include unique session prefix to segregate statistic.<br>
+	 * Optional unless you want to use different aggregation periods for the same rule names.<br>
+	 * If several listeners gather statistic under the same name statistic will be merged and 'peer' counter increased.
 	 */
 	public RulesChronoAgendaEventListener withSessionPrefix(String sessionPrefix) {
 		this.sessionPrefix = sessionPrefix;
@@ -75,7 +75,7 @@ public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 		if (ruleStat == null) {
 			synchronized (rulesStat) {
 				if (ruleStat == null) {
-					ruleStat = new PerfStat(ruleName, aggregationPeriodMs);
+					ruleStat = new PerfStat(sessionPrefix, ruleName, aggregationPeriodMs);
 					rulesStat.put(ruleName, ruleStat);
 				}
 			}
@@ -85,8 +85,6 @@ public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 	
 	private String uniqueRuleName(Rule rule) {
 		StringBuilder sb = new StringBuilder();
-		if (sessionPrefix != null)
-			sb.append(sessionPrefix);
 		if (usePackageName) {
 			sb.append(rule.getPackageName());
 			sb.append(".");
@@ -97,7 +95,7 @@ public class RulesChronoAgendaEventListener extends DefaultAgendaEventListener {
 	
 	@Override
 	public void afterMatchFired(AfterMatchFiredEvent event) {
-		rulesStat.get(event.getMatch().getRule().getName()).stop();
+		rulesStat.get(uniqueRuleName(event.getMatch().getRule())).stop();
 	}
 	
 	public void reset() {
