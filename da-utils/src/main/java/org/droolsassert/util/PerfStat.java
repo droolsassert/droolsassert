@@ -3,9 +3,10 @@ package org.droolsassert.util;
 import static java.lang.Long.parseLong;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getProperty;
+import static javax.management.ObjectName.quote;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.containsAny;
 import static org.apache.commons.lang3.StringUtils.isNoneEmpty;
-import static org.apache.commons.lang3.StringUtils.replaceChars;
 import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 import static org.droolsassert.util.JmxUtils.registerMBean;
 
@@ -185,14 +186,18 @@ public class PerfStat {
 				objName.append(":");
 				if (isNoneEmpty(type)) {
 					objName.append("type=");
-					objName.append(replaceChars(type, "*?\\\n", ""));
+					objName.append(quoteIfNeeded(type));
 					objName.append(",");
 				}
 				objName.append("name=");
-				objName.append(replaceChars(name, "*?\\\n", ""));
+				objName.append(quoteIfNeeded(name));
 				registerMBean(objName.toString(), stat, Stat.class);
 			}
 		}
+	}
+	
+	private String quoteIfNeeded(String name) {
+		return containsAny(name, '\n', '\\', '\"', '*', '?') ? quote(name) : name;
 	}
 	
 	/**
