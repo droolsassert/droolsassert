@@ -78,16 +78,24 @@ public final class DroolsAssertUtils {
 	
 	public static Set<Object> getRuleLogicialDependencies(Match match) {
 		Set<Object> logicalDependencies = new HashSet<>();
-		Tuple tuple = (Tuple) match;
-		do {
-			LinkedList list = ((Activation) tuple).getLogicalDependencies();
-			if (list != null) {
-				for (LogicalDependency node = (LogicalDependency) list.getFirst(); node != null; node = (LogicalDependency) node.getNext())
-					logicalDependencies.add(node.getObject());
-			}
+		Activation<?> activation = (Activation<?>) match;
+		collectLogicalDependencies(activation, logicalDependencies);
+		
+		Tuple tuple = activation.getTuple();
+		while (tuple != null) {
+			if (tuple instanceof Activation)
+				collectLogicalDependencies((Activation<?>) tuple, logicalDependencies);
 			tuple = tuple.getHandlePrevious();
-		} while (tuple != null);
+		}
 		return logicalDependencies;
+	}
+	
+	public static void collectLogicalDependencies(Activation<?> activation, Set<Object> logicalDependencies) {
+		LinkedList<?> list = activation.getLogicalDependencies();
+		if (list != null) {
+			for (LogicalDependency<?> node = (LogicalDependency<?>) list.getFirst(); node != null; node = (LogicalDependency<?>) node.getNext())
+				logicalDependencies.add(node.getObject());
+		}
 	}
 	
 	public static List<Resource> getResources(boolean mandatory, boolean logResources, String... locations) {
