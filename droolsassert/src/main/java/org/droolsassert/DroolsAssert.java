@@ -30,6 +30,7 @@ import static org.droolsassert.DroolsAssertUtils.getExpectedCount;
 import static org.droolsassert.DroolsAssertUtils.getResources;
 import static org.droolsassert.DroolsAssertUtils.getRulesCountFromSource;
 import static org.droolsassert.DroolsAssertUtils.getRulesFromSource;
+import static org.droolsassert.DroolsAssertUtils.getSimpleName;
 import static org.droolsassert.jbehave.DroolsSessionProxy.newDroolsSessionProxy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -266,8 +267,8 @@ public class DroolsAssert implements TestRule {
 	@SuppressWarnings("unchecked")
 	public <T> T getObject(Class<T> clazz) {
 		Collection<T> objects = getObjects(clazz);
-		assertFalse(format("No object of type %s found", clazz.getSimpleName()), objects.isEmpty());
-		assertFalse(format("Non-unique object of type %s found", clazz.getSimpleName()), objects.size() > 1);
+		assertFalse(format("No object of type %s found", getSimpleName(clazz)), objects.isEmpty());
+		assertFalse(format("Non-unique object of type %s found", getSimpleName(clazz)), objects.size() > 1);
 		return (T) objects.toArray()[0];
 	}
 	

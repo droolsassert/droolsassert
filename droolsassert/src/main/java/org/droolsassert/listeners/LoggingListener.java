@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.lang.System.identityHashCode;
 import static java.util.stream.Collectors.toList;
 import static org.droolsassert.DroolsAssertUtils.getRuleActivatedBy;
+import static org.droolsassert.DroolsAssertUtils.getSimpleName;
 import static org.droolsassert.DroolsAssertUtils.isJustified;
 
 import java.util.List;
@@ -60,10 +61,10 @@ public class LoggingListener extends DefaultAgendaEventListener implements Drool
 	}
 	
 	protected void log(String action, Object fact) {
-		droolsassert.log(format("%s #%s: %s", action, identityHashCode(fact), (droolsSessionMeta.logFacts() ? droolsassert.factToString(fact) : fact.getClass().getSimpleName())));
+		droolsassert.log(format("%s #%s: %s", action, identityHashCode(fact), (droolsSessionMeta.logFacts() ? droolsassert.factToString(fact) : getSimpleName(fact.getClass()))));
 	}
 	
 	protected String tupleToString(List<Object> tuple) {
-		return "" + tuple.stream().map(o -> format("%s#%s", o.getClass().getSimpleName(), identityHashCode(o))).collect(toList());
+		return "" + tuple.stream().map(o -> format("%s#%s", getSimpleName(o.getClass()), identityHashCode(o))).collect(toList());
 	}
 }

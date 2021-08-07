@@ -24,6 +24,7 @@ import static org.droolsassert.DroolsAssertUtils.directory;
 import static org.droolsassert.DroolsAssertUtils.formatTime;
 import static org.droolsassert.DroolsAssertUtils.getRuleActivatedBy;
 import static org.droolsassert.DroolsAssertUtils.getRuleLogicialDependencies;
+import static org.droolsassert.DroolsAssertUtils.getSimpleName;
 import static org.droolsassert.DroolsAssertUtils.isJustified;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.DeletedFact;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.InsertedFact;
@@ -275,7 +276,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		
 		String stateId = format("#%s-%s", fh.getIdentityHashCode(), cellType == DeletedFact ? state : state.incrementAndGet());
 		writeToFile(fact, stateId);
-		DefaultGraphCell cell = newCell(newLabel(cellType, fact.getClass().getSimpleName(), stateId, formatTime(clock), flags), cellType);
+		DefaultGraphCell cell = newCell(newLabel(cellType, getSimpleName(fact.getClass()), stateId, formatTime(clock), flags), cellType);
 		DefaultGraphCell previousStateCell;
 		if (cellType == DeletedFact) {
 			previousStateCell = lastObjectCell.remove(fact);
@@ -311,7 +312,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	private void writeToFile(Object fact, String stateId) {
 		try {
-			String fileName = format("%s/%s%s.txt", getReportName(), fact.getClass().getSimpleName(), stateId);
+			String fileName = format("%s/%s%s.txt", getReportName(), getSimpleName(fact.getClass()), stateId);
 			writeStringToFile(new File(reportsDirectory, fileName), objectStateDump(fact), defaultCharset());
 		} catch (IOException e) {
 			throw new DroolsAssertException("Cannot write object state to file", e);

@@ -13,7 +13,9 @@ import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.io.FileUtils.forceMkdir;
 import static org.apache.commons.io.IOUtils.readLines;
+import static org.apache.commons.lang3.ClassUtils.getShortCanonicalName;
 import static org.apache.commons.lang3.StringUtils.LF;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.drools.core.common.EqualityKey.JUSTIFIED;
 
@@ -184,5 +186,9 @@ public final class DroolsAssertUtils {
 							? (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS : DDD_HH_MM_SS)
 							: (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS_SSS : DDD_HH_MM_SS_SSS));
 		}
+	}
+	
+	public static String getSimpleName(Class<?> clazz) {
+		return defaultIfEmpty(clazz.getSimpleName(), getShortCanonicalName(clazz));
 	}
 }
