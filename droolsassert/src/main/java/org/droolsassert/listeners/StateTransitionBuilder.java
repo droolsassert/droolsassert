@@ -219,8 +219,10 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 			lastRuleTriggerCount.putIfAbsent(rule, new AtomicInteger());
 		int triggerCount = lastRuleTriggerCount.get(rule).incrementAndGet();
 		
-		StringBuilder ruleMeta = new StringBuilder(rule.getAgendaGroup())
-				.append("|").append(rule.getSalienceValue());
+		StringBuilder ruleMeta = new StringBuilder(rule.getAgendaGroup());
+		if (rule.getActivationGroup() != null)
+			ruleMeta.append("|").append(rule.getActivationGroup());
+		ruleMeta.append("|").append(rule.getSalienceValue());
 		if (rule.isSalienceDynamic())
 			ruleMeta.append("D");
 		if (rule.isNoLoop())
