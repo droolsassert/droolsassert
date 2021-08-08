@@ -237,18 +237,15 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		
 		synchronized (StateTransitionBuilder.class) {
 			getView().insert(ruleCell);
+			getView().setVisible(ruleCell, false);
+			
 			getRuleActivatedBy(event.getMatch()).stream()
 					.map(this::getLastKnownObjectCell)
-					.filter(Objects::nonNull).forEach(objectCell -> {
-						getView().setVisible(objectCell, true);
-						getView().insert(newEdge(objectCell, ruleCell));
-					});
+					.filter(Objects::nonNull)
+					.forEach(objectCell -> getView().insert(newEdge(objectCell, ruleCell)));
 			getRuleLogicialDependencies(event.getMatch()).stream()
 					.flatMap(o -> lastObjectCell.entrySet().stream().filter(e -> e.getKey().equals(o)).map(e -> e.getValue()))
-					.forEach(objectCell -> {
-						getView().setVisible(objectCell, true);
-						getView().insert(newEdge(ruleCell, objectCell));
-					});
+					.forEach(objectCell -> getView().insert(newEdge(ruleCell, objectCell)));
 		}
 	}
 	
@@ -293,14 +290,10 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 			getView().insert(cell);
 			getView().setVisible(cell, false);
 			
-			if (rule != null) {
-				getView().setVisible(cell, true);
+			if (rule != null)
 				getView().insert(newEdge(lastObjectCell.get(rule), cell));
-			} else if (previousStateCell != null) {
-				getView().setVisible(cell, true);
-				getView().setVisible(previousStateCell, true);
+			else if (previousStateCell != null)
 				getView().insert(newEdge(previousStateCell, cell));
-			}
 		}
 	}
 	
