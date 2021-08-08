@@ -159,6 +159,8 @@ public class ActivationReportBuilder implements DroolsassertListener {
 	}
 	
 	private void writeReport(File report, Map<String, Integer> activations) {
+		if (activations.isEmpty())
+			return;
 		Set<String> triggeredRules = triggeredRules(activations);
 		try (PrintWriter pw = new PrintWriter(report)) {
 			pw.printf("%.2f%n", 100.0 * triggeredRules.size() / activations.size());
