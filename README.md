@@ -23,9 +23,9 @@ Specify any combination of rules you want to test in single session using `@Droo
 Spring ant-like [PathMatchingResourcePatternResolver](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/core/io/support/PathMatchingResourcePatternResolver.html) gives you robust tool to include functionality you want to test together or segregate.  
 
     @DroolsSession(resources = {
-        "classpath:/org/droolsassert/rules.drl",
-        "classpath:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
-        "classpath:/com/company/project/*/ruleUnderTest.rdslr" },
+        "classpath*:/org/droolsassert/rules.drl",
+        "classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
+        "classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
         builderProperties = "drools.dump.dir = target/dump",
         logResources = true)
 
@@ -51,7 +51,7 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
 [Extend it with your application specific utilities](https://github.com/droolsassert/droolsassert/wiki/Extension-example)  
 [Gather performance statistic](https://github.com/droolsassert/droolsassert/wiki/Performance-stats)  
 [Activation report](https://github.com/droolsassert/droolsassert/wiki/Activation-report)  
-[State transition report](https://github.com/droolsassert/droolsassert/wiki/State-transition-report) <img src="wiki-data/new.png"/>  
+[State transition report](https://github.com/droolsassert/droolsassert/wiki/State-transition-report)  
 [Run tests in parallel](https://github.com/droolsassert/droolsassert/wiki/Parallel-run)  
 [Jbehave integration](https://github.com/droolsassert/droolsassert/wiki/Jbehave-integration)  
 [Jbehave Spring example](https://github.com/droolsassert/droolsassert/wiki/Jbehave-Spring-example)  
@@ -63,6 +63,6 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.3.12</version>
+        <version>2.4.0</version>
         <scope>test</scope>
     </dependency>
