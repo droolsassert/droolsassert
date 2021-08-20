@@ -9,6 +9,7 @@ import java.lang.annotation.Target;
 
 import org.droolsassert.listeners.StateTransitionBuilder;
 import org.kie.api.KieBaseConfiguration;
+import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSessionConfiguration;
 import org.kie.internal.builder.KnowledgeBuilderConfiguration;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -30,6 +31,25 @@ public @interface DroolsSession {
 	 * @see PathMatchingResourcePatternResolver
 	 */
 	String[] resources() default {};
+	
+	/**
+	 * Rule source<br>
+	 * <br>
+	 * 
+	 * <pre>
+	 * &#64;DroolsSession(source = "DRL inline source here...")
+	 * </pre>
+	 * 
+	 * <pre>
+	 * &#64;DroolsSession(source = &#123;
+	 * 	"DRL", "DRL inline source here...",
+	 * 	"DSL", "DSL inline source here..."
+	 * &#125;)
+	 * </pre>
+	 * 
+	 * @see ResourceType
+	 */
+	String[] source() default {};
 	
 	/**
 	 * @see KieSessionConfiguration

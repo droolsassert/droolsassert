@@ -19,6 +19,7 @@ public class DroolsSessionProxy implements InvocationHandler {
 	}
 	
 	String[] resources = new String[0];
+	String[] source = new String[0];
 	String[] sessionProperties = new String[0];
 	String[] sessionPropertySource = new String[0];
 	String[] baseProperties = new String[0];
@@ -39,6 +40,8 @@ public class DroolsSessionProxy implements InvocationHandler {
 		case "value":
 		case "resources":
 			return resources;
+		case "source":
+			return source;
 		case "sessionProperties":
 			return sessionProperties;
 		case "sessionPropertySource":

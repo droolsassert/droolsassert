@@ -1,5 +1,6 @@
 package org.droolsassert;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
@@ -37,6 +38,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.runners.model.MultipleFailureException.assertEmpty;
+import static org.kie.api.io.ResourceType.DRL;
+import static org.kie.api.io.ResourceType.getResourceType;
 import static org.kie.internal.io.ResourceFactory.newUrlResource;
 
 import java.io.File;
@@ -231,8 +234,19 @@ public class DroolsAssert implements TestRule {
 		synchronized (DroolsAssert.class) {
 			KieHelper kieHelper = new KieHelper();
 			kieHelper.setKieModuleModel(kieModule(builderConfiguration(droolsSessionMeta)));
-			for (Resource resource : getResources(true, droolsSessionMeta.logResources(), firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources())))
+			
+			String[] source = droolsSessionMeta.source();
+			for (Resource resource : getResources(source.length == 0, droolsSessionMeta.logResources(), firstNonEmpty(droolsSessionMeta.value(), droolsSessionMeta.resources())))
 				kieHelper.addResource(newUrlResource(resource.getURL()));
+			
+			if (source.length == 1) {
+				kieHelper.addContent(source[0], DRL);
+			} else {
+				checkArgument(source.length % 2 == 0, "Unexpected number of arguments for @DroolsSession.source");
+				for (int i = 0; i < source.length; i = i + 2)
+					kieHelper.addContent(source[i + 1], getResourceType(source[i]));
+			}
+			
 			KieBase kieBase = kieHelper.build(baseConfiguration(droolsSessionMeta));
 			
 			kieBases.put(droolsSessionMeta, kieBase);
