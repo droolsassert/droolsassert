@@ -205,19 +205,6 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		reportsDirectory = directory(new File(params.length > 1 ? params[1] : "target/droolsassert/stateTransitionReport"));
 	}
 	
-	private DefaultGraphCell newStatisticCell() {
-		DefaultGraphCell statistic = newCell(null, Statistic);
-		getView().insert(statistic);
-		
-		DefaultEdge edge = new DefaultEdge();
-		edge.setSource(statistic.getChildAt(0));
-		edge.setTarget(statistic.getChildAt(0));
-		setLineColor(edge.getAttributes(), white);
-		getView().insert(edge);
-		
-		return statistic;
-	}
-	
 	private void writeToFile(JGraph graph) {
 		try {
 			JPanel panel = new JPanel();
@@ -392,17 +379,30 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		return edge;
 	}
 	
+	private DefaultGraphCell newStatisticCell() {
+		DefaultGraphCell statistic = newCell(null, Statistic);
+		getView().insert(statistic);
+		
+		DefaultEdge edge = new DefaultEdge();
+		edge.setSource(statistic.getChildAt(0));
+		edge.setTarget(statistic.getChildAt(0));
+		setLineColor(edge.getAttributes(), white);
+		getView().insert(edge);
+		
+		return statistic;
+	}
+	
 	private String newLabel(CellType cellType, String line1, String line2, String line3, String flags) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<html>");
 		sb.append("<table style='width:100%'>");
 		sb.append("<tr>");
-		sb.append("<td style='padding: 0px; text-align: center; font-family:tahoma,serif; font-size:11px; font-weight: normal'>");
+		sb.append("<td style='padding: 0; text-align: center; font-family:tahoma,serif; font-size:11px; font-weight: normal'>");
 		sb.append(escapeHtml4(line1));
 		sb.append("</td>");
 		sb.append("</tr>");
 		sb.append("<tr>");
-		sb.append("<td style='padding: 0px; text-align: center; font-family:verdana; font-size:8px; font-weight: lighter'>");
+		sb.append("<td style='padding: 0; text-align: center; font-family:verdana; font-size:8px; font-weight: lighter'>");
 		sb.append(escapeHtml4(line2));
 		sb.append("</td>");
 		sb.append("</tr>");
@@ -411,13 +411,13 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		
 		sb.append("<table style='margin-top: -7; margin-bottom: -7; margin-left: -4; margin-right: -4; width:100%;'>");
 		sb.append("<tr>");
-		sb.append(format("<td style='padding: 0px; font-family:verdana; font-size:8px; font-weight: normal; color: %s'>", cellType.background));
+		sb.append(format("<td style='padding: 0; font-family:verdana; font-size:8px; font-weight: normal; color: %s'>", cellType.background));
 		sb.append(flags);
 		sb.append("</td>");
-		sb.append("<td style='padding: 0px; font-family:verdana; font-size:8px; font-weight: lighter; width: 100%; text-align: center;'>");
+		sb.append("<td style='padding: 0; text-align: center; font-family:verdana; font-size:8px; font-weight: lighter; width: 100%;'>");
 		sb.append(line3);
 		sb.append("</td>");
-		sb.append("<td style='padding: 0px; font-family:verdana; font-size:8px; font-weight: normal; color: red'>");
+		sb.append("<td style='padding: 0; font-family:verdana; font-size:8px; font-weight: normal; color: red'>");
 		sb.append(flags);
 		sb.append("</td>");
 		sb.append("</tr>");
@@ -436,10 +436,10 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		sb.append("<table style='width:100%'>");
 		for (Entry<String, Integer> entry : map.entrySet()) {
 			sb.append("<tr>");
-			sb.append("<td style='padding: 0; text-align: center; font-family:verdana; font-size:9px; font-weight: lighter; text-align: right'>");
+			sb.append("<td style='padding: 0; text-align: right; font-family:verdana; font-size:9px; font-weight: lighter'>");
 			sb.append(entry.getKey());
 			sb.append("</td>");
-			sb.append("<td style='padding: 0 0 0 3px; text-align: center; font-family:verdana; font-size:9px; font-weight: lighter; text-align: left'>");
+			sb.append("<td style='padding: 0 0 0 3px; text-align: left; font-family:verdana; font-size:9px; font-weight: lighter'>");
 			sb.append(entry.getValue());
 			sb.append("</td>");
 			sb.append("</tr>");
