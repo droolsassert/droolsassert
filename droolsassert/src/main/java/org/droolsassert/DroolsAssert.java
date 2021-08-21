@@ -948,7 +948,7 @@ public class DroolsAssert implements TestRule {
 		return asList(
 				new LoggingListener(droolsSessionMeta, this),
 				new ActivationReportBuilder(session, activations),
-				new StateTransitionBuilder(droolsSessionMeta, clock))
+				new StateTransitionBuilder(droolsSessionMeta, session, clock))
 						.stream().filter(DroolsassertListener::enabled).collect(toList());
 	}
 	

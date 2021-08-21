@@ -29,6 +29,7 @@ import static org.droolsassert.DroolsAssertUtils.isJustified;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.DeletedFact;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.InsertedFact;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.Rule;
+import static org.droolsassert.listeners.StateTransitionBuilder.CellType.Statistic;
 import static org.droolsassert.listeners.StateTransitionBuilder.CellType.UpdatedFact;
 import static org.droolsassert.util.JsonUtils.toYaml;
 import static org.jgraph.graph.GraphConstants.ARROW_CLASSIC;
@@ -49,6 +50,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -76,6 +80,7 @@ import org.kie.api.event.rule.ObjectDeletedEvent;
 import org.kie.api.event.rule.ObjectInsertedEvent;
 import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.event.rule.RuleRuntimeEventListener;
+import org.kie.api.runtime.KieSession;
 import org.kie.api.time.SessionPseudoClock;
 
 import com.jgraph.layout.JGraphFacade;
@@ -97,14 +102,14 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
  * target/droolsassert/stateTransitionReport
  * </pre>
  */
-// TODO: implement statistic box on a graph view how many objects and of which types left in a session
 public class StateTransitionBuilder extends DefaultAgendaEventListener implements DroolsassertListener, RuleRuntimeEventListener {
 	
 	public enum CellType {
 		InsertedFact("#c8edc2", "#42b52f"),
 		UpdatedFact("#c8edc2", "#42b52f"),
 		DeletedFact("#ebebeb", "#9e9e9e"),
-		Rule("#c7e7ff", "#4eb3fc");
+		Rule("#c7e7ff", "#4eb3fc"),
+		Statistic("#ffffff", "#ffffff");
 		
 		private String background;
 		private String borderColor;
@@ -118,12 +123,14 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	private static String systemProperty = getProperty("droolsassert.stateTransitionReport");
 	
 	private DroolsSession droolsSessionMeta;
+	private KieSession session;
 	private SessionPseudoClock clock;
 	private File reportsDirectory;
 	private String format;
 	private String test;
 	private String scenario;
 	private JGraph graph;
+	private DefaultGraphCell statisticCell;
 	private volatile Thread eventDispatchThread;
 	
 	private IdentityHashMap<Object, AtomicInteger> lastObjectState;
@@ -131,9 +138,14 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	private IdentityHashMap<Object, DefaultGraphCell> lastRemovedCell;
 	private IdentityHashMap<Object, AtomicInteger> lastRuleTriggerCount;
 	private AtomicInteger adgeCounter;
+	private AtomicInteger activatedCounter;
+	private AtomicInteger insertedCounter;
+	private AtomicInteger updatedCounter;
+	private AtomicInteger deletedCounter;
 	
-	public StateTransitionBuilder(DroolsSession droolsSessionMeta, SessionPseudoClock clock) {
+	public StateTransitionBuilder(DroolsSession droolsSessionMeta, KieSession session, SessionPseudoClock clock) {
 		this.droolsSessionMeta = droolsSessionMeta;
+		this.session = session;
 		this.clock = clock;
 	}
 	
@@ -157,13 +169,27 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		lastRemovedCell = new IdentityHashMap<>();
 		lastRuleTriggerCount = new IdentityHashMap<>();
 		adgeCounter = new AtomicInteger();
+		activatedCounter = new AtomicInteger();
+		insertedCounter = new AtomicInteger();
+		updatedCounter = new AtomicInteger();
+		deletedCounter = new AtomicInteger();
 		graph = newGraph();
+		statisticCell = newStatisticCell();
 	}
 	
 	@Override
 	public void afterScenario() {
+		Map<String, Integer> statistic = new LinkedHashMap<>();
+		statistic.put("activated", activatedCounter.get());
+		statistic.put("inserted", insertedCounter.get());
+		statistic.put("updated", updatedCounter.get());
+		statistic.put("deleted", deletedCounter.get());
+		statistic.put("retained", (int) session.getObjects().stream().count());
+		statisticCell.setUserObject(newStatsLabel(statistic));
+		
 		// JGraph instances require class synchronization otherwise NPEs appear deep in AWT stuff
 		synchronized (StateTransitionBuilder.class) {
+			layout(graph);
 			layout(graph);
 			writeToFile(graph);
 			if (droolsSessionMeta.showStateTransitionPopup())
@@ -177,6 +203,19 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		String[] params = trimToEmpty(systemProperty).split(pathSeparator);
 		format = defaultIfEmpty(params[0], "png");
 		reportsDirectory = directory(new File(params.length > 1 ? params[1] : "target/droolsassert/stateTransitionReport"));
+	}
+	
+	private DefaultGraphCell newStatisticCell() {
+		DefaultGraphCell statistic = newCell(null, Statistic);
+		getView().insert(statistic);
+		
+		DefaultEdge edge = new DefaultEdge();
+		edge.setSource(statistic.getChildAt(0));
+		edge.setTarget(statistic.getChildAt(0));
+		setLineColor(edge.getAttributes(), white);
+		getView().insert(edge);
+		
+		return statistic;
 	}
 	
 	private void writeToFile(JGraph graph) {
@@ -214,6 +253,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	@Override
 	public void beforeMatchFired(BeforeMatchFiredEvent event) {
+		activatedCounter.incrementAndGet();
 		RuleImpl rule = (RuleImpl) event.getMatch().getRule();
 		if (!lastRuleTriggerCount.containsKey(rule))
 			lastRuleTriggerCount.putIfAbsent(rule, new AtomicInteger());
@@ -251,16 +291,19 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	@Override
 	public void objectInserted(ObjectInsertedEvent event) {
+		insertedCounter.incrementAndGet();
 		objectUpdated((InternalFactHandle) event.getFactHandle(), (RuleImpl) event.getRule(), InsertedFact);
 	}
 	
 	@Override
 	public void objectUpdated(ObjectUpdatedEvent event) {
+		updatedCounter.incrementAndGet();
 		objectUpdated((InternalFactHandle) event.getFactHandle(), (RuleImpl) event.getRule(), UpdatedFact);
 	}
 	
 	@Override
 	public void objectDeleted(ObjectDeletedEvent event) {
+		deletedCounter.incrementAndGet();
 		objectUpdated((InternalFactHandle) event.getFactHandle(), (RuleImpl) event.getRule(), DeletedFact);
 	}
 	
@@ -297,7 +340,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		}
 	}
 	
-	public GraphLayoutCache getView() {
+	private GraphLayoutCache getView() {
 		return graph.getGraphLayoutCache();
 	}
 	
@@ -382,6 +425,25 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		
 		sb.append("</td>");
 		sb.append("</tr>");
+		sb.append("</table>");
+		sb.append("</html>");
+		return sb.toString();
+	}
+	
+	private String newStatsLabel(Map<String, Integer> map) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<html>");
+		sb.append("<table style='width:100%'>");
+		for (Entry<String, Integer> entry : map.entrySet()) {
+			sb.append("<tr>");
+			sb.append("<td style='padding: 0; text-align: center; font-family:verdana; font-size:9px; font-weight: lighter; text-align: right'>");
+			sb.append(entry.getKey());
+			sb.append("</td>");
+			sb.append("<td style='padding: 0 0 0 3px; text-align: center; font-family:verdana; font-size:9px; font-weight: lighter; text-align: left'>");
+			sb.append(entry.getValue());
+			sb.append("</td>");
+			sb.append("</tr>");
+		}
 		sb.append("</table>");
 		sb.append("</html>");
 		return sb.toString();
