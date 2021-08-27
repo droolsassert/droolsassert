@@ -381,11 +381,13 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	
 	private DefaultGraphCell newStatisticCell() {
 		DefaultGraphCell statistic = newCell(null, Statistic);
+		DefaultGraphCell statistic2 = newCell(null, Statistic);
 		getView().insert(statistic);
+		getView().insert(statistic2);
 		
 		DefaultEdge edge = new DefaultEdge();
 		edge.setSource(statistic.getChildAt(0));
-		edge.setTarget(statistic.getChildAt(0));
+		edge.setTarget(statistic2.getChildAt(0));
 		setLineColor(edge.getAttributes(), white);
 		getView().insert(edge);
 		
