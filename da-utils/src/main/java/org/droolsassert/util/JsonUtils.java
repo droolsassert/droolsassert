@@ -4,6 +4,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.OBJECT_AND_NON_CONCRETE;
+import static com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS;
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static java.lang.String.format;
 
@@ -82,6 +83,7 @@ public final class JsonUtils {
 				.withCreatorVisibility(NONE));
 
 		mapper.setSerializationInclusion(inclusion);
+		mapper.configure(FAIL_ON_EMPTY_BEANS, false);
 		return mapper;
 	}
 }

@@ -19,6 +19,8 @@ import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.trimToEmpty;
+import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
+import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
 import static org.droolsassert.DroolsAssertUtils.directory;
 import static org.droolsassert.DroolsAssertUtils.formatTime;
@@ -99,7 +101,7 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
  * <b>directory_path</b> - directory for reports per test, default
  * 
  * <pre>
- * target/droolsassert/stateTransitionReport
+ * target / droolsassert / stateTransitionReport
  * </pre>
  */
 public class StateTransitionBuilder extends DefaultAgendaEventListener implements DroolsassertListener, RuleRuntimeEventListener {
@@ -345,7 +347,11 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	}
 	
 	protected String objectStateDump(Object fact) {
-		return toYaml(fact);
+		try {
+			return toYaml(fact);
+		} catch (Exception e) {
+			return reflectionToString(fact, MULTI_LINE_STYLE);
+		}
 	}
 	
 	private JGraph newGraph() {
