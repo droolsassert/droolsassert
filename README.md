@@ -63,6 +63,6 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.5.2</version>
+        <version>2.5.3</version>
         <scope>test</scope>
     </dependency>
