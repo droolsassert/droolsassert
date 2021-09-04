@@ -2,7 +2,6 @@ package org.droolsassert.jbehave;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.collect.Sets.newHashSet;
-import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
@@ -183,17 +182,20 @@ public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter
 			} else if (line.matches("\\s*ignore rules.*")) {
 				line = line.replaceFirst("\\s*ignore rules:?", "");
 				current = ignoreRules;
-			} else if (line.matches("\\s*log resources.*")) {
-				droolsSessionMeta.logResources = parseBoolean(line.replaceFirst("\\s*log resources:?\\s+", ""));
+			} else if (line.matches("\\s*log resources:?(\\s|$).*")) {
+				droolsSessionMeta.logResources = parseBoolean(line.replaceFirst("\\s*log resources:?(\\s|$)", ""));
 				continue;
-			} else if (line.matches("\\s*keep facts history.*")) {
-				droolsSessionMeta.keepFactsHistory = parseBoolean(line.replaceFirst("\\s*keep facts history:?\\s+", ""));
+			} else if (line.matches("\\s*keep facts history:?(\\s|$).*")) {
+				droolsSessionMeta.keepFactsHistory = parseBoolean(line.replaceFirst("\\s*keep facts history:?(\\s|$)", ""));
 				continue;
-			} else if (line.matches("\\s*log facts.*")) {
-				droolsSessionMeta.logFacts = parseBoolean(line.replaceFirst("\\s*log facts:?\\s+", ""));
+			} else if (line.matches("\\s*log facts:?(\\s|$).*")) {
+				droolsSessionMeta.logFacts = parseBoolean(line.replaceFirst("\\s*log facts:?(\\s|$)", ""));
 				continue;
-			} else if (line.matches("\\s*log.*")) {
-				droolsSessionMeta.log = parseBoolean(line.replaceFirst("\\s*log:?\\s+", ""));
+			} else if (line.matches("\\s*log:?(\\s|$).*")) {
+				droolsSessionMeta.log = parseBoolean(line.replaceFirst("\\s*log:?(\\s|$)", ""));
+				continue;
+			} else if (line.matches("\\s*show state transition popup:?(\\s|$).*")) {
+				droolsSessionMeta.showStateTransitionPopup = parseBoolean(line.replaceFirst("\\s*show state transition popup:?(\\s|$)", ""));
 				continue;
 			}
 			if (line.isEmpty())
@@ -590,6 +592,10 @@ public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter
 	
 	protected final <T> Class<T> classOf(String className) {
 		return mvelProcessor.evaluate(className + ".class");
+	}
+	
+	private boolean parseBoolean(String value) {
+		return isBlank(value) || Boolean.parseBoolean(value);
 	}
 	
 	@Override
