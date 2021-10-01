@@ -4,11 +4,11 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.shuffle;
 import static java.util.Collections.sort;
 import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AlphanumComparatorTest {
 	

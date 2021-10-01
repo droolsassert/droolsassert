@@ -3,13 +3,13 @@ package org.droolsassert.util;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.out;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class PerfStatTest {
 	
 	@Test
-	@Ignore("for manual run")
+	@Disabled("for manual run")
 	public void test() {
 		float cycles = 1_000_000_000;
 		PerfStat domainPerf = new PerfStat("domain.under.test"); // ~0,002ms

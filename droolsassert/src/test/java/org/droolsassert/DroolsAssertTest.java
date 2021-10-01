@@ -1,16 +1,17 @@
 package org.droolsassert;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kie.api.runtime.rule.FactHandle;
 
 @DroolsSession(resources = {
@@ -22,7 +23,7 @@ import org.kie.api.runtime.rule.FactHandle;
 		logResources = true)
 public class DroolsAssertTest {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
 	@Test
@@ -74,16 +75,16 @@ public class DroolsAssertTest {
 		assertEquals("string", drools.getObject(String.class));
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testNoObjectFound() {
-		assertEquals(0, drools.getObject(BigDecimal.class).intValue());
+		assertThrows(AssertionError.class, () -> drools.getObject(BigDecimal.class).intValue());
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	@TestRules(expected = "atomic long rule")
 	public void testNoUniqueObjectFound() {
 		drools.insertAndFire(new AtomicLong(), new AtomicLong());
-		assertEquals(2, drools.getObject(AtomicLong.class));
+		assertThrows(AssertionError.class, () -> drools.getObject(AtomicLong.class));
 	}
 	
 	@Test

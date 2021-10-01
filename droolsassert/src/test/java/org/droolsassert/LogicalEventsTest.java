@@ -5,22 +5,22 @@ import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
 import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
 import static org.drools.core.common.EqualityKey.JUSTIFIED;
 import static org.drools.core.common.EqualityKey.STATED;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.drools.core.common.InternalFactHandle;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 @DroolsSession("org/droolsassert/logicalEvents.drl")
 public class LogicalEventsTest extends DroolsAssert {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert droolsAssert = this;
 	
-	@Before
+	@BeforeEach
 	public void before() {
 		setGlobal("stdout", System.out);
 	}

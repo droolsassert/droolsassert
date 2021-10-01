@@ -6,9 +6,9 @@ import static org.droolsassert.util.JsonUtils.toYaml;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kie.api.definition.type.Position;
 
 /**
@@ -17,11 +17,11 @@ import org.kie.api.definition.type.Position;
 @DroolsSession("**/backwardChaining.drl")
 public class BackwardChainingTest extends DroolsAssert {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert droolsAssert = this;
 	private Result result;
 	
-	@Before
+	@BeforeEach
 	public void before() {
 		setGlobal("result", result = new Result());
 	}

@@ -19,18 +19,18 @@ import org.jbehave.core.parsers.RegexStoryParser;
 import org.jbehave.core.reporters.StoryReporterBuilder;
 import org.jbehave.core.steps.InjectableStepsFactory;
 import org.jbehave.core.steps.spring.SpringStepsFactory;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { AppConfig.class })
 public class JbehaveSpringTest extends InjectableEmbedder {
 	
@@ -39,8 +39,8 @@ public class JbehaveSpringTest extends InjectableEmbedder {
 	@Autowired
 	private SpringContextAwareDroolsAssertSteps springContextAwareDroolsAssertSteps;
 	
-	@Override
 	@Test
+	@Override
 	public void run() {
 		Embedder embedder = injectedEmbedder();
 		embedder.useConfiguration(configuration());

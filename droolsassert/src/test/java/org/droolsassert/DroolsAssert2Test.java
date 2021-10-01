@@ -1,13 +1,14 @@
 package org.droolsassert;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 @DroolsSession(resources = {
 		"classpath*:/org/droolsassert/rules.drl",
@@ -18,7 +19,7 @@ import org.junit.Test;
 		logResources = true)
 public class DroolsAssert2Test extends DroolsAssert {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert droolsAssert = this;
 	
 	@Test
@@ -70,16 +71,16 @@ public class DroolsAssert2Test extends DroolsAssert {
 		assertEquals("string", getObject(String.class));
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testNoObjectFound() {
-		assertEquals(0, getObject(BigDecimal.class).intValue());
+		assertThrows(AssertionError.class, () -> getObject(BigDecimal.class));
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	@TestRules(expected = "atomic long rule")
 	public void testNoUniqueObjectFound() {
 		insertAndFire(new AtomicLong(), new AtomicLong());
-		assertEquals(2, getObject(AtomicLong.class));
+		assertThrows(AssertionError.class, () -> getObject(AtomicLong.class));
 	}
 	
 	@Test

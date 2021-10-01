@@ -24,6 +24,7 @@ import static org.apache.commons.lang3.StringUtils.join;
 import static org.apache.commons.lang3.StringUtils.joinWith;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.apache.commons.lang3.math.NumberUtils.INTEGER_ZERO;
 import static org.droolsassert.DroolsAssertUtils.firstNonEmpty;
 import static org.droolsassert.DroolsAssertUtils.formatTime;
@@ -33,11 +34,10 @@ import static org.droolsassert.DroolsAssertUtils.getRulesCountFromSource;
 import static org.droolsassert.DroolsAssertUtils.getRulesFromSource;
 import static org.droolsassert.DroolsAssertUtils.getSimpleName;
 import static org.droolsassert.jbehave.DroolsSessionProxy.newDroolsSessionProxy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.runners.model.MultipleFailureException.assertEmpty;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.kie.api.io.ResourceType.DRL;
 import static org.kie.api.io.ResourceType.getResourceType;
 import static org.kie.internal.io.ResourceFactory.newUrlResource;
@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -71,9 +72,10 @@ import org.droolsassert.listeners.ActivationReportBuilder;
 import org.droolsassert.listeners.DroolsassertListener;
 import org.droolsassert.listeners.LoggingListener;
 import org.droolsassert.listeners.StateTransitionBuilder;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 import org.kie.api.KieBase;
 import org.kie.api.KieBaseConfiguration;
 import org.kie.api.KieServices;
@@ -96,12 +98,13 @@ import org.kie.api.time.SessionPseudoClock;
 import org.kie.internal.builder.KnowledgeBuilderConfiguration;
 import org.kie.internal.builder.conf.DumpDirOption;
 import org.kie.internal.utils.KieHelper;
+import org.opentest4j.AssertionFailedError;
 import org.springframework.core.io.Resource;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 
 /**
- * JUnit {@link TestRule} for declarative drools tests.
+ * JUnit <a href="https://junit.org/junit5/docs/current/user-guide/#extensions">extension</a> for declarative drools tests.
  * 
  * <pre>
  * &#64;DroolsSession(resources = {
@@ -112,7 +115,7 @@ import org.springframework.util.PathMatcher;
  *     logResources = true)
  * public class DroolsAssertTest {
  *     
- *     &#64;Rule
+ *     &#64;RegisterExtension
  *     public DroolsAssert drools = new DroolsAssert();
  *     
  *     &#64;Test
@@ -129,7 +132,7 @@ import org.springframework.util.PathMatcher;
  * &#64;DroolsSession("org/droolsassert/complexEventProcessing.drl")
  * public class ComplexEventProcessingTest extends DroolsAssert {
  *     
- *     &#64;Rule
+ *     &#64;RegisterExtension
  *     public DroolsAssert droolsAssert = this;
  *     
  *     &#64;Before
@@ -173,7 +176,7 @@ import org.springframework.util.PathMatcher;
  * @see DroolsAssertSteps
  * @see <a href=https://github.com/droolsassert>Documentation on GitHub</a>
  */
-public class DroolsAssert implements TestRule {
+public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, TestExecutionExceptionHandler {
 	protected static final PathMatcher nameMatcher = new AntPathMatcher("\n");
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
@@ -189,6 +192,8 @@ public class DroolsAssert implements TestRule {
 	protected Map<Object, Integer> factsHistory;
 	protected RulesChronoAgendaEventListener rulesChrono;
 	protected List<DroolsassertListener> listeners;
+	
+	private List<Throwable> errors = new ArrayList<>();
 	
 	/**
 	 * Initializes new drools session based on meta data.<br>
@@ -281,8 +286,8 @@ public class DroolsAssert implements TestRule {
 	@SuppressWarnings("unchecked")
 	public <T> T getObject(Class<T> clazz) {
 		Collection<T> objects = getObjects(clazz);
-		assertFalse(format("No object of type %s found", getSimpleName(clazz)), objects.isEmpty());
-		assertFalse(format("Non-unique object of type %s found", getSimpleName(clazz)), objects.size() > 1);
+		assertFalse(objects.isEmpty(), format("No object of type %s found", getSimpleName(clazz)));
+		assertFalse(objects.size() > 1, format("Non-unique object of type %s found", getSimpleName(clazz)));
 		return (T) objects.toArray()[0];
 	}
 	
@@ -516,7 +521,7 @@ public class DroolsAssert implements TestRule {
 		Map<String, Integer> activationsSnapshot = new HashMap<>(activations);
 		triggerAllScheduledActivations();
 		List<String> diff = getNewActivations(activationsSnapshot).keySet().stream().filter(this::isEligibleForAssertion).collect(toList());
-		assertTrue(formatUnexpectedCollection("Activation", "scheduled", diff), diff.isEmpty());
+		assertTrue(diff.isEmpty(), formatUnexpectedCollection("Activation", "scheduled", diff));
 	}
 	
 	protected final void tickTime(long amount, TimeUnit unit) {
@@ -569,13 +574,13 @@ public class DroolsAssert implements TestRule {
 		
 		if (droolsSessionMeta.keepFactsHistory()) {
 			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
-			assertTrue(formatUnexpectedCollection("Fact", "never inserted into the session", unknown), unknown.isEmpty());
+			assertTrue(unknown.isEmpty(), formatUnexpectedCollection("Fact", "never inserted into the session", unknown));
 		}
 		
 		deleteExpiredEvents();
 		session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).forEach(obj -> identityMap.remove(obj));
 		List<String> deleted = identityMap.keySet().stream().map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Fact", "removed from the session", deleted), deleted.isEmpty());
+		assertTrue(deleted.isEmpty(), formatUnexpectedCollection("Fact", "removed from the session", deleted));
 	}
 	
 	/**
@@ -589,13 +594,13 @@ public class DroolsAssert implements TestRule {
 		
 		if (droolsSessionMeta.keepFactsHistory()) {
 			List<String> unknown = stream(objects).filter(obj -> !factsHistory.containsKey(obj)).map(this::factToString).collect(toList());
-			assertTrue(formatUnexpectedCollection("Fact", "never inserted into the session", unknown), unknown.isEmpty());
+			assertTrue(unknown.isEmpty(), formatUnexpectedCollection("Fact", "never inserted into the session", unknown));
 		}
 		
 		deleteExpiredEvents();
 		List<String> notDeleted = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream())
 				.filter(obj -> identityMap.containsKey(obj)).map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Fact", "not deleted from the session", notDeleted), notDeleted.isEmpty());
+		assertTrue(notDeleted.isEmpty(), formatUnexpectedCollection("Fact", "not deleted from the session", notDeleted));
 	}
 	
 	/**
@@ -606,7 +611,7 @@ public class DroolsAssert implements TestRule {
 	public void assertAllDeleted() {
 		deleteExpiredEvents();
 		List<String> facts = session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).map(this::factToString).collect(toList());
-		assertTrue(formatUnexpectedCollection("Fact", "not deleted from the session", facts), facts.isEmpty());
+		assertTrue(facts.isEmpty(), formatUnexpectedCollection("Fact", "not deleted from the session", facts));
 	}
 	
 	/**
@@ -817,27 +822,17 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	@Override
-	public Statement apply(Statement base, Description description) {
-		init(description.getTestClass().getAnnotation(DroolsSession.class), description.getAnnotation(TestRules.class));
-		listeners.forEach(l -> l.beforeScenario(description.getClassName(), description.getMethodName()));
-		
-		return new Statement() {
-			@Override
-			public void evaluate() throws Throwable {
-				DroolsAssert.this.evaluate(base);
-			}
-		};
+	public void beforeEach(ExtensionContext context) throws Exception {
+		Class<?> clazz = context.getTestClass().get();
+		Method method = context.getTestMethod().get();
+		init(clazz.getAnnotation(DroolsSession.class), method.getAnnotation(TestRules.class));
+		listeners.forEach(l -> l.beforeScenario(getSimpleName(clazz), method.getName()));
 	}
 	
-	protected void evaluate(Statement base) throws Throwable {
-		List<Throwable> errors = new ArrayList<>();
-		try {
-			base.evaluate();
-		} catch (Throwable th) {
-			errors.add(th);
-		} finally {
-			listeners.forEach(DroolsassertListener::afterScenario);
-		}
+	@Override
+	public void afterEach(ExtensionContext context) throws Exception {
+		listeners.forEach(DroolsassertListener::afterScenario);
+		
 		if (testRulesMeta != null) {
 			try {
 				if (testRulesMeta.checkScheduled())
@@ -856,7 +851,25 @@ public class DroolsAssert implements TestRule {
 		}
 		
 		destroy();
-		assertEmpty(errors);
+		rethrowMultiple(errors);
+	}
+	
+	@Override
+	public void handleTestExecutionException(ExtensionContext context, Throwable throwable) throws Throwable {
+		errors.add(throwable);
+	}
+	
+	public void rethrowMultiple(List<Throwable> errors) throws Exception {
+		if (errors.size() == 1 && errors.get(0) instanceof Exception) {
+			throw (Exception) errors.get(0);
+		} else if (errors.size() == 1 && errors.get(0) instanceof Error) {
+			throw (Error) errors.get(0);
+		} else if (!errors.isEmpty()) {
+			StringBuilder sb = new StringBuilder("Failures detected:\n");
+			for (Throwable e : errors)
+				sb.append(format("\n%s", getStackTrace(e)));
+			throw new AssertionFailedError(sb.toString());
+		}
 	}
 	
 	public final void initializeIgnoredActivations() {

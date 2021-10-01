@@ -3,22 +3,23 @@ package org.droolsassert;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.droolsassert.ComplexEventProcessingTest.CallDropped;
 import org.droolsassert.ComplexEventProcessingTest.CallInProgress;
 import org.droolsassert.ComplexEventProcessingTest.Dialing;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 @DroolsSession("org/droolsassert/complexEventProcessing.drl")
 public class ComplexEventProcessing2Test extends DroolsAssert {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert droolsAssert = this;
 	
-	@Before
+	@BeforeEach
 	public void before() {
 		setGlobal("stdout", System.out);
 	}
@@ -124,10 +125,10 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 		insertAndFire(new Dialing("11111", "22222"));
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testAssertNoScheduledActivations() {
 		insertAndFire(new Dialing("11111", "22222"));
-		assertNoScheduledActivations();
+		assertThrows(AssertionError.class, () -> assertNoScheduledActivations());
 	}
 	
 	@Test
@@ -140,22 +141,22 @@ public class ComplexEventProcessing2Test extends DroolsAssert {
 		awaitForAny();
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testAwaitScheduledActivations() {
 		insertAndFire(new Dialing("11111", "22222"));
-		awaitFor("blah");
+		assertThrows(AssertionError.class, () -> awaitFor("blah"));
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testAwaitForAnyScheduledActivationsFailed() {
-		awaitForAny();
+		assertThrows(AssertionError.class, () -> awaitForAny());
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testAssertActivatedFailed() {
 		insertAndFire(new Dialing("11111", "22222"));
 		insertAndFire(new Dialing("33333", "44444"));
-		assertActivatedCount(1, "input call");
+		assertThrows(AssertionError.class, () -> assertActivatedCount(1, "input call"));
 	}
 	
 	@Test

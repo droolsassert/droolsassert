@@ -9,7 +9,7 @@ import static org.droolsassert.util.JsonUtils.fromYaml;
 import static org.droolsassert.util.JsonUtils.toYaml;
 import static org.joda.time.DateTimeConstants.SATURDAY;
 import static org.joda.time.DateTimeConstants.SUNDAY;
-import static org.junit.runners.model.MultipleFailureException.assertEmpty;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,8 +17,8 @@ import java.util.Map;
 
 import org.droolsassert.util.MvelProcessor;
 import org.joda.time.LocalDate;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kie.api.runtime.rule.FactHandle;
 import org.mvel2.ParserContext;
 
@@ -27,13 +27,13 @@ import com.google.common.io.Resources;
 @DroolsSession("classpath:/org/droolsassert/complexEventProcessing.drl")
 public class ExtensionTest {
 	
-	@Rule
+	@RegisterExtension
 	public ExtendedDroolsAssert drools = new ExtendedDroolsAssert();
 	
-	@Test(expected = RuntimeException.class)
+	@Test
 	public void testNoErrors() throws Exception {
 		drools.insertAndFire(new RuntimeException("Something reported"));
-		drools.assertNoErrors();
+		assertThrows(RuntimeException.class, () -> drools.assertNoErrors());
 	}
 	
 	@Test
@@ -48,7 +48,7 @@ public class ExtensionTest {
 		private MvelProcessor mvelProcessor = new ExtendedMvelProcessor();
 		
 		public void assertNoErrors() throws Exception {
-			assertEmpty(new ArrayList<Throwable>(getObjects(Throwable.class)));
+			rethrowMultiple(new ArrayList<Throwable>(getObjects(Throwable.class)));
 		}
 		
 		public FactHandle insertFromYaml(Class<?> type, String resource) {

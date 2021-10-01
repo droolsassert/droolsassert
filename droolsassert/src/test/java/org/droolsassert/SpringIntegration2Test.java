@@ -2,14 +2,14 @@ package org.droolsassert;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.drools.core.impl.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.droolsassert.SpringIntegration2Test.AppConfig;
 import org.droolsassert.SpringIntegrationTest.Weather;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -21,10 +21,10 @@ import org.kie.internal.io.ResourceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { AppConfig.class })
 public class SpringIntegration2Test {
 	
@@ -33,7 +33,7 @@ public class SpringIntegration2Test {
 	@Autowired
 	private RestTemplate restTemplate;
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert() {
 		@Override
 		protected KieSession newSession(DroolsSession droolsSessionMeta) {
@@ -44,7 +44,7 @@ public class SpringIntegration2Test {
 		};
 	};
 	
-	@Before
+	@BeforeEach
 	public void before() {
 		drools.setGlobal("weatherUrl", "https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22");
 		drools.setGlobal("restTemplate", restTemplate);

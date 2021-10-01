@@ -3,22 +3,23 @@ package org.droolsassert;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 @DroolsSession("org/droolsassert/complexEventProcessing.drl")
 public class ComplexEventProcessingTest {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
-	@Before
+	@BeforeEach
 	public void before() {
 		drools.setGlobal("stdout", System.out);
 	}
@@ -124,10 +125,10 @@ public class ComplexEventProcessingTest {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testAssertNoScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
-		drools.assertNoScheduledActivations();
+		assertThrows(AssertionError.class, () -> drools.assertNoScheduledActivations());
 	}
 	
 	@Test
@@ -140,22 +141,22 @@ public class ComplexEventProcessingTest {
 		drools.awaitForAny();
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testAwaitScheduledActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
-		drools.awaitFor("blah");
+		assertThrows(AssertionError.class, () -> drools.awaitFor("blah"));
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testAwaitForAnyScheduledActivationsFailed() {
-		drools.awaitForAny();
+		assertThrows(AssertionError.class, () -> drools.awaitForAny());
 	}
 	
-	@Test(expected = AssertionError.class)
+	@Test
 	public void testAssertActivatedFailed() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 		drools.insertAndFire(new Dialing("33333", "44444"));
-		drools.assertActivatedCount(1, "input call");
+		assertThrows(AssertionError.class, () -> drools.assertActivatedCount(1, "input call"));
 	}
 	
 	@Test

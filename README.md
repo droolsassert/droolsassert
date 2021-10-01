@@ -1,10 +1,3 @@
-**Please vote for drools jiras to help me finish some cool stuff for you**
-* [DROOLS-5406](https://issues.redhat.com/browse/DROOLS-5406)
-* [DROOLS-5971](https://issues.redhat.com/browse/DROOLS-5971)
-* [DROOLS-6072](https://issues.redhat.com/browse/DROOLS-6072)
-* [DROOLS-6080](https://issues.redhat.com/browse/DROOLS-6080)
-* [DROOLS-6081](https://issues.redhat.com/browse/DROOLS-6081)
-
 ## Goal
 
 Relieve Drools JUnit testing 
@@ -29,9 +22,9 @@ Spring ant-like [PathMatchingResourcePatternResolver](https://docs.spring.io/spr
         builderProperties = "drools.dump.dir = target/dump",
         logResources = true)
 
-Declare [the rule](https://www.baeldung.com/junit-4-rules) for the test
+Declare JUnit5 [extension](https://junit.org/junit5/docs/current/user-guide/#extensions) for the test ([rule](https://www.baeldung.com/junit-4-rules) for JUnit4)
 
-    @Rule
+    @RegisterExtension
     public DroolsAssert drools = new DroolsAssert();
 
 Specify list of rules expected to be triggered for a scenario with `@TestRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
@@ -58,11 +51,18 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
 [Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/Jbehave-extention)  
 [JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/JUnit-vs-jbehave)  
 
-## Latest maven build
-
+## Latest maven build (JUnit5)
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.5.3</version>
+        <version>3.0.0</version>
+        <scope>test</scope>
+    </dependency>
+
+## JUnit4
+    <dependency>
+        <groupId>org.droolsassert</groupId>
+        <artifactId>droolsassert</artifactId>
+        <version>2.5.5</version>
         <scope>test</scope>
     </dependency>

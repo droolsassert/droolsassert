@@ -167,7 +167,7 @@ public class ActivationReportBuilder implements DroolsassertListener {
 			for (Entry<String, Integer> e : activations.entrySet())
 				pw.printf("%-7d \t%s%n", e.getValue(), e.getKey());
 		} catch (IOException e) {
-			throw new DroolsAssertException("Cannot write consolidated report", e);
+			throw new DroolsAssertException("Cannot write activation report", e);
 		}
 	}
 	

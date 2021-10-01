@@ -18,8 +18,8 @@ import static org.droolsassert.jbehave.DroolsSessionProxy.newDroolsSessionProxy;
 import static org.droolsassert.jbehave.TestRulesProxy.newTestRulesProxy;
 import static org.droolsassert.util.JsonUtils.fromJson;
 import static org.droolsassert.util.JsonUtils.fromYaml;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -456,7 +456,7 @@ public class DroolsAssertSteps<A extends DroolsAssert> extends NullStoryReporter
 		if (isBlank(message))
 			assertTrue((boolean) mvelProcessor.evaluate(expression));
 		else
-			assertTrue(message, (boolean) mvelProcessor.evaluate(expression));
+			assertTrue((boolean) mvelProcessor.evaluate(expression), message);
 	}
 	
 	/**

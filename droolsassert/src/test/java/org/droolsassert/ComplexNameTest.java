@@ -1,17 +1,17 @@
 package org.droolsassert;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 @DroolsSession("classpath:/org/droolsassert/complex name * ${with}(*)[or].drl")
 public class ComplexNameTest {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
 	@Test

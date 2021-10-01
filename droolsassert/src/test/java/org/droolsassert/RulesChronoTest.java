@@ -9,18 +9,18 @@ import java.util.Map;
 import java.util.Random;
 
 import org.jfree.data.time.TimeSeries;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 @DroolsSession(resources = "classpath:/org/droolsassert/chrono.drl", log = false)
 public class RulesChronoTest {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
 	@Test
-	@Ignore
+	@Disabled
 	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoListener() {
 		for (int i = 1; i <= 50; i++)
@@ -29,7 +29,7 @@ public class RulesChronoTest {
 	}
 	
 	@Test
-	@Ignore
+	@Disabled
 	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoChartRecorder() {
 		drools.setRulesChrono(new RulesChronoChartRecorder(5000));

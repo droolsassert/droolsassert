@@ -7,17 +7,17 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static org.apache.commons.lang3.builder.EqualsBuilder.reflectionEquals;
 import static org.apache.commons.lang3.builder.HashCodeBuilder.reflectionHashCode;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 @DroolsSession("org/droolsassert/insertLogical.drl")
 public class InsertLogicalTest extends DroolsAssert {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert droolsAssert = this;
 	
-	@Before
+	@BeforeEach
 	public void before() {
 		setGlobal("stdout", System.out);
 	}

@@ -2,17 +2,17 @@ package org.droolsassert;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 @DroolsSession("classpath:/org/droolsassert/slidingTimeWindow.drl")
 public class SlidingTimeWindowTest {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
-	@Before
+	@BeforeEach
 	public void before() {
 		drools.setGlobal("stdout", System.out);
 	}

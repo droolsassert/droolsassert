@@ -4,17 +4,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.droolsassert.SlidingTimeWindowTest.SensorReading;
 import org.droolsassert.SlidingTimeWindowTest.TemperatureThreshold;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Test;
 
 @DroolsSession("classpath:/org/droolsassert/slidingLengthWindow.drl")
 public class SlidingLengthWindowTest {
 	
-	@Rule
+	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
-	@Before
+	@BeforeEach
 	public void before() {
 		drools.setGlobal("stdout", System.out);
 	}
