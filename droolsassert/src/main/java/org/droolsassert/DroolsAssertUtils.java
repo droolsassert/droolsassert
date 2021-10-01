@@ -119,9 +119,10 @@ public final class DroolsAssertUtils {
 	
 	public static File directory(File file) {
 		try {
-			if (!file.exists())
-				forceMkdir(file);
-			return file;
+			File absoluteFile = file.getAbsoluteFile();
+			if (!absoluteFile.exists())
+				forceMkdir(absoluteFile);
+			return absoluteFile;
 		} catch (IOException e) {
 			throw new DroolsAssertException("Cannot create directory", e);
 		}
