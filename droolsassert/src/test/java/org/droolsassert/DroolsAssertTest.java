@@ -77,7 +77,7 @@ public class DroolsAssertTest {
 	
 	@Test
 	public void testNoObjectFound() {
-		assertThrows(AssertionError.class, () -> drools.getObject(BigDecimal.class).intValue());
+		assertThrows(AssertionError.class, () -> drools.getObject(BigDecimal.class));
 	}
 	
 	@Test

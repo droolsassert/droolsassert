@@ -8,7 +8,7 @@ import static java.lang.System.out;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.sort;
-import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -321,7 +321,7 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	public InternalFactHandle getFactHandle(Object o) {
 		return session.getEntryPoints().stream()
 				.map(e -> e.getFactHandle(o))
-				.filter(h -> !isNull(h))
+				.filter(h -> nonNull(h))
 				.map(InternalFactHandle.class::cast)
 				.findFirst().orElse(null);
 	}

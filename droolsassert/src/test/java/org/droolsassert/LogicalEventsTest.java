@@ -11,8 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.drools.core.common.InternalFactHandle;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 @DroolsSession("org/droolsassert/logicalEvents.drl")
 public class LogicalEventsTest extends DroolsAssert {
@@ -56,8 +57,8 @@ public class LogicalEventsTest extends DroolsAssert {
 		assertEquals(2, negative.get());
 	}
 	
-	// @Test
-	// https://issues.redhat.com/browse/DROOLS-5971
+	@Test
+	@Disabled("https://issues.redhat.com/browse/DROOLS-5971")
 	public void testUpdateLogicalEvent() {
 		AtomicInteger positive = new AtomicInteger(1);
 		
@@ -83,8 +84,8 @@ public class LogicalEventsTest extends DroolsAssert {
 		assertEquals(2, positive.get());
 	}
 	
-	// @Test
-	// https://issues.redhat.com/browse/DROOLS-6072
+	@Test
+	@Disabled("https://issues.redhat.com/browse/DROOLS-6072")
 	public void testStage() {
 		AtomicInteger positive = new AtomicInteger(1);
 		
@@ -100,8 +101,8 @@ public class LogicalEventsTest extends DroolsAssert {
 		assertEquals(1, positive.get());
 	}
 	
-	// @Test
-	// https://issues.redhat.com/browse/DROOLS-6080
+	@Test
+	@Disabled("https://issues.redhat.com/browse/DROOLS-6080")
 	public void testUnstage() {
 		AtomicInteger positive = new AtomicInteger(1);
 		
