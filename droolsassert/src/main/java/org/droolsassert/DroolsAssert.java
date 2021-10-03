@@ -831,6 +831,8 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	
 	@Override
 	public void afterEach(ExtensionContext context) throws Exception {
+		if (session == null)
+			return;
 		listeners.forEach(DroolsassertListener::afterScenario);
 		
 		if (testRulesMeta != null) {
