@@ -1,10 +1,3 @@
-**Please vote for drools jiras to help me finish some cool stuff for you**
-* [DROOLS-5406](https://issues.redhat.com/browse/DROOLS-5406)
-* [DROOLS-5971](https://issues.redhat.com/browse/DROOLS-5971)
-* [DROOLS-6072](https://issues.redhat.com/browse/DROOLS-6072)
-* [DROOLS-6080](https://issues.redhat.com/browse/DROOLS-6080)
-* [DROOLS-6081](https://issues.redhat.com/browse/DROOLS-6081)
-
 ## Goal
 
 Relieve Drools JUnit testing 
@@ -63,6 +56,6 @@ Specify list of rules expected to be triggered for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.5.3</version>
+        <version>2.5.6</version>
         <scope>test</scope>
     </dependency>
