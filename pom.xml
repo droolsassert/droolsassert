@@ -260,6 +260,7 @@
 				<version>3.0.0-M5</version>
 				<configuration>
 					<parallel>classes</parallel>
+					<useUnlimitedThreads>true</useUnlimitedThreads>
 					<forkCount>5</forkCount>
 				</configuration>
 			</plugin>
