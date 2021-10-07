@@ -874,7 +874,7 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 		}
 	}
 	
-	public final void initializeIgnoredActivations() {
+	private void initializeIgnoredActivations() {
 		ignored = new HashSet<>();
 		ignoreActivations(droolsSessionMeta.ignoreRules());
 		if (!droolsSessionMeta.ignoreRulesSource().isEmpty())

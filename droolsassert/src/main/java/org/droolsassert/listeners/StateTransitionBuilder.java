@@ -101,7 +101,7 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
  * <b>directory_path</b> - directory for reports per test, default
  * 
  * <pre>
- * target / droolsassert / stateTransitionReport
+ * target/droolsassert/stateTransitionReport
  * </pre>
  */
 public class StateTransitionBuilder extends DefaultAgendaEventListener implements DroolsassertListener, RuleRuntimeEventListener {
