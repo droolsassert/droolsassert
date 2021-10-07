@@ -11,6 +11,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.droolsassert.DroolsAssertUtils.COUNT_OF_RULES;
 import static org.droolsassert.DroolsAssertUtils.directory;
+import static org.droolsassert.DroolsAssertUtils.getReentrantFileLockFactory;
 import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 
 import java.io.File;
@@ -25,6 +26,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 
 import org.droolsassert.DroolsAssertException;
+import org.droolsassert.util.ReentrantFileLock;
 import org.kie.api.definition.rule.Query;
 import org.kie.api.runtime.KieSession;
 
@@ -62,6 +64,7 @@ import org.kie.api.runtime.KieSession;
 public class ActivationReportBuilder implements DroolsassertListener {
 	
 	private static String systemProperty = getProperty("droolsassert.activationReport");
+	private static volatile ReentrantFileLock consolidatedReportLock;
 	
 	private KieSession session;
 	private Map<String, Integer> activations;
@@ -103,15 +106,16 @@ public class ActivationReportBuilder implements DroolsassertListener {
 		reportsDirectory = directory(new File(defaultIfEmpty(params[0], "target/droolsassert/activationReport")));
 		consolidatedReport = new File(params.length > 1 ? params[1] : reportsDirectory + ".txt");
 		
-		synchronized (ActivationReportBuilder.class) {
-			try {
-				if (!consolidatedReport.exists()) {
-					forceMkdirParent(consolidatedReport);
-					consolidatedReport.createNewFile();
-				}
-			} catch (IOException e) {
-				throw new DroolsAssertException("Cannot initialize reports file system", e);
+		getConsolidatedReportLock().lock();
+		try {
+			if (!consolidatedReport.exists()) {
+				forceMkdirParent(consolidatedReport);
+				consolidatedReport.createNewFile();
 			}
+		} catch (IOException e) {
+			throw new DroolsAssertException("Cannot initialize reports file system", e);
+		} finally {
+			getConsolidatedReportLock().unlock();
 		}
 	}
 	
@@ -134,7 +138,8 @@ public class ActivationReportBuilder implements DroolsassertListener {
 		TreeMap<String, Integer> consolidatedReportData = new TreeMap<>(ALPHANUM_COMPARATOR);
 		knownRules().forEach(rule -> consolidatedReportData.put(rule, 0));
 		
-		synchronized (ActivationReportBuilder.class) {
+		getConsolidatedReportLock().lock();
+		try {
 			try (InputStream is = new FileInputStream(consolidatedReport)) {
 				readLines(is, defaultCharset()).stream()
 						.skip(1)
@@ -155,6 +160,8 @@ public class ActivationReportBuilder implements DroolsassertListener {
 			});
 			
 			writeReport(consolidatedReport, consolidatedReportData);
+		} finally {
+			getConsolidatedReportLock().unlock();
 		}
 	}
 	
@@ -184,5 +191,15 @@ public class ActivationReportBuilder implements DroolsassertListener {
 				.filter(e -> e.getValue() > 0)
 				.map(e -> e.getKey())
 				.collect(toSet());
+	}
+	
+	private ReentrantFileLock getConsolidatedReportLock() {
+		if (consolidatedReportLock != null)
+			return consolidatedReportLock;
+		synchronized (getClass()) {
+			if (consolidatedReportLock == null)
+				consolidatedReportLock = getReentrantFileLockFactory().newLock(ActivationReportBuilder.class.getName());
+			return consolidatedReportLock;
+		}
 	}
 }

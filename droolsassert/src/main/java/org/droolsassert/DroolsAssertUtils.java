@@ -18,6 +18,7 @@ import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.drools.core.common.EqualityKey.JUSTIFIED;
+import static org.droolsassert.util.ReentrantFileLock.newReentrantFileLockFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,7 @@ import org.drools.core.common.LogicalDependency;
 import org.drools.core.spi.Activation;
 import org.drools.core.spi.Tuple;
 import org.drools.core.util.LinkedList;
+import org.droolsassert.util.ReentrantFileLock.ReentrantFileLockFactory;
 import org.kie.api.runtime.rule.Match;
 import org.kie.api.time.SessionPseudoClock;
 import org.springframework.core.io.Resource;
@@ -53,6 +55,7 @@ public final class DroolsAssertUtils {
 	protected static final long DAY_MILLISECONDS = DAYS.toMillis(1);
 	public static final Pattern COUNT_OF_RULES = compile("(?<count>\\d+)\\s+(?<rule>.+)");
 	public static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+	private static volatile ReentrantFileLockFactory fileLockFactory;
 	
 	private DroolsAssertUtils() {
 	}
@@ -117,11 +120,13 @@ public final class DroolsAssertUtils {
 		return resources;
 	}
 	
+	/**
+	 * Pins relative directory
+	 */
 	public static File directory(File file) {
 		try {
 			File absoluteFile = file.getAbsoluteFile();
-			if (!absoluteFile.exists())
-				forceMkdir(absoluteFile);
+			forceMkdir(absoluteFile);
 			return absoluteFile;
 		} catch (IOException e) {
 			throw new DroolsAssertException("Cannot create directory", e);
@@ -191,5 +196,15 @@ public final class DroolsAssertUtils {
 	
 	public static String getSimpleName(Class<?> clazz) {
 		return defaultIfEmpty(clazz.getSimpleName(), getShortCanonicalName(clazz));
+	}
+	
+	public static ReentrantFileLockFactory getReentrantFileLockFactory() {
+		if (fileLockFactory != null)
+			return fileLockFactory;
+		synchronized (DroolsAssertUtils.class) {
+			if (fileLockFactory == null)
+				fileLockFactory = newReentrantFileLockFactory("target/droolsassert/lock");
+			return fileLockFactory;
+		}
 	}
 }

@@ -859,7 +859,7 @@ public class DroolsAssert implements TestRule {
 		assertEmpty(errors);
 	}
 	
-	public final void initializeIgnoredActivations() {
+	private void initializeIgnoredActivations() {
 		ignored = new HashSet<>();
 		ignoreActivations(droolsSessionMeta.ignoreRules());
 		if (!droolsSessionMeta.ignoreRulesSource().isEmpty())
