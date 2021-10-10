@@ -60,7 +60,6 @@ public class ReentrantFileLockTest {
 	private static final long workTimeMinMs = 0;
 	private static final long workTimeMaxMs = 1000;
 	private static final String jvmName = getRuntimeMXBean().getName();
-	private ReentrantFileLockFactory lockFactory = newReentrantFileLockFactory("lock");
 	private File dumpDir = new File("dump");
 	
 	@Test
@@ -130,6 +129,7 @@ public class ReentrantFileLockTest {
 		File file = new File(dumpDir, jvmName.substring(0, jvmName.indexOf("@")) + ".txt");
 		file.getParentFile().mkdirs();
 		setOut(new PrintStream(file));
+		ReentrantFileLockFactory lockFactory = newReentrantFileLockFactory("lock");
 		// ReentrantFileLock lock1 = lockFactory.newLock(1);
 		// ReentrantFileLock lock2 = lockFactory.newLock(1);
 		// ReentrantFileLock lock3 = lockFactory.newLock(1);
