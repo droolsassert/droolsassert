@@ -1,25 +1,42 @@
 package org.droolsassert.util;
 
+import static java.lang.String.format;
 import static java.lang.System.nanoTime;
 import static java.lang.Thread.currentThread;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.locks.LockSupport.parkNanos;
 import static org.apache.commons.io.FileUtils.forceMkdirParent;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.collect.MapMaker;
+
 /**
  * Combines {@link ReentrantLock} with {@link FileLock}<br>
  * Suitable to synchronize threads from different VMs via file system.<br>
- * <br>
+ * As per documentation, file locks are held on behalf of the entire Java virtual machine.<br>
+ * Thus in most cases your {@link ReentrantFileLock} should be static to have single JVM instance of the lock object correspond to file lock for the entire JVM.<br>
+ * But it should not be an error to have several exclusive locks on JVM level correspond to single file lock id when you have valid technical usecase to do so.<br>
+ * <p>
+ * Inner logic is fairly simple and imply acquiring first java {@link ReentrantLock} (fairness option belong here) and, when succeeded, continue further with acquiring file
+ * lock.<br>
+ * Release logic behaves in the opposite order.<br>
+ * <p>
+ * {@link ReentrantLock} is reentrant, meaning the same thread can re-acquire the same lock again (lock held count get incremented).<br>
+ * The same logic implemented for the file lock, meaning any {@link ReentrantFileLock}(s) can re-acquire the same lock id on the file running within the same JVM (file lock held
+ * count get incremented implying no interaction with file system).<br>
+ * <p>
+ * Consider Initialization-on-demand holder idiom for lazy loading<br>
  * 
  * <pre>
  * private static final ReentrantFileLockFactory fileLockFactory = newReentrantFileLockFactory("target/droolsassert/lock");
@@ -39,80 +56,124 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ReentrantFileLock extends ReentrantLock {
 	
 	private static final long serialVersionUID = 6495726261995738151L;
-	private static final long RETRY_NS = 50;
-	private static final Map<Integer, AtomicInteger> fileLockHoldCount = new ConcurrentHashMap<>();
+	private static final long LOCK_RETRY_MS = 10;
+	private static final String cantAcquireFileLock = "Cannot acquire file lock";
+	
+	private static final ConcurrentMap<Integer, FileLockHolder> fileLocks = new MapMaker().weakValues().makeMap();
 	
 	public static final ReentrantFileLockFactory newReentrantFileLockFactory(String filePath) {
-		return new ReentrantFileLockFactory(new File(filePath));
+		return newReentrantFileLockFactory(false, filePath);
+	}
+	
+	public static final ReentrantFileLockFactory newReentrantFileLockFactory(boolean fair, String filePath) {
+		return new ReentrantFileLockFactory(fair, new File(filePath));
 	}
 	
 	public static final ReentrantFileLockFactory newReentrantFileLockFactory(File file) {
-		return new ReentrantFileLockFactory(file);
+		return newReentrantFileLockFactory(false, file);
 	}
 	
+	public static final ReentrantFileLockFactory newReentrantFileLockFactory(boolean fair, File file) {
+		return new ReentrantFileLockFactory(fair, file);
+	}
+	
+	private final File absoluteFile;
 	private final FileChannel lockFileChannel;
 	private final int id;
-	private volatile FileLock fileLock;
+	private final FileLockHolder shared;
 	
-	public ReentrantFileLock(int id, FileChannel lockFileChannel) {
+	private ReentrantFileLock(int id, FileChannel lockFileChannel, File absoluteFile) {
+		this(false, id, lockFileChannel, absoluteFile);
+	}
+	
+	private ReentrantFileLock(boolean fair, int id, FileChannel lockFileChannel, File absoluteFile) {
+		super(fair);
 		this.id = id;
 		this.lockFileChannel = lockFileChannel;
+		this.absoluteFile = absoluteFile;
+		FileLockHolder defaultValue = new FileLockHolder();
+		shared = defaultIfNull(fileLocks.putIfAbsent(id, defaultValue), defaultValue);
 	}
 	
 	@Override
 	public void lock() {
 		super.lock();
-		if (incrementAndGetFileLockHoldCount() == 1) {
+		shared.modificationLock.lock();
+		if (shared.holdCount.get() == 0) {
 			try {
-				fileLock = lockFileChannel.lock(id, 1, false);
+				shared.fileLock = lockFileChannel.lock(id, 1, false);
+				shared.holdCount.incrementAndGet();
 			} catch (Exception e) {
-				decrementAndGetFileLockHoldCount();
 				super.unlock();
-				throw new RuntimeException("Cannot acquire file lock", e);
+				throw new RuntimeException(cantAcquireFileLock, e);
+			} finally {
+				shared.modificationLock.unlock();
 			}
+		} else {
+			shared.holdCount.incrementAndGet();
+			shared.modificationLock.unlock();
 		}
 	}
 	
 	@Override
 	public void lockInterruptibly() throws InterruptedException {
 		super.lockInterruptibly();
-		if (incrementAndGetFileLockHoldCount() == 1) {
-			for (;;) {
-				try {
-					fileLock = lockFileChannel.tryLock(id, 1, false);
-				} catch (IOException e) {
-					decrementAndGetFileLockHoldCount();
-					super.unlock();
-					throw new RuntimeException("Cannot acquire file lock", e);
+		shared.modificationLock.lockInterruptibly();
+		if (shared.holdCount.get() == 0) {
+			try {
+				while (true) {
+					try {
+						shared.fileLock = lockFileChannel.tryLock(id, 1, false);
+						if (shared.fileLock != null) {
+							shared.holdCount.incrementAndGet();
+							break;
+						}
+					} catch (Exception e) {
+						super.unlock();
+						throw new RuntimeException(cantAcquireFileLock, e);
+					}
+					parkNanos(MILLISECONDS.toNanos(LOCK_RETRY_MS));
+					if (currentThread().isInterrupted()) {
+						super.unlock();
+						throw new InterruptedException();
+					}
 				}
-				if (fileLock != null)
-					break;
-				parkNanos(RETRY_NS);
-				if (currentThread().isInterrupted()) {
-					decrementAndGetFileLockHoldCount();
-					super.unlock();
-					throw new InterruptedException();
-				}
+			} finally {
+				shared.modificationLock.unlock();
 			}
+		} else {
+			shared.holdCount.incrementAndGet();
+			shared.modificationLock.unlock();
 		}
 	}
 	
 	@Override
 	public boolean tryLock() {
 		boolean locked = super.tryLock();
-		if (locked && incrementAndGetFileLockHoldCount() == 1) {
+		if (!locked)
+			return false;
+		if (!shared.modificationLock.tryLock()) {
+			super.unlock();
+			return false;
+		}
+		if (shared.holdCount.get() == 0) {
 			try {
-				fileLock = lockFileChannel.tryLock(id, 1, false);
-			} catch (IOException e) {
-				decrementAndGetFileLockHoldCount();
+				shared.fileLock = lockFileChannel.tryLock(id, 1, false);
+				if (shared.fileLock != null) {
+					shared.holdCount.incrementAndGet();
+				} else {
+					super.unlock();
+					return false;
+				}
+			} catch (Exception e) {
 				super.unlock();
-				throw new RuntimeException("Cannot acquire file lock", e);
+				throw new RuntimeException(cantAcquireFileLock, e);
+			} finally {
+				shared.modificationLock.unlock();
 			}
-			if (fileLock == null) {
-				decrementAndGetFileLockHoldCount();
-				super.unlock();
-				locked = false;
-			}
+		} else {
+			shared.holdCount.incrementAndGet();
+			shared.modificationLock.unlock();
 		}
 		return locked;
 	}
@@ -121,77 +182,89 @@ public class ReentrantFileLock extends ReentrantLock {
 	public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
 		long deadline = nanoTime() + unit.toNanos(timeout);
 		boolean locked = super.tryLock(timeout, unit);
-		if (locked && incrementAndGetFileLockHoldCount() == 1) {
-			for (;;) {
-				try {
-					fileLock = lockFileChannel.tryLock(id, 1, false);
-				} catch (IOException e) {
-					decrementAndGetFileLockHoldCount();
-					super.unlock();
-					throw new RuntimeException("Cannot acquire file lock", e);
+		if (!locked)
+			return false;
+		if (!shared.modificationLock.tryLock(deadline - nanoTime(), NANOSECONDS)) {
+			super.unlock();
+			return false;
+		}
+		if (shared.holdCount.get() == 0) {
+			try {
+				while (true) {
+					try {
+						shared.fileLock = lockFileChannel.tryLock(id, 1, false);
+						if (shared.fileLock != null) {
+							shared.holdCount.incrementAndGet();
+							break;
+						}
+					} catch (Exception e) {
+						super.unlock();
+						throw new RuntimeException(cantAcquireFileLock, e);
+					}
+					parkNanos(MILLISECONDS.toNanos(LOCK_RETRY_MS));
+					if (currentThread().isInterrupted()) {
+						super.unlock();
+						throw new InterruptedException();
+					}
+					if (nanoTime() > deadline) {
+						super.unlock();
+						locked = false;
+						break;
+					}
 				}
-				if (fileLock != null)
-					break;
-				parkNanos(RETRY_NS);
-				if (currentThread().isInterrupted() || nanoTime() > deadline) {
-					super.unlock();
-					locked = false;
-					break;
-				}
+			} finally {
+				shared.modificationLock.unlock();
 			}
+		} else {
+			shared.holdCount.incrementAndGet();
+			shared.modificationLock.unlock();
 		}
 		return locked;
 	}
 	
 	@Override
 	public void unlock() {
-		if (decrementAndGetFileLockHoldCount() == 0) {
+		shared.modificationLock.lock();
+		if (shared.holdCount.get() == 1) {
 			try {
-				fileLock.release();
-				fileLock = null;
-			} catch (IOException e) {
+				shared.fileLock.release();
+				shared.fileLock = null;
+				shared.holdCount.decrementAndGet();
+			} catch (Exception e) {
 				throw new RuntimeException("Cannot release file lock", e);
 			} finally {
+				shared.modificationLock.unlock();
 				super.unlock();
 			}
 		} else {
+			shared.holdCount.decrementAndGet();
+			shared.modificationLock.unlock();
 			super.unlock();
 		}
 	}
 	
-	private int incrementAndGetFileLockHoldCount() {
-		AtomicInteger lockCount = fileLockHoldCount.get(id);
-		if (lockCount == null) {
-			synchronized (getClass()) {
-				lockCount = fileLockHoldCount.get(id);
-				if (lockCount == null) {
-					lockCount = new AtomicInteger();
-					fileLockHoldCount.put(id, lockCount);
-				}
-			}
-		}
-		return lockCount.incrementAndGet();
+	@Override
+	public String toString() {
+		return format("%s-%s (%s)", absoluteFile.getName(), id, shared.holdCount);
 	}
 	
-	private int decrementAndGetFileLockHoldCount() {
-		int decremented = fileLockHoldCount.get(id).decrementAndGet();
-		if (decremented == 0) {
-			synchronized (getClass()) {
-				if (fileLockHoldCount.get(id).get() == 0)
-					fileLockHoldCount.remove(id);
-			}
-		}
-		return decremented;
+	private class FileLockHolder {
+		private final ReentrantLock modificationLock = new ReentrantLock(true);
+		private final AtomicInteger holdCount = new AtomicInteger();
+		private volatile FileLock fileLock;
 	}
 	
 	public static class ReentrantFileLockFactory {
 		
+		private final boolean fair;
+		private final File absoluteFile;
 		private final FileChannel lockFileChannel;
 		
 		@SuppressWarnings("resource")
-		private ReentrantFileLockFactory(File file) {
+		private ReentrantFileLockFactory(boolean fair, File file) {
 			try {
-				File absoluteFile = file.getAbsoluteFile();
+				this.fair = fair;
+				absoluteFile = file.getAbsoluteFile();
 				forceMkdirParent(absoluteFile);
 				lockFileChannel = new FileOutputStream(absoluteFile).getChannel();
 			} catch (IOException e) {
@@ -201,7 +274,7 @@ public class ReentrantFileLock extends ReentrantLock {
 		
 		/**
 		 * Creates new lock for the given name.<br>
-		 * Hash code of the name will be used to derive lock id (position) in the file.
+		 * Hash code of the name will be used to compute lock id (position) in the file.
 		 * 
 		 * @see FileChannel#lock(long, long, boolean)
 		 */
@@ -210,13 +283,13 @@ public class ReentrantFileLock extends ReentrantLock {
 		}
 		
 		/**
-		 * Creates new lock for the given name.<br>
+		 * Creates new lock for the given id.<br>
 		 * Id will be used to uniquely identify the lock (position) in the file.
 		 * 
 		 * @see FileChannel#lock(long, long, boolean)
 		 */
 		public ReentrantFileLock newLock(int id) {
-			return new ReentrantFileLock(id, lockFileChannel);
+			return new ReentrantFileLock(fair, id, lockFileChannel, absoluteFile);
 		}
 	}
 }
