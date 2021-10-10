@@ -55,7 +55,9 @@ public final class DroolsAssertUtils {
 	protected static final long DAY_MILLISECONDS = DAYS.toMillis(1);
 	public static final Pattern COUNT_OF_RULES = compile("(?<count>\\d+)\\s+(?<rule>.+)");
 	public static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
-	private static volatile ReentrantFileLockFactory fileLockFactory;
+	public static class LazyReentrantFileLockFactory {
+		public static final ReentrantFileLockFactory instance = newReentrantFileLockFactory("target/droolsassert/lock");
+	}
 	
 	private DroolsAssertUtils() {
 	}
@@ -196,15 +198,5 @@ public final class DroolsAssertUtils {
 	
 	public static String getSimpleName(Class<?> clazz) {
 		return defaultIfEmpty(clazz.getSimpleName(), getShortCanonicalName(clazz));
-	}
-	
-	public static ReentrantFileLockFactory getReentrantFileLockFactory() {
-		if (fileLockFactory != null)
-			return fileLockFactory;
-		synchronized (DroolsAssertUtils.class) {
-			if (fileLockFactory == null)
-				fileLockFactory = newReentrantFileLockFactory("target/droolsassert/lock");
-			return fileLockFactory;
-		}
 	}
 }
