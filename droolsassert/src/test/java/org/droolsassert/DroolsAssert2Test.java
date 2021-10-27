@@ -65,7 +65,7 @@ public class DroolsAssert2Test extends DroolsAssert {
 	
 	@Test
 	@TestRules(expected = {})
-	public void testNoRulesWereTriggered() {
+	public void testNoRulesWereActivated() {
 		insertAndFire("string");
 		assertFactsCount(1);
 		assertEquals("string", getObject(String.class));
