@@ -138,7 +138,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	private IdentityHashMap<Object, AtomicInteger> lastObjectState;
 	private IdentityHashMap<Object, DefaultGraphCell> lastObjectCell;
 	private IdentityHashMap<Object, DefaultGraphCell> lastRemovedCell;
-	private IdentityHashMap<Object, AtomicInteger> lastRuleTriggerCount;
+	private IdentityHashMap<Object, AtomicInteger> lastRuleActivationCount;
 	private AtomicInteger adgeCounter;
 	private AtomicInteger activatedCounter;
 	private AtomicInteger insertedCounter;
@@ -169,7 +169,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		lastObjectState = new IdentityHashMap<>();
 		lastObjectCell = new IdentityHashMap<>();
 		lastRemovedCell = new IdentityHashMap<>();
-		lastRuleTriggerCount = new IdentityHashMap<>();
+		lastRuleActivationCount = new IdentityHashMap<>();
 		adgeCounter = new AtomicInteger();
 		activatedCounter = new AtomicInteger();
 		insertedCounter = new AtomicInteger();
@@ -244,9 +244,9 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	public void beforeMatchFired(BeforeMatchFiredEvent event) {
 		activatedCounter.incrementAndGet();
 		RuleImpl rule = (RuleImpl) event.getMatch().getRule();
-		if (!lastRuleTriggerCount.containsKey(rule))
-			lastRuleTriggerCount.putIfAbsent(rule, new AtomicInteger());
-		int triggerCount = lastRuleTriggerCount.get(rule).incrementAndGet();
+		if (!lastRuleActivationCount.containsKey(rule))
+			lastRuleActivationCount.putIfAbsent(rule, new AtomicInteger());
+		int activationCount = lastRuleActivationCount.get(rule).incrementAndGet();
 		
 		StringBuilder ruleMeta = new StringBuilder(rule.getAgendaGroup());
 		if (rule.getActivationGroup() != null)
@@ -258,7 +258,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 			ruleMeta.append("|NL");
 		if (rule.isLockOnActive())
 			ruleMeta.append("|LOA");
-		ruleMeta.append("|").append(triggerCount);
+		ruleMeta.append("|").append(activationCount);
 		
 		String flags = rule.getTimer() == null ? "" : "T";
 		DefaultGraphCell ruleCell = newCell(newLabel(Rule, rule.getName(), ruleMeta.toString(), formatTime(clock), flags), Rule);

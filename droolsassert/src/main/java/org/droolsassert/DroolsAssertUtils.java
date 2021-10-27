@@ -63,10 +63,10 @@ public final class DroolsAssertUtils {
 	}
 	
 	public static List<Object> getRuleActivatedBy(Match match) {
-		Object triggerObject = ((Activation) match).getPropagationContext().getFactHandle().getObject();
+		Object activatorObject = ((Activation) match).getPropagationContext().getFactHandle().getObject();
 		List<Object> result = new ArrayList<>(match.getObjects());
-		if (!result.contains(triggerObject))
-			result.add(0, triggerObject);
+		if (!result.contains(activatorObject))
+			result.add(0, activatorObject);
 		return result;
 	}
 	

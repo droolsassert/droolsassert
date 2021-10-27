@@ -68,7 +68,7 @@ public class DroolsAssertTest {
 	
 	@Test
 	@TestRules(expected = {})
-	public void testNoRulesWereTriggered() {
+	public void testNoRulesWereActivated() {
 		drools.insertAndFire("string");
 		drools.assertFactsCount(1);
 		assertEquals("string", drools.getObject(String.class));

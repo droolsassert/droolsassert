@@ -11,20 +11,20 @@ import org.springframework.util.AntPathMatcher;
 
 /**
  * Provides additional options for the test.<br>
- * Can be used to declare and assert rules being triggered during test run.
+ * Can be used to declare and assert rules being activated during test run.
  */
 @Retention(RUNTIME)
 @Target(METHOD)
 public @interface TestRules {
 	
 	/**
-	 * Rules expected to be triggered. Provide empty list to assert no rules where triggered.<br>
+	 * Rules expected to be activated. Provide empty list to assert no rules where activated.<br>
 	 * This overrides {@link #expectedSource} and {@link #expectedCountSource}
 	 */
 	String[] expected() default { EMPTY };
 	
 	/**
-	 * Rules expected to be triggered in a line delimited resource file.
+	 * Rules expected to be activated in a line delimited resource file.
 	 * 
 	 * <pre>
 	 * # comment
@@ -73,7 +73,7 @@ public @interface TestRules {
 	String ignoreSource() default EMPTY;
 	
 	/**
-	 * Check any rules that are scheduled to be triggered later.<br>
+	 * Check any rules that are scheduled to be activated later.<br>
 	 * <br>
 	 * Default - false (do not check)
 	 */

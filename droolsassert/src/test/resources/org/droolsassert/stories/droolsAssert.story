@@ -71,7 +71,7 @@ Then assert listOfLong.size() is 2
 Then count of all activations defined by **/expectedCountDroolsAssertTest.txt
 
 
-Scenario: test no rule where triggered
+Scenario: test no rule where activated
 Given new session for scenario
 Given variable x is 'string'
 When insert and fire x

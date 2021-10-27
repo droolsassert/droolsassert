@@ -4,7 +4,7 @@ Relieve Drools JUnit testing
 
 ## Audience
 
-The goal of unit testing is to isolate each part of the program and show that the individual parts are correct. You can achieve this easier when working with drools using this library. Be certain about the rules being triggered and the facts retained in your session for a scenario you need.
+The goal of unit testing is to isolate each part of the program and show that the individual parts are correct. You can achieve this easier when working with drools using this library. Be certain about the rules being activated and the facts retained in your session for a scenario you need.
 
 ## Approach
 
@@ -27,7 +27,7 @@ Declare [the rule](https://www.baeldung.com/junit-4-rules) for the test
     @Rule
     public DroolsAssert drools = new DroolsAssert();
 
-Specify list of rules expected to be triggered for a scenario with `@TestRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
+Specify list of rules expected to be activated for a scenario with `@TestRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
 
     @Test
     @TestRules(expected = "atomic int rule")

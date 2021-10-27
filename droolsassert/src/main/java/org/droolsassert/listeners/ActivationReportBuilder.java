@@ -173,9 +173,9 @@ public class ActivationReportBuilder implements DroolsassertListener {
 	private void writeReport(File report, Map<String, Integer> activations) {
 		if (activations.isEmpty())
 			return;
-		Set<String> triggeredRules = triggeredRules(activations);
+		Set<String> activatedRules = activatedRules(activations);
 		try (PrintWriter pw = new PrintWriter(report)) {
-			pw.printf("%.2f%n", 100.0 * triggeredRules.size() / activations.size());
+			pw.printf("%.2f%n", 100.0 * activatedRules.size() / activations.size());
 			for (Entry<String, Integer> e : activations.entrySet())
 				pw.printf("%-7d \t%s%n", e.getValue(), e.getKey());
 		} catch (IOException e) {
@@ -191,7 +191,7 @@ public class ActivationReportBuilder implements DroolsassertListener {
 				.collect(toSet());
 	}
 	
-	private Set<String> triggeredRules(Map<String, Integer> activations) {
+	private Set<String> activatedRules(Map<String, Integer> activations) {
 		return activations.entrySet().stream()
 				.filter(e -> e.getValue() > 0)
 				.map(e -> e.getKey())
