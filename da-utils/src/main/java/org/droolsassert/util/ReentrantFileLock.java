@@ -1,5 +1,6 @@
 package org.droolsassert.util;
 
+import static com.google.common.io.Resources.getResource;
 import static java.lang.String.format;
 import static java.lang.System.nanoTime;
 import static java.lang.Thread.currentThread;
@@ -12,6 +13,7 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.concurrent.ConcurrentMap;
@@ -35,6 +37,7 @@ import com.google.common.collect.MapMaker;
  * {@link ReentrantLock} is reentrant, meaning the same thread can re-acquire the same lock again (lock held count get incremented).<br>
  * The same logic implemented for the file lock, meaning any {@link ReentrantFileLock}(s) can re-acquire the same lock id on the file running within the same JVM (file lock held
  * count get incremented implying no interaction with file system).<br>
+ * You can also synchronize on resources which are files on file system, like configuration files etc. Files will be locked for write though.<br>
  * <p>
  * Consider Initialization-on-demand holder idiom for lazy loading<br>
  * 
@@ -75,6 +78,18 @@ public class ReentrantFileLock extends ReentrantLock {
 	
 	public static final ReentrantFileLockFactory newReentrantFileLockFactory(boolean fair, File file) {
 		return new ReentrantFileLockFactory(fair, file);
+	}
+	
+	public static final ReentrantFileLockFactory newReentrantResourceLockFactory(String resourcePath) {
+		return newReentrantResourceLockFactory(false, resourcePath);
+	}
+	
+	public static final ReentrantFileLockFactory newReentrantResourceLockFactory(boolean fair, String resourcePath) {
+		try {
+			return new ReentrantFileLockFactory(fair, new File(getResource(resourcePath).toURI()));
+		} catch (URISyntaxException e) {
+			throw new RuntimeException("Cannot create a lock from the resource " + resourcePath, e);
+		}
 	}
 	
 	private final File absoluteFile;
@@ -266,7 +281,7 @@ public class ReentrantFileLock extends ReentrantLock {
 				this.fair = fair;
 				absoluteFile = file.getAbsoluteFile();
 				forceMkdirParent(absoluteFile);
-				lockFileChannel = new FileOutputStream(absoluteFile, true).getChannel();
+				lockFileChannel = new FileOutputStream(absoluteFile).getChannel();
 			} catch (IOException e) {
 				throw new RuntimeException("Cannot initialize file lock factory", e);
 			}
