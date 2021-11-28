@@ -18,7 +18,7 @@ import static org.apache.commons.io.FileUtils.listFiles;
 import static org.apache.commons.io.FileUtils.readLines;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
-import static org.droolsassert.util.ReentrantFileLock.newReentrantFileLockFactory;
+import static org.droolsassert.util.ReentrantFileLock.newReentrantResourceLockFactory;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.File;
@@ -97,7 +97,7 @@ public class ReentrantFileLockTest {
 		assertFalse(intersectionFound);
 	}
 	
-	public Map<String, List<LogLine>> threadOperations(File file) {
+	private Map<String, List<LogLine>> threadOperations(File file) {
 		return readLinesSilently(file, defaultCharset()).stream()
 				.map(this::parseLogLine)
 				.collect(groupingBy(l -> l.threadId, TreeMap::new, toList()));
@@ -129,7 +129,7 @@ public class ReentrantFileLockTest {
 		File file = new File(dumpDir, jvmName.substring(0, jvmName.indexOf("@")) + ".txt");
 		file.getParentFile().mkdirs();
 		setOut(new PrintStream(file));
-		ReentrantFileLockFactory lockFactory = newReentrantFileLockFactory("lock");
+		ReentrantFileLockFactory lockFactory = newReentrantResourceLockFactory("resource.lock");
 		// ReentrantFileLock lock1 = lockFactory.newLock(1);
 		// ReentrantFileLock lock2 = lockFactory.newLock(1);
 		// ReentrantFileLock lock3 = lockFactory.newLock(1);
