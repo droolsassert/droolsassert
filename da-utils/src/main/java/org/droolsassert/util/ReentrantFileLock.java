@@ -87,7 +87,7 @@ public class ReentrantFileLock extends ReentrantLock {
 	public static final ReentrantFileLockFactory newReentrantResourceLockFactory(boolean fair, String resourcePath) {
 		try {
 			return new ReentrantFileLockFactory(fair, new File(getResource(resourcePath).toURI()));
-		} catch (URISyntaxException e) {
+		} catch (URISyntaxException | RuntimeException e) {
 			throw new RuntimeException("Cannot create a lock from the resource " + resourcePath, e);
 		}
 	}
@@ -110,6 +110,9 @@ public class ReentrantFileLock extends ReentrantLock {
 		shared = defaultIfNull(fileLocks.putIfAbsent(id, defaultValue), defaultValue);
 	}
 	
+	/**
+	 * Unlike other lock methods this one served fairly when enqueued to heavy used file resource.
+	 */
 	@Override
 	public void lock() {
 		super.lock();
@@ -256,6 +259,10 @@ public class ReentrantFileLock extends ReentrantLock {
 			shared.modificationLock.unlock();
 			super.unlock();
 		}
+	}
+	
+	public File getAbsoluteFile() {
+		return absoluteFile;
 	}
 	
 	@Override
