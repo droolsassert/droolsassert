@@ -1,0 +1,35 @@
+Configuration:
+  status: warn
+  name: SharedRollingFileAppenderTest
+  packages: org.droolsassert.util
+  appenders:
+    Console:
+      name: stdout
+      target: SYSTEM_OUT
+      PatternLayout:
+        Pattern: "%m%n"
+    SharedRollingFile:
+      name: SharedRollingFile
+      fileLock: target/logs/lock
+      fileName: target/logs/shared.log
+      filePattern: target/logs/shared-%d{MM-dd-yyyy}-%i.log.gz
+      writerThreadKeepAliveTimeSec: 0
+      PatternLayout:
+        Pattern: "%d %p %C{1.} [%t] %m%n"
+      DefaultRolloverStrategy:
+        max: 2
+      Policies:
+        SizeBasedTriggeringPolicy:
+          size: 10M
+
+  Loggers:
+    logger:
+      - name: org.droolsassert.util.SharedRollingFileAppenderTest
+        level: debug
+        additivity: false
+        AppenderRef:
+          ref: SharedRollingFile
+    Root:
+      level: info
+      AppenderRef:
+        ref: stdout
