@@ -55,7 +55,7 @@ Specify list of rules expected to be activated for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>3.0.3</version>
+        <version>3.0.6</version>
         <scope>test</scope>
     </dependency>
 
@@ -63,6 +63,6 @@ Specify list of rules expected to be activated for a scenario with `@TestRules` 
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.5.7</version>
+        <version>2.5.9</version>
         <scope>test</scope>
     </dependency>
