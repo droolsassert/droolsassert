@@ -669,9 +669,13 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	 * @see EntryPoint#insert(Object)
 	 */
 	public List<FactHandle> insert(EntryPoint entryPoint, Object... objects) {
+		checkArgument(objects != null, "You cannot insert null object into drools knowledge base");
 		List<FactHandle> factHandles = new LinkedList<>();
-		for (Object object : objects)
+		for (int i = 0; i < objects.length; i++) {
+			Object object = objects[i];
+			checkArgument(object != null, "You cannot insert null object into drools knowledge base. Parameter " + (i + 1));
 			factHandles.add(entryPoint.insert(object));
+		}
 		return factHandles;
 	}
 	
@@ -787,8 +791,11 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	 * @see KieSession#fireAllRules()
 	 */
 	public List<FactHandle> insertAndFire(EntryPoint entryPoint, Object... objects) {
+		checkArgument(objects != null, "You cannot insert null object into drools knowledge base");
 		List<FactHandle> factHandles = new LinkedList<>();
-		for (Object object : objects) {
+		for (int i = 0; i < objects.length; i++) {
+			Object object = objects[i];
+			checkArgument(object != null, "You cannot insert null object into drools knowledge base. Parameter " + (i + 1));
 			factHandles.add(entryPoint.insert(object));
 			fireAllRules();
 		}
