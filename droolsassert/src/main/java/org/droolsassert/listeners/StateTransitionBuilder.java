@@ -1,6 +1,7 @@
 package org.droolsassert.listeners;
 
 import static java.awt.Color.darkGray;
+import static java.awt.Color.red;
 import static java.awt.Color.white;
 import static java.awt.Toolkit.getDefaultToolkit;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
@@ -66,6 +67,7 @@ import javax.swing.JScrollPane;
 
 import org.drools.core.common.InternalFactHandle;
 import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.droolsassert.DroolsAssert;
 import org.droolsassert.DroolsAssertException;
 import org.droolsassert.DroolsSession;
 import org.jgraph.JGraph;
@@ -82,7 +84,6 @@ import org.kie.api.event.rule.ObjectDeletedEvent;
 import org.kie.api.event.rule.ObjectInsertedEvent;
 import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.event.rule.RuleRuntimeEventListener;
-import org.kie.api.runtime.KieSession;
 import org.kie.api.time.SessionPseudoClock;
 
 import com.jgraph.layout.JGraphFacade;
@@ -125,7 +126,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	private static String systemProperty = getProperty("droolsassert.stateTransitionReport");
 	
 	private DroolsSession droolsSessionMeta;
-	private KieSession session;
+	private DroolsAssert droolsAssert;
 	private SessionPseudoClock clock;
 	private File reportsDirectory;
 	private String format;
@@ -145,9 +146,9 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 	private AtomicInteger updatedCounter;
 	private AtomicInteger deletedCounter;
 	
-	public StateTransitionBuilder(DroolsSession droolsSessionMeta, KieSession session, SessionPseudoClock clock) {
+	public StateTransitionBuilder(DroolsSession droolsSessionMeta, DroolsAssert droolsAssert, SessionPseudoClock clock) {
 		this.droolsSessionMeta = droolsSessionMeta;
-		this.session = session;
+		this.droolsAssert = droolsAssert;
 		this.clock = clock;
 	}
 	
@@ -186,9 +187,11 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		statistic.put("inserted", insertedCounter.get());
 		statistic.put("updated", updatedCounter.get());
 		statistic.put("deleted", deletedCounter.get());
-		statistic.put("retained", (int) session.getObjects().stream().count());
+		statistic.put("retained", droolsAssert.getObjects().size());
 		statisticCell.setUserObject(newStatsLabel(statistic));
-		
+		highlightRetainedFacts();
+		getView().reload();
+
 		// JGraph instances require class synchronization otherwise NPEs appear deep in AWT stuff
 		synchronized (StateTransitionBuilder.class) {
 			layout(graph);
@@ -462,6 +465,13 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 		JGraphHierarchicalLayout layout = new JGraphHierarchicalLayout();
 		layout.run(facade);
 		graph.getGraphLayoutCache().edit(facade.createNestedMap(true, true));
+	}
+	
+	private void highlightRetainedFacts() {
+		droolsAssert.getObjects().stream()
+				.map(lastObjectCell::get)
+				.filter(Objects::nonNull)
+				.forEach(cell -> setBorderColor(cell.getAttributes(), red));
 	}
 	
 	private void awaitForDialogClose(JFrame frame) {
