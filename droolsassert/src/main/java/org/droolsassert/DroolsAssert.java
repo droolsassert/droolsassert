@@ -305,12 +305,21 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	/**
-	 * Returns all objects of the class if found
+	 * Returns all objects found
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> List<T> getObjects(ObjectFilter filter) {
 		deleteExpiredEvents();
 		return (List<T>) session.getEntryPoints().stream().flatMap(e -> e.getObjects(filter).stream()).collect(toList());
+	}
+	
+	/**
+	 * Returns all objects
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> List<T> getObjects() {
+		deleteExpiredEvents();
+		return (List<T>) session.getEntryPoints().stream().flatMap(e -> e.getObjects().stream()).collect(toList());
 	}
 	
 	public InternalFactHandle getFactHandle(Object o) {
@@ -955,7 +964,7 @@ public class DroolsAssert implements TestRule {
 		return asList(
 				new LoggingListener(droolsSessionMeta, this),
 				new ActivationReportBuilder(session, activations),
-				new StateTransitionBuilder(droolsSessionMeta, session, clock))
+				new StateTransitionBuilder(droolsSessionMeta, this, clock))
 						.stream().filter(DroolsassertListener::enabled).collect(toList());
 	}
 	
