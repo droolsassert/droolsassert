@@ -39,6 +39,7 @@ import org.apache.logging.log4j.core.appender.ManagerFactory;
 import org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy;
 import org.apache.logging.log4j.core.appender.rolling.DirectFileRolloverStrategy;
 import org.apache.logging.log4j.core.appender.rolling.DirectWriteRolloverStrategy;
+import org.apache.logging.log4j.core.appender.rolling.PatternProcessor;
 import org.apache.logging.log4j.core.appender.rolling.RollingFileManager;
 import org.apache.logging.log4j.core.appender.rolling.RolloverListener;
 import org.apache.logging.log4j.core.appender.rolling.RolloverStrategy;
@@ -68,9 +69,9 @@ import org.apache.logging.log4j.core.util.FileUtils;
  * default 1K.
  * <p>
  * <b>writerThreadKeepAliveTimeSec</b> - <i>if value is greater than zero</i>, it is used as a time to shut down background non-daemon writer thread guarantee messages flush to the
- * file system in the background thread but not prevent normal JVM shutdown when idle. Rare messages may experience short delays (~0.3s) starting worker thread. <i>If
- * value is zero</i>, endless daemon worker thread is started not preventing normal JVM shutdown but without any guarantee of messages processing before shutdown. This approach has
- * no write time delays and continuous worker thread recreation after idle times (suitable for long running applications).<br>
+ * file system in the background thread but not prevent normal JVM shutdown when idle. Rare messages may experience short delays (~0.3s) starting worker thread. <i>If value is
+ * zero</i>, endless daemon worker thread is started not preventing normal JVM shutdown but without any guarantee of messages processing before shutdown. This approach has no write
+ * time delays and continuous worker thread recreation after idle times (suitable for long running applications).<br>
  * default 3
  * 
  */
@@ -537,6 +538,18 @@ class SharedRollingFileManager extends RollingFileManager {
 			this.fileOwner = fileOwner;
 			this.fileGroup = fileGroup;
 		}
+		
+		public TriggeringPolicy getTriggeringPolicy() {
+			return this.policy;
+		}
+		
+		public RolloverStrategy getRolloverStrategy() {
+			return this.strategy;
+		}
+		
+		public String getPattern() {
+			return pattern;
+		}
 	}
 	
 	private static class SharedRollingFileManagerFactory implements ManagerFactory<SharedRollingFileManager, FactoryData> {
@@ -682,6 +695,14 @@ class SharedRollingFileManager extends RollingFileManager {
 	
 	public void openOutputStream() throws IOException {
 		setOutputStream(createOutputStream());
+	}
+	
+	@Override
+	public void updateData(final Object data) {
+		final FactoryData factoryData = (FactoryData) data;
+		setRolloverStrategy(factoryData.getRolloverStrategy());
+		setPatternProcessor(new PatternProcessor(factoryData.getPattern(), getPatternProcessor()));
+		setTriggeringPolicy(factoryData.getTriggeringPolicy());
 	}
 	
 	public void awaitAsyncRollover() {
