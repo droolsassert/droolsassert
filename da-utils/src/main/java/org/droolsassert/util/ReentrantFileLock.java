@@ -288,7 +288,7 @@ public class ReentrantFileLock extends ReentrantLock {
 				this.fair = fair;
 				absoluteFile = file.getAbsoluteFile();
 				forceMkdirParent(absoluteFile);
-				lockFileChannel = new FileOutputStream(absoluteFile).getChannel();
+				lockFileChannel = new FileOutputStream(absoluteFile, true).getChannel();
 			} catch (IOException e) {
 				throw new RuntimeException("Cannot initialize file lock factory", e);
 			}
