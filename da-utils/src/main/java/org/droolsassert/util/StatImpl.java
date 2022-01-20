@@ -1,12 +1,14 @@
 package org.droolsassert.util;
 
 import static java.lang.String.format;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class StatImpl implements Stat {
-	private static final long serialVersionUID = -9173318780008157727L;
-	private String domain;
+	private static final long serialVersionUID = 6025961415245995217L;
+	private String type;
+	private String name;
 	volatile long leapsCount;
 	volatile long leapsCountSample;
 	volatile long failedLeapsCount;
@@ -26,10 +28,11 @@ public final class StatImpl implements Stat {
 		// for deserialization
 	}
 	
-	public StatImpl(String domain) {
-		this.domain = domain;
+	public StatImpl(String type, String name) {
+		this.type = type;
 	}
 	
+	@Override
 	public synchronized void reset() {
 		totalTimeNs = 0;
 		totalTimeSampleNs = 0;
@@ -43,8 +46,19 @@ public final class StatImpl implements Stat {
 		leapsCountSample = 0;
 	}
 	
-	public String getDomain() {
-		return domain;
+	@Override
+	public String getType() {
+		return type;
+	}
+	
+	@Override
+	public String getName() {
+		return name;
+	}
+	
+	@Override
+	public String getFullName() {
+		return type == EMPTY ? name : type + "/" + name;
 	}
 	
 	@Override

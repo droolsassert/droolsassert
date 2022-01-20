@@ -3,7 +3,11 @@ package org.droolsassert.util;
 import java.io.Serializable;
 
 public interface Stat extends Serializable {
-	String getDomain();
+	String getType();
+	
+	String getName();
+	
+	String getFullName();
 	
 	long getLeapsCount();
 	
