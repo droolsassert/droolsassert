@@ -199,15 +199,15 @@ public class RulesChronoChartRecorder extends RulesChronoAgendaEventListener {
 	}
 	
 	private void initTimeSeries(String rule, Stat stat) {
-		TimeSeries series = new TimeSeries(stat.getDomain());
+		TimeSeries series = new TimeSeries(stat.getFullName());
 		series.setMaximumItemAge(retentionPeriodSec);
 		rulesMaxChart.put(rule, series);
 		
-		series = new TimeSeries(stat.getDomain());
+		series = new TimeSeries(stat.getFullName());
 		series.setMaximumItemAge(retentionPeriodSec);
 		rulesAvgChart.put(rule, series);
 		
-		series = new TimeSeries(stat.getDomain());
+		series = new TimeSeries(stat.getFullName());
 		series.setMaximumItemAge(retentionPeriodSec);
 		rulesMinChart.put(rule, series);
 	}

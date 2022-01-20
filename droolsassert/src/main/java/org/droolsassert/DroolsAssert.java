@@ -828,7 +828,7 @@ public class DroolsAssert implements TestRule {
 	public void printPerformanceStatistic() {
 		StringBuilder sb = new StringBuilder(format("Performance Statistic, total activations %s:", activations.values().stream().mapToInt(Integer::intValue).sum()));
 		rulesChrono.getPerfStat().values()
-				.forEach(s -> sb.append(format("%n%s - min: %.2f avg: %.2f max: %.2f activations: %d", s.getDomain(), s.getMinTimeMs(), s.getAvgTimeMs(), s.getMaxTimeMs(), s.getLeapsCount())));
+				.forEach(s -> sb.append(format("%n%s - min: %.2f avg: %.2f max: %.2f activations: %d", s.getFullName(), s.getMinTimeMs(), s.getAvgTimeMs(), s.getMaxTimeMs(), s.getLeapsCount())));
 		log(sb.toString());
 	}
 	

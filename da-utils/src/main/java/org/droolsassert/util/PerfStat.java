@@ -179,7 +179,7 @@ public class PerfStat {
 			
 			stat = statsByName.get(name);
 			if (stat == null) {
-				stat = new StatImpl(name);
+				stat = new StatImpl(type, name);
 				statsByName.put(name, stat);
 				
 				StringBuilder objName = new StringBuilder(jmxDomain);
@@ -197,7 +197,7 @@ public class PerfStat {
 	}
 	
 	private String quoteIfNeeded(String name) {
-		return containsAny(name, '\n', '\\', '\"', '*', '?') ? quote(name) : name;
+		return containsAny(name, '\n', '\\', '\"', '*', '?', ':') ? quote(name) : name;
 	}
 	
 	/**
@@ -269,6 +269,18 @@ public class PerfStat {
 	
 	public Stat getStat() {
 		return stat;
+	}
+	
+	public String getType() {
+		return stat.getType();
+	}
+	
+	public String getName() {
+		return stat.getName();
+	}
+	
+	public String getFullName() {
+		return stat.getFullName();
 	}
 	
 	static double round(double nanos) {
