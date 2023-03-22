@@ -10,7 +10,6 @@ import java.util.Random;
 
 import org.jfree.data.time.TimeSeries;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @DroolsSession(resources = "classpath:/org/droolsassert/chrono.drl", log = false)
@@ -19,7 +18,6 @@ public class RulesChronoTest {
 	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
-	@Test
 	@Disabled
 	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoListener() {
@@ -28,7 +26,6 @@ public class RulesChronoTest {
 		drools.printPerformanceStatistic();
 	}
 	
-	@Test
 	@Disabled
 	@TestRules(expected = { "sleep method", "more than 200" })
 	public void testRulesChronoChartRecorder() {

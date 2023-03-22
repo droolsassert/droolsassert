@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.Test;
 
 @DroolsSession("classpath:/org/droolsassert/temporalReasoning.drl")
 public class TemporalReasoningTest {
@@ -18,7 +17,6 @@ public class TemporalReasoningTest {
 		drools.setGlobal("stdout", System.out);
 	}
 	
-	@Test
 	@TestRules(expected = {})
 	public void testRegularHeartbeat() {
 		Heartbeat heartbeat1 = new Heartbeat(1);
@@ -52,7 +50,6 @@ public class TemporalReasoningTest {
 		drools.printFacts();
 	}
 	
-	@Test
 	@TestRules(expectedCount = { "1", "Sound the Alarm" })
 	public void testIrregularHeartbeat() {
 		drools.insertAndFireAt("MonitoringStream", new Heartbeat(1));

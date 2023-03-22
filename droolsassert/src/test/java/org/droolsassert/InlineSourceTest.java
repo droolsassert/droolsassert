@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.Test;
 
 @DroolsSession(source = "dialect 'mvel'\n"
 		+ "import java.util.concurrent.atomic.AtomicInteger\n"
@@ -22,7 +21,6 @@ public class InlineSourceTest {
 	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
-	@Test
 	@TestRules(expected = "atomic int rule")
 	public void testInlineSource() {
 		drools.insertAndFire(new AtomicInteger(), new AtomicLong());

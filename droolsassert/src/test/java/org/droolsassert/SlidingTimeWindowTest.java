@@ -4,7 +4,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.Test;
 
 @DroolsSession("classpath:/org/droolsassert/slidingTimeWindow.drl")
 public class SlidingTimeWindowTest {
@@ -17,7 +16,6 @@ public class SlidingTimeWindowTest {
 		drools.setGlobal("stdout", System.out);
 	}
 	
-	@Test
 	@TestRules(expectedCount = { "5", "Sound the alarm if temperature rises above threshold" })
 	public void testSlidingTimeWindow() {
 		drools.insert(new TemperatureThreshold(2));

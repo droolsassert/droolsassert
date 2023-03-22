@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.Test;
 
 @DroolsSession(source = {
 		"DRL", ""
@@ -34,7 +33,6 @@ public class InlineSource2Test {
 	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
-	@Test
 	@TestRules(expected = { "atomic int rule", "atomic long rule" })
 	public void testInlineSource() {
 		drools.insertAndFire(new AtomicInteger(), new AtomicLong());

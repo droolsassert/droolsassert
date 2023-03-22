@@ -109,13 +109,11 @@ public class ComplexEventProcessingTest {
 		drools.assertAllDeleted();
 	}
 	
-	@Test
 	@TestRules(expected = "input call")
 	public void testAssertActivations() {
 		drools.insertAndFire(new Dialing("11111", "22222"));
 	}
 	
-	@Test
 	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",
@@ -131,7 +129,6 @@ public class ComplexEventProcessingTest {
 		assertThrows(AssertionError.class, () -> drools.assertNoScheduledActivations());
 	}
 	
-	@Test
 	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",
@@ -159,7 +156,6 @@ public class ComplexEventProcessingTest {
 		assertThrows(AssertionError.class, () -> drools.assertActivatedCount(1, "input call"));
 	}
 	
-	@Test
 	@TestRules(expected = {
 			"input call",
 			"drop the call if caller is talking more than permitted time",

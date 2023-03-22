@@ -4,6 +4,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
+import org.junit.jupiter.api.Test;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -13,6 +14,7 @@ import org.springframework.util.AntPathMatcher;
  * Provides additional options for the test.<br>
  * Can be used to declare and assert rules being activated during test run.
  */
+@Test
 @Retention(RUNTIME)
 @Target(METHOD)
 public @interface TestRules {
