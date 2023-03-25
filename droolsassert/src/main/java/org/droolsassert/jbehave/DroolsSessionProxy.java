@@ -18,21 +18,21 @@ public class DroolsSessionProxy implements InvocationHandler {
 				invocationHandler);
 	}
 	
-	String[] resources = new String[0];
-	String[] source = new String[0];
-	String[] sessionProperties = new String[0];
-	String[] sessionPropertySource = new String[0];
-	String[] baseProperties = new String[0];
-	String[] basePropertySource = new String[0];
-	String[] builderProperties = new String[0];
-	String[] builderPropertySource = new String[0];
-	String[] ignoreRules = new String[0];
-	String ignoreRulesSource = EMPTY;
-	boolean logResources;
-	boolean keepFactsHistory = true;
-	boolean logFacts = true;
-	boolean log = true;
-	boolean showStateTransitionPopup = false;
+	protected String[] resources = new String[0];
+	protected String[] source = new String[0];
+	protected String[] sessionProperties = new String[0];
+	protected String[] sessionPropertySource = new String[0];
+	protected String[] baseProperties = new String[0];
+	protected String[] basePropertySource = new String[0];
+	protected String[] builderProperties = new String[0];
+	protected String[] builderPropertySource = new String[0];
+	protected String[] ignoreRules = new String[0];
+	protected String ignoreRulesSource = EMPTY;
+	protected boolean logResources;
+	protected boolean keepFactsHistory = true;
+	protected boolean logFacts = true;
+	protected boolean log = true;
+	protected boolean showStateTransitionPopup = false;
 	
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
