@@ -51,18 +51,17 @@ Specify list of rules expected to be activated for a scenario with `@TestRules` 
 [Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/Jbehave-extention)  
 [JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/JUnit-vs-jbehave)  
 
-## Latest maven build (JUnit5)
+## Maven dependency
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>3.0.10</version>
+        <version>x.x.x</version>
         <scope>test</scope>
     </dependency>
 
-## JUnit4
-    <dependency>
-        <groupId>org.droolsassert</groupId>
-        <artifactId>droolsassert</artifactId>
-        <version>2.5.10</version>
-        <scope>test</scope>
-    </dependency>
+## Compatibility matrix
+<table style="border-spacing: 10px;">
+    <tr><td><b>Drools</b></td><td><b>Junit5</b></td><td><b>Junit4</b></td></tr>
+    <tr><td><b>8.x.x</b></td><td>3.1.0</td><td>2.6.0</td></tr>
+    <tr><td><b>7.x.x</b></td><td>3.0.11</td><td>2.5.11</td></tr>
+</table>
