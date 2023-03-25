@@ -22,9 +22,9 @@ Spring ant-like [PathMatchingResourcePatternResolver](https://docs.spring.io/spr
         builderProperties = "drools.dump.dir = target/dump",
         logResources = true)
 
-Declare [the rule](https://www.baeldung.com/junit-4-rules) for the test
+Declare JUnit5 [extension](https://junit.org/junit5/docs/current/user-guide/#extensions) for the test ([rule](https://www.baeldung.com/junit-4-rules) for JUnit4)
 
-    @Rule
+    @RegisterExtension
     public DroolsAssert drools = new DroolsAssert();
 
 Specify list of rules expected to be activated for a scenario with `@TestRules` annotation in addition to assertions inside test method and use other useful utilities to deal with the session.
@@ -51,11 +51,17 @@ Specify list of rules expected to be activated for a scenario with `@TestRules` 
 [Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/Jbehave-extention)  
 [JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/JUnit-vs-jbehave)  
 
-## Latest maven build
-
+## Maven dependency
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>2.5.7</version>
+        <version>x.x.x</version>
         <scope>test</scope>
     </dependency>
+
+## Compatibility matrix
+<table style="border-spacing: 10px;">
+    <tr><td><b>Drools</b></td><td><b>Junit5</b></td><td><b>Junit4</b></td></tr>
+    <tr><td><b>8.x.x</b></td><td>3.1.0</td><td>2.6.0</td></tr>
+    <tr><td><b>7.x.x</b></td><td>3.0.11</td><td>2.5.11</td></tr>
+</table>
