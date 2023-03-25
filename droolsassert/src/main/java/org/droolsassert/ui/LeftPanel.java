@@ -161,11 +161,11 @@ public class LeftPanel extends JPanel {
 		}
 	}
 
-	private static class SearchProcessor implements Runnable {
-		private static String tableDataRegex = "(?s)(>)([^<>]*?)(</td)";
-		private static String highlightSpan = "<span style=\"background-color: yellow\">";
-		private static String highlightedRegex = highlightSpan + "(.*?)</span>";
-		private static ExecutorService searchProcessor = newFixedThreadPool(1, new BasicThreadFactory.Builder().namingPattern("searchProcessor").daemon(true).build());
+	private class SearchProcessor implements Runnable {
+		private String tableDataRegex = "(?s)(>)([^<>]*?)(</td)";
+		private String highlightSpan = "<span style=\"background-color: yellow\">";
+		private String highlightedRegex = highlightSpan + "(.*?)</span>";
+		private ExecutorService searchProcessor = newFixedThreadPool(1, new BasicThreadFactory.Builder().namingPattern("searchProcessor").daemon(true).build());
 		private LinkedBlockingQueue<String> searchStrings = new LinkedBlockingQueue<>();
 		private StateTransitionGraph stateTransitionGraph;
 
