@@ -4,6 +4,7 @@ import static java.awt.Color.white;
 import static java.io.File.pathSeparator;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
+import static java.lang.System.setProperty;
 import static java.nio.charset.Charset.defaultCharset;
 import static javax.imageio.ImageIO.write;
 import static org.apache.commons.io.FileUtils.writeStringToFile;
@@ -62,6 +63,10 @@ import org.kie.api.time.SessionPseudoClock;
 public class StateTransitionBuilder extends DefaultAgendaEventListener implements DroolsassertListener, RuleRuntimeEventListener {
 	
 	private static String systemProperty = getProperty("droolsassert.stateTransitionReport");
+	
+	static {
+		setProperty("sun.java2d.uiScale", "1.0");
+	}
 	
 	private DroolsSession droolsSessionMeta;
 	private DroolsAssert droolsAssert;
