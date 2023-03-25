@@ -49,9 +49,8 @@
 	</developers>
 
 	<properties>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		<drools.version>7.59.0.Final</drools.version>
+		<maven.compiler.release>11</maven.compiler.release>
+		<drools.version>8.36.0.Final</drools.version>
 		<jbehave.version>4.8.3</jbehave.version>
 		<spring.version>5.3.10</spring.version>
 		<jackson.version>2.10.2</jackson.version>
@@ -87,6 +86,16 @@
 			<dependency>
 				<groupId>org.drools</groupId>
 				<artifactId>drools-core</artifactId>
+				<version>${drools.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.drools</groupId>
+				<artifactId>drools-mvel</artifactId>
+				<version>${drools.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.drools</groupId>
+				<artifactId>drools-tms</artifactId>
 				<version>${drools.version}</version>
 			</dependency>
 			<dependency>
@@ -250,6 +259,11 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.11.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
