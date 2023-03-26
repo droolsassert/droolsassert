@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.droolsassert</groupId>
 		<artifactId>droolsassert-bom</artifactId>
-		<version>2.6.1</version>
+		<version>2.3.13</version>
 	</parent>
 
 	<artifactId>droolsassert</artifactId>
@@ -32,14 +32,6 @@
 		<dependency>
 			<groupId>org.drools</groupId>
 			<artifactId>drools-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.drools</groupId>
-			<artifactId>drools-mvel</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.drools</groupId>
-			<artifactId>drools-tms</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.drools</groupId>

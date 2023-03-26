@@ -29,6 +29,7 @@ import javax.swing.JPanel;
 
 import org.drools.core.common.InternalFactHandle;
 import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.drools.core.time.SessionPseudoClock;
 import org.droolsassert.DroolsAssert;
 import org.droolsassert.DroolsAssertException;
 import org.droolsassert.DroolsSession;
@@ -42,7 +43,6 @@ import org.kie.api.event.rule.ObjectDeletedEvent;
 import org.kie.api.event.rule.ObjectInsertedEvent;
 import org.kie.api.event.rule.ObjectUpdatedEvent;
 import org.kie.api.event.rule.RuleRuntimeEventListener;
-import org.kie.api.time.SessionPseudoClock;
 
 /**
  * Creates state transition diagrams<br>

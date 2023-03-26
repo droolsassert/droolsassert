@@ -37,14 +37,13 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.drools.core.common.InternalFactHandle;
-import org.drools.core.reteoo.Tuple;
-import org.drools.core.rule.consequence.InternalMatch;
+import org.drools.core.common.LogicalDependency;
+import org.drools.core.spi.Activation;
+import org.drools.core.spi.Tuple;
+import org.drools.core.time.SessionPseudoClock;
 import org.drools.core.util.LinkedList;
-import org.drools.tms.LogicalDependency;
-import org.drools.tms.agenda.TruthMaintenanceSystemInternalMatch;
 import org.droolsassert.util.ReentrantFileLock.ReentrantFileLockFactory;
 import org.kie.api.runtime.rule.Match;
-import org.kie.api.time.SessionPseudoClock;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
@@ -64,7 +63,7 @@ public final class DroolsAssertUtils {
 	}
 	
 	public static List<Object> getRuleActivatedBy(Match match) {
-		Object activatorObject = ((InternalMatch) match).getPropagationContext().getFactHandle().getObject();
+		Object activatorObject = ((InternalFactHandle) ((Activation<?>) match).getPropagationContext().getFactHandle()).getObject();
 		List<Object> result = new ArrayList<>(match.getObjects());
 		if (!result.contains(activatorObject))
 			result.add(0, activatorObject);
@@ -86,19 +85,19 @@ public final class DroolsAssertUtils {
 	
 	public static Set<Object> getRuleLogicialDependencies(Match match) {
 		Set<Object> logicalDependencies = new HashSet<>();
-		TruthMaintenanceSystemInternalMatch<?> activation = (TruthMaintenanceSystemInternalMatch<?>) match;
+		Activation<?> activation = (Activation<?>) match;
 		collectLogicalDependencies(activation, logicalDependencies);
 		
 		Tuple tuple = activation.getTuple();
 		while (tuple != null) {
-			if (tuple instanceof TruthMaintenanceSystemInternalMatch)
-				collectLogicalDependencies((TruthMaintenanceSystemInternalMatch<?>) tuple, logicalDependencies);
+			if (tuple instanceof Activation)
+				collectLogicalDependencies((Activation<?>) tuple, logicalDependencies);
 			tuple = tuple.getHandlePrevious();
 		}
 		return logicalDependencies;
 	}
 	
-	public static void collectLogicalDependencies(TruthMaintenanceSystemInternalMatch<?> activation, Set<Object> logicalDependencies) {
+	public static void collectLogicalDependencies(Activation<?> activation, Set<Object> logicalDependencies) {
 		LinkedList<?> list = activation.getLogicalDependencies();
 		if (list != null) {
 			for (LogicalDependency<?> node = (LogicalDependency<?>) list.getFirst(); node != null; node = node.getNext())

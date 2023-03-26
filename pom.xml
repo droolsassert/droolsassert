@@ -3,7 +3,7 @@
 
 	<groupId>org.droolsassert</groupId>
 	<artifactId>droolsassert-bom</artifactId>
-	<version>2.6.1</version>
+	<version>2.3.13</version>
 	<packaging>pom</packaging>
 
 	<name>DroolsAssert BOM</name>
@@ -49,8 +49,9 @@
 	</developers>
 
 	<properties>
-		<maven.compiler.release>11</maven.compiler.release>
-		<drools.version>8.36.0.Final</drools.version>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<drools.version>6.5.0.Final</drools.version>
 		<jbehave.version>4.8.3</jbehave.version>
 		<spring.version>5.3.10</spring.version>
 		<jackson.version>2.10.2</jackson.version>
