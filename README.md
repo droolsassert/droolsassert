@@ -66,3 +66,6 @@ Specify list of rules expected to be activated for a scenario with `@TestRules` 
     <tr><td><b>7.x.x</b></td><td>3.0.12</td><td>2.5.12</td><td>1.8+</td></tr>
     <tr><td><b>6.4+</b></td><td>2.4.12</td><td>2.3.13</td><td>1.8+</td></tr>
 </table>
+
+## Support
+[Buy droolsassert a coffee](https://www.buymeacoffee.com/droolsassert)
