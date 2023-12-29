@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JPanel;
 
 import org.drools.core.common.InternalFactHandle;
-import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.drools.base.definitions.rule.impl.RuleImpl;
 import org.droolsassert.DroolsAssert;
 import org.droolsassert.DroolsAssertException;
 import org.droolsassert.DroolsSession;
