@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.drools.core.common.InternalFactHandle;
-import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.drools.base.definitions.rule.impl.RuleImpl;
 import org.droolsassert.listeners.StateTransitionBuilder;
 import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultCellViewFactory;
