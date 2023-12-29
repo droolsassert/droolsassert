@@ -62,6 +62,7 @@ Specify list of rules expected to be activated for a scenario with `@TestRules` 
 ## Compatibility matrix
 <table style="border-spacing: 10px;">
     <tr><td><b>Drools</b></td><td><b>Junit5</b></td><td><b>Junit4</b></td><td><b>Java</b></td></tr>
+    <tr><td><b>9.x.x</b></td><td>3.2.0</td><td>2.7.0</td><td>11+</td></tr>
     <tr><td><b>8.x.x</b></td><td>3.1.1</td><td>2.6.1</td><td>11+</td></tr>
     <tr><td><b>7.x.x</b></td><td>3.0.12</td><td>2.5.12</td><td>1.8+</td></tr>
     <tr><td><b>6.4+</b></td><td>2.4.12</td><td>2.3.13</td><td>1.8+</td></tr>
