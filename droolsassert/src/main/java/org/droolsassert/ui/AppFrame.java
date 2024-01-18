@@ -11,6 +11,7 @@ import static javax.swing.BorderFactory.createEmptyBorder;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.SwingUtilities.invokeLater;
+import static org.droolsassert.ui.UIUtils.scale;
 
 import java.awt.Container;
 import java.awt.Dimension;
@@ -41,7 +42,7 @@ public class AppFrame extends JFrame {
 	}
 
 	public void showDialog() {
-		setMinimumSize(new Dimension(800, 600));
+		setMinimumSize(new Dimension((int) scale(800), (int) scale(600)));
 		setMaximumSize(getDefaultToolkit().getScreenSize());
 		pack();
 		setLocationRelativeTo(null);
@@ -55,7 +56,7 @@ public class AppFrame extends JFrame {
 		c.fill = BOTH;
 		c.weightx = 1;
 		c.weighty = 1;
-		c.insets = new Insets(5, 5, 5, 5);
+		c.insets = new Insets((int) scale(5), (int) scale(5), (int) scale(5), (int) scale(5));
 		pane.add(builder.getGraph(), c);
 		pane.setBackground(white);
 
