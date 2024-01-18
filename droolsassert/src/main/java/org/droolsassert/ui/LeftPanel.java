@@ -13,6 +13,7 @@ import static javax.swing.BorderFactory.createLineBorder;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
+import static org.droolsassert.ui.UIUtils.scale;
 import static org.droolsassert.ui.UIUtils.segoiUi;
 import static org.droolsassert.ui.UIUtils.withComponentTree;
 
@@ -61,7 +62,7 @@ public class LeftPanel extends JPanel {
 		c.fill = HORIZONTAL;
 		add(searchField(), c);
 
-		Font font = segoiUi.deriveFont(PLAIN, 15f);
+		Font font = segoiUi.deriveFont(PLAIN, scale(14));
 		withComponentTree(this, p -> p.setFont(font));
 	}
 
