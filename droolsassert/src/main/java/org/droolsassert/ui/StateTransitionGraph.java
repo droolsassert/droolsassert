@@ -3,7 +3,9 @@ package org.droolsassert.ui;
 import static java.awt.Color.darkGray;
 import static java.awt.Color.decode;
 import static java.awt.Color.red;
+import static java.lang.Math.sqrt;
 import static java.lang.String.format;
+import static java.util.Locale.US;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.ObjectUtils.firstNonNull;
 import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
@@ -18,9 +20,11 @@ import static org.jgraph.graph.GraphConstants.ARROW_CLASSIC;
 import static org.jgraph.graph.GraphConstants.setAutoSize;
 import static org.jgraph.graph.GraphConstants.setBorderColor;
 import static org.jgraph.graph.GraphConstants.setEndFill;
-import static org.jgraph.graph.GraphConstants.setInset;
 import static org.jgraph.graph.GraphConstants.setLineColor;
 import static org.jgraph.graph.GraphConstants.setLineEnd;
+import static org.jgraph.graph.GraphConstants.setLineWidth;
+import static org.droolsassert.ui.UIUtils.scale;
+import static org.droolsassert.ui.UIUtils.scaling;
 
 import com.jgraph.layout.JGraphFacade;
 import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
@@ -69,6 +73,12 @@ public class StateTransitionGraph extends JGraph {
 	public void layoutHierarchy() {
 		JGraphFacade facade = new JGraphFacade(this);
 		JGraphHierarchicalLayout layout = new JGraphHierarchicalLayout();
+		layout.setFineTuning(true);
+		layout.setCompactLayout(true);
+		layout.setParallelEdgeSpacing(scale(5));
+		layout.setInterHierarchySpacing(scale(20));
+		layout.setIntraCellSpacing(scale(20));
+		layout.setInterRankCellSpacing(scale(40));
 		layout.run(facade);
 		getGraphLayoutCache().edit(facade.createNestedMap(true, true));
 	}
@@ -156,11 +166,11 @@ public class StateTransitionGraph extends JGraph {
 		cell.add(new DefaultPort());
 		cells.add(cell);
 
-		GraphConstants.setBounds(cell.getAttributes(), new Rectangle2D.Double(0, 0, 100, 50));
-		setInset(cell.getAttributes(), 3);
+		GraphConstants.setBounds(cell.getAttributes(), new Rectangle2D.Double(0, 0, scale(100), scale(50)));
 		GraphConstants.setBackground(cell.getAttributes(), decode(cellType.background));
 		setBorderColor(cell.getAttributes(), decode(cellType.borderColor));
 		setAutoSize(cell.getAttributes(), true);
+		setLineWidth(cell.getAttributes(), scale(1));
 		GraphConstants.setOpaque(cell.getAttributes(), true);
 		return cell;
 	}
@@ -173,6 +183,8 @@ public class StateTransitionGraph extends JGraph {
 		setLineColor(edge.getAttributes(), darkGray);
 		setLineEnd(edge.getAttributes(), ARROW_CLASSIC);
 		setEndFill(edge.getAttributes(), true);
+		setLineWidth(edge.getAttributes(), scale(1));
+		GraphConstants.setFont(edge.getAttributes(), getFont().deriveFont(scale(10)));
 		GraphConstants.setOpaque(edge.getAttributes(), true);
 		return edge;
 	}
@@ -180,31 +192,31 @@ public class StateTransitionGraph extends JGraph {
 	private String label(CellType cellType, String line1, String line2, String line3, String flags) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("<html>");
-		sb.append("<table style='width:100%'>");
+		sb.append(format(US, "<table style='border: %.1fpx; border-spacing: 0; width:100%%'>", scale(2)));
 		sb.append("<tr>");
-		sb.append("<td style='padding: 0; text-align: center; font-family:tahoma,serif; font-size:11px; font-weight: normal'>");
+		sb.append(format(US, "<td style='padding: %.1fpx; text-align: center; font-family:tahoma,serif; font-size:%.1fpx; font-weight: normal'>", scale(3), scale(9)));
 		sb.append(escapeHtml4(line1));
 		sb.append("</td>");
 		sb.append("</tr>");
 		sb.append("<tr>");
-		sb.append("<td style='padding: 0; text-align: center; font-family:verdana; font-size:8px; font-weight: lighter'>");
+		sb.append(format(US, "<td style='padding: 0; text-align: center; font-family:verdana; font-size:%.1fpx; font-weight: lighter'>", scale(7)));
 		sb.append(escapeHtml4(line2));
 		sb.append("</td>");
 		sb.append("</tr>");
-		sb.append("<tr style=''>");
-		sb.append("<td style='padding: 0px;'>");
-
-		sb.append("<table style='margin-top: -7; margin-bottom: -7; margin-left: -4; margin-right: -4; width:100%;'>");
 		sb.append("<tr>");
-		sb.append("<td style='padding: 0; font-family:verdana; font-size:8px; font-weight: normal;'>");
+		sb.append("<td style='padding: 0;'>");
+
+		sb.append(format(US, "<table style='border: 0; border-spacing: 0; margin-top: -%1$.1f; margin-bottom: -%1$.1f; width:100%%;'>", 3 * sqrt(scaling)));
+		sb.append("<tr>");
+		sb.append(format(US, "<td style='padding: 0; font-family:verdana; font-size:%.1fpx; font-weight: normal;'>", scale(7)));
 		sb.append(format("<span style='color: %s'>", cellType.background));
 		sb.append(flags);
 		sb.append("</span>");
 		sb.append("</td>");
-		sb.append("<td style='padding: 0; text-align: center; font-family:verdana; font-size:8px; font-weight: lighter; width: 100%;'>");
+		sb.append(format(US, "<td style='padding: 0; text-align: center; font-family:verdana; font-size:%.1fpx; font-weight: lighter; width: 100%%;'>", scale(7)));
 		sb.append(line3);
 		sb.append("</td>");
-		sb.append("<td style='padding: 0; font-family:verdana; font-size:8px; font-weight: normal; color: red'>");
+		sb.append(format(US, "<td style='padding: 0; font-family:verdana; font-size:%.1fpx; font-weight: normal; color: red'>", scale(7)));
 		sb.append(flags);
 		sb.append("</td>");
 		sb.append("</tr>");
