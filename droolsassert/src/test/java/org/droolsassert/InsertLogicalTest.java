@@ -23,7 +23,7 @@ public class InsertLogicalTest extends DroolsAssert {
 	}
 	
 	@Test
-	public void testInsertLogical() throws InterruptedException {
+	public void testInsertLogical() {
 		advanceTime(3, HOURS);
 		for (double i = 0; i > -3 * PI; i -= PI / 6) {
 			insertAndFire(new SensorData("sin", sin(i)));
@@ -36,7 +36,7 @@ public class InsertLogicalTest extends DroolsAssert {
 	}
 	
 	@Test
-	public void testInsertStated() throws InterruptedException {
+	public void testInsertStated() {
 		advanceTime(3, HOURS);
 		int h = 3;
 		for (double i = 0; i > -3 * PI; i -= PI / 6) {
@@ -54,16 +54,16 @@ public class InsertLogicalTest extends DroolsAssert {
 	}
 	
 	public static class SensorData {
-		private String isensorId;
+		private String sensorId;
 		private double value;
 		
 		public SensorData(String sensorId, double value) {
-			this.isensorId = sensorId;
+			this.sensorId = sensorId;
 			this.value = value;
 		}
 		
 		public String getSensorId() {
-			return isensorId;
+			return sensorId;
 		}
 		
 		public double getValue() {
