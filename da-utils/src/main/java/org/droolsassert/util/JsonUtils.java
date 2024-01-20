@@ -8,24 +8,23 @@ import static com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static java.lang.String.format;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.IOException;
 
 public final class JsonUtils {
 
 	private static final ObjectMapper DEFAULT_MAPPER = newFieldMapper(new JsonFactory(), NON_NULL);
 	private static final ObjectMapper YAML_MAPPER = newFieldMapper(new YAMLFactory(), NON_NULL);
 	static {
-		DEFAULT_MAPPER.registerModule(new JodaModule());
+		DEFAULT_MAPPER.registerModule(new JavaTimeModule());
 		DEFAULT_MAPPER.configure(WRITE_DATES_AS_TIMESTAMPS, false);
 		DEFAULT_MAPPER.activateDefaultTyping(DEFAULT_MAPPER.getPolymorphicTypeValidator(), OBJECT_AND_NON_CONCRETE);
 
-		YAML_MAPPER.registerModule(new JodaModule());
+		YAML_MAPPER.registerModule(new JavaTimeModule());
 		YAML_MAPPER.configure(WRITE_DATES_AS_TIMESTAMPS, false);
 	}
 
