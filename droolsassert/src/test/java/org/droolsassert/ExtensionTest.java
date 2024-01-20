@@ -2,21 +2,21 @@ package org.droolsassert;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static java.lang.String.format;
+import static java.time.DayOfWeek.SATURDAY;
+import static java.time.DayOfWeek.SUNDAY;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 import static org.droolsassert.DroolsAssertUtils.resourceResolver;
 import static org.droolsassert.util.JsonUtils.fromYaml;
 import static org.droolsassert.util.JsonUtils.toYaml;
-import static org.joda.time.DateTimeConstants.SATURDAY;
-import static org.joda.time.DateTimeConstants.SUNDAY;
 import static org.junit.runners.model.MultipleFailureException.assertEmpty;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Map;
 
 import org.droolsassert.util.MvelProcessor;
-import org.joda.time.LocalDate;
 import org.junit.Rule;
 import org.junit.Test;
 import org.kie.api.runtime.rule.FactHandle;
