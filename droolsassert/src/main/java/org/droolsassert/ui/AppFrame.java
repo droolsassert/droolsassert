@@ -7,10 +7,12 @@ import static java.awt.GridBagConstraints.BOTH;
 import static java.awt.Toolkit.getDefaultToolkit;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
 import static java.lang.Thread.currentThread;
+import static java.util.Arrays.asList;
 import static javax.swing.BorderFactory.createEmptyBorder;
 import static javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.SwingUtilities.invokeLater;
+import static org.droolsassert.ui.UIUtils.icon;
 import static org.droolsassert.ui.UIUtils.scale;
 
 import java.awt.Container;
@@ -33,6 +35,7 @@ public class AppFrame extends JFrame {
 		super(title);
 		this.builder = builder;
 
+		setIconImages(asList(icon("logo_180.png"), icon("logo_120.png"), icon("logo_64.png"), icon("logo_32.png"), icon("logo_24.png"), icon("logo_16.png")));
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		getRootPane().registerKeyboardAction(e -> dispose(), getKeyStroke(VK_ESCAPE, 0), WHEN_IN_FOCUSED_WINDOW);
 

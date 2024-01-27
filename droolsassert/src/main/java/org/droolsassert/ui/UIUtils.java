@@ -2,6 +2,8 @@ package org.droolsassert.ui;
 
 import static com.google.common.io.Resources.getResource;
 import static java.awt.Toolkit.getDefaultToolkit;
+import static javax.imageio.ImageIO.read;
+import static org.apache.commons.io.IOUtils.resourceToURL;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -9,6 +11,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.HeadlessException;
+import java.awt.Image;
 import java.io.IOException;
 import java.util.function.Consumer;
 
@@ -35,6 +38,14 @@ class UIUtils {
 
 	public static float scale(float num) {
 		return num * scaling;
+	}
+
+	public static Image icon(String path) {
+		try {
+			return read(resourceToURL("/org/droolsassert/icon/" + path));
+		} catch (IOException e) {
+			throw new IllegalStateException(path, e);
+		}
 	}
 
 	public static Color darker(Color c, double factor) {
