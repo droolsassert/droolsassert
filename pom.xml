@@ -50,7 +50,7 @@
 
 	<properties>
 		<maven.compiler.release>11</maven.compiler.release>
-		<drools.version>8.36.0.Final</drools.version>
+		<drools.version>8.44.0.Final</drools.version>
 		<jbehave.version>4.8.3</jbehave.version>
 		<spring.version>5.3.10</spring.version>
 		<jackson.version>2.16.1</jackson.version>
