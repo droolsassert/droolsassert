@@ -51,7 +51,7 @@
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<drools.version>7.50.0.Final</drools.version>
+		<drools.version>7.74.1.Final</drools.version>
 	</properties>
 
 	<dependencyManagement>
