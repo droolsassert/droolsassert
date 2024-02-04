@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @DroolsSession(source = {
@@ -33,6 +34,7 @@ public class InlineSource2Test {
 	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
 	
+	@Test
 	@TestRules(expected = { "atomic int rule", "atomic long rule" })
 	public void testInlineSource() {
 		drools.insertAndFire(new AtomicInteger(), new AtomicLong());

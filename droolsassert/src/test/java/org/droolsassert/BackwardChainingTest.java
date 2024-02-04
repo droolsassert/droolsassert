@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kie.api.definition.type.Position;
 
@@ -25,6 +26,7 @@ public class BackwardChainingTest extends DroolsAssert {
 		setGlobal("result", result = new Result());
 	}
 	
+	@Test
 	@TestRules(expected = { "Great Wall of China BELONGS TO Planet Earth", "print all facts" })
 	public void testIt() {
 		
