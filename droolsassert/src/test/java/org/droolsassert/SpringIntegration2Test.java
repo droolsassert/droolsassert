@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.droolsassert.SpringIntegration2Test.AppConfig;
 import org.droolsassert.SpringIntegrationTest.Weather;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.kie.api.KieServices;
@@ -48,6 +49,7 @@ public class SpringIntegration2Test {
 		drools.setGlobal("restTemplate", restTemplate);
 	}
 	
+	@Test
 	@TestRules(expected = { "Check weather", "Humidity is high" })
 	public void testWeatherInLongon() {
 		drools.advanceTime(1, HOURS);

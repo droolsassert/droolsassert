@@ -36,6 +36,7 @@ public class ExtensionTest {
 		assertThrows(RuntimeException.class, () -> drools.assertNoErrors());
 	}
 	
+	@Test
 	@TestRules(expected = {})
 	public void testInsertFromYaml() throws Exception {
 		drools.insertFromYaml(Trade.class, "classpath:/org/droolsassert/trade.yaml");
