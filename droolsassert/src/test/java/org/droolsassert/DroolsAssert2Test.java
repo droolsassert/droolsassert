@@ -22,12 +22,14 @@ public class DroolsAssert2Test extends DroolsAssert {
 	@RegisterExtension
 	public DroolsAssert droolsAssert = this;
 	
+	@Test
 	@TestRules(expected = "atomic int rule")
 	public void testInt() {
 		insertAndFire(new AtomicInteger());
 		assertEquals(1, getObject(AtomicInteger.class).get());
 	}
 	
+	@Test
 	@TestRules(expected = { "atomic int rule", "atomic long rule" })
 	public void testLong() {
 		insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
@@ -36,12 +38,14 @@ public class DroolsAssert2Test extends DroolsAssert {
 		assertEquals(2, getObjects(AtomicLong.class).size());
 	}
 	
+	@Test
 	@TestRules(expectedCount = { "2", "atomic long rule" }, ignore = "* int rule")
 	public void testActivationCount() {
 		insertAndFire(new AtomicInteger(), new AtomicLong(), new AtomicLong());
 		assertEquals(2, getObjects(AtomicLong.class).size());
 	}
 	
+	@Test
 	@TestRules(expectedSource = "org/droolsassert/expectedDroolsAssertTest.txt")
 	public void testExpectedSource() {
 		insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
@@ -50,6 +54,7 @@ public class DroolsAssert2Test extends DroolsAssert {
 		assertEquals(2, getObjects(AtomicLong.class).size());
 	}
 	
+	@Test
 	@TestRules(expectedCountSource = "**/expectedCountDroolsAssertTest.txt", ignoreSource = "**/ignoreDroolsAssertTest.txt")
 	public void testExpectedCountSource() {
 		insert(new AtomicInteger(), new AtomicLong(), new AtomicLong());
@@ -58,6 +63,7 @@ public class DroolsAssert2Test extends DroolsAssert {
 		assertEquals(2, getObjects(AtomicLong.class).size());
 	}
 	
+	@Test
 	@TestRules(expected = {})
 	public void testNoRulesWereActivated() {
 		insertAndFire("string");
@@ -70,6 +76,7 @@ public class DroolsAssert2Test extends DroolsAssert {
 		assertThrows(AssertionError.class, () -> getObject(BigDecimal.class));
 	}
 	
+	@Test
 	@TestRules(expected = "atomic long rule")
 	public void testNoUniqueObjectFound() {
 		insertAndFire(new AtomicLong(), new AtomicLong());

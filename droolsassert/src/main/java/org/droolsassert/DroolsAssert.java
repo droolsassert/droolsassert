@@ -177,6 +177,7 @@ import org.springframework.util.PathMatcher;
  * @see <a href=https://github.com/droolsassert>Documentation on GitHub</a>
  */
 public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, TestExecutionExceptionHandler {
+	private static final String parameterizedScenarioNameRegex = ".*?\\[(\\d+).*";
 	protected static final PathMatcher nameMatcher = new AntPathMatcher("\n");
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
@@ -841,8 +842,11 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	public void beforeEach(ExtensionContext context) throws Exception {
 		Class<?> clazz = context.getTestClass().get();
 		Method method = context.getTestMethod().get();
+		StringBuilder scenario = new StringBuilder(method.getName());
+		if (context.getDisplayName().matches(parameterizedScenarioNameRegex))
+			scenario.append(context.getDisplayName().replaceAll(parameterizedScenarioNameRegex, "[$1]"));
 		init(clazz.getAnnotation(DroolsSession.class), method.getAnnotation(TestRules.class));
-		listeners.forEach(l -> l.beforeScenario(getSimpleName(clazz), method.getName()));
+		listeners.forEach(l -> l.beforeScenario(getSimpleName(clazz), scenario.toString()));
 	}
 	
 	@Override
