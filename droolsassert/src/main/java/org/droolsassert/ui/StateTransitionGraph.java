@@ -16,6 +16,8 @@ import static org.droolsassert.DroolsAssertUtils.getSimpleName;
 import static org.droolsassert.DroolsAssertUtils.isJustified;
 import static org.droolsassert.ui.CellType.DeletedFact;
 import static org.droolsassert.ui.CellType.Rule;
+import static org.droolsassert.ui.UIUtils.scale;
+import static org.droolsassert.ui.UIUtils.scaling;
 import static org.jgraph.graph.GraphConstants.ARROW_CLASSIC;
 import static org.jgraph.graph.GraphConstants.setAutoSize;
 import static org.jgraph.graph.GraphConstants.setBorderColor;
@@ -23,17 +25,16 @@ import static org.jgraph.graph.GraphConstants.setEndFill;
 import static org.jgraph.graph.GraphConstants.setLineColor;
 import static org.jgraph.graph.GraphConstants.setLineEnd;
 import static org.jgraph.graph.GraphConstants.setLineWidth;
-import static org.droolsassert.ui.UIUtils.scale;
-import static org.droolsassert.ui.UIUtils.scaling;
 
-import com.jgraph.layout.JGraphFacade;
-import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
+import java.awt.Color;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.drools.base.definitions.rule.impl.RuleImpl;
 import org.drools.core.common.InternalFactHandle;
 import org.droolsassert.listeners.StateTransitionBuilder;
@@ -46,6 +47,9 @@ import org.jgraph.graph.GraphConstants;
 import org.jgraph.graph.GraphLayoutCache;
 import org.jgraph.graph.GraphModel;
 import org.kie.api.runtime.rule.Match;
+
+import com.jgraph.layout.JGraphFacade;
+import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
 
 public class StateTransitionGraph extends JGraph {
 	private StateTransitionBuilder builder;
@@ -80,7 +84,9 @@ public class StateTransitionGraph extends JGraph {
 		layout.setIntraCellSpacing(scale(20));
 		layout.setInterRankCellSpacing(scale(40));
 		layout.run(facade);
-		getGraphLayoutCache().edit(facade.createNestedMap(true, true));
+		synchronized (StateTransitionGraph.class) {
+			graphLayoutCache.edit(facade.createNestedMap(true, true));
+		}
 	}
 
 	public void highlightRetainedFacts() {
@@ -88,7 +94,9 @@ public class StateTransitionGraph extends JGraph {
 				.map(lastObjectCell::get)
 				.filter(Objects::nonNull)
 				.forEach(cell -> setBorderColor(cell.getAttributes(), red));
-		getGraphLayoutCache().reload();
+		synchronized (StateTransitionGraph.class) {
+			graphLayoutCache.reload();
+		}
 	}
 
 	public void ruleTriggered(Match match) {
@@ -113,19 +121,18 @@ public class StateTransitionGraph extends JGraph {
 		DefaultGraphCell ruleCell = cell(label(Rule, rule.getName(), ruleMeta.toString(), formatTime(builder.getClock()), flags), Rule);
 		lastObjectCell.put(rule, ruleCell);
 
-		synchronized (StateTransitionBuilder.class) {
-			getGraphLayoutCache().insert(ruleCell);
-			getGraphLayoutCache().setVisible(ruleCell, false);
+		synchronized (StateTransitionGraph.class) {
+			graphLayoutCache.insert(ruleCell);
+			graphLayoutCache.setVisible(ruleCell, false);
 
 			getRuleActivatedBy(match).stream()
 					.map(this::getLastKnownObjectCell)
 					.filter(Objects::nonNull)
-					.forEach(objectCell -> getGraphLayoutCache().insert(edge(objectCell, ruleCell)));
+					.forEach(objectCell -> graphLayoutCache.insert(edge(objectCell, ruleCell)));
 			getRuleLogicialDependencies(match).stream()
 					.flatMap(o -> lastObjectCell.entrySet().stream().filter(e -> e.getKey().equals(o)).map(e -> e.getValue()))
-					.forEach(objectCell -> getGraphLayoutCache().insert(edge(ruleCell, objectCell)));
+					.forEach(objectCell -> graphLayoutCache.insert(edge(ruleCell, objectCell)));
 		}
-
 	}
 
 	public void objectUpdated(InternalFactHandle fh, RuleImpl rule, CellType cellType) {
@@ -150,14 +157,14 @@ public class StateTransitionGraph extends JGraph {
 			previousStateCell = lastObjectCell.put(fact, cell);
 		}
 
-		synchronized (StateTransitionBuilder.class) {
-			getGraphLayoutCache().insert(cell);
-			getGraphLayoutCache().setVisible(cell, false);
+		synchronized (StateTransitionGraph.class) {
+			graphLayoutCache.insert(cell);
+			graphLayoutCache.setVisible(cell, false);
 
 			if (rule != null)
-				getGraphLayoutCache().insert(edge(lastObjectCell.get(rule), cell));
+				graphLayoutCache.insert(edge(lastObjectCell.get(rule), cell));
 			else if (previousStateCell != null)
-				getGraphLayoutCache().insert(edge(previousStateCell, cell));
+				graphLayoutCache.insert(edge(previousStateCell, cell));
 		}
 	}
 
@@ -187,6 +194,13 @@ public class StateTransitionGraph extends JGraph {
 		GraphConstants.setFont(edge.getAttributes(), getFont().deriveFont(scale(10)));
 		GraphConstants.setOpaque(edge.getAttributes(), true);
 		return edge;
+	}
+
+	@Override
+	public BufferedImage getImage(Color bg, int inset) {
+		synchronized (StateTransitionGraph.class) {
+			return super.getImage(bg, inset);
+		}
 	}
 
 	private String label(CellType cellType, String line1, String line2, String line3, String flags) {
