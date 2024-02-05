@@ -3,8 +3,10 @@ package org.droolsassert;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.Integer.parseInt;
 import static java.lang.Long.MAX_VALUE;
+import static java.lang.System.getProperty;
 import static java.lang.System.out;
 import static java.nio.charset.Charset.defaultCharset;
+import static java.nio.file.Files.exists;
 import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
@@ -18,10 +20,12 @@ import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.join;
 import static org.drools.core.common.EqualityKey.JUSTIFIED;
+import static org.droolsassert.DroolsAssertUtils.LazyWorkDirectory.workDir;
 import static org.droolsassert.util.ReentrantFileLock.newReentrantFileLockFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -49,6 +53,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 public final class DroolsAssertUtils {
+	private static final String systemPropertyWorkDir = getProperty("droolsassert.work.dir");
 	protected static final DateTimeFormatter HH_MM_SS = DateTimeFormatter.ofPattern("HH:mm:ss");
 	protected static final DateTimeFormatter HH_MM_SS_SSS = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 	protected static final DateTimeFormatter DDD_HH_MM_SS = DateTimeFormatter.ofPattern("DDD HH:mm:ss");
@@ -56,8 +61,11 @@ public final class DroolsAssertUtils {
 	protected static final long DAY_MILLISECONDS = DAYS.toMillis(1);
 	public static final Pattern COUNT_OF_RULES = compile("(?<count>\\d+)\\s+(?<rule>.+)");
 	public static final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+	public static class LazyWorkDirectory {
+		public static final String workDir = getWorkDir();
+	}
 	public static class LazyReentrantFileLockFactory {
-		public static final ReentrantFileLockFactory instance = newReentrantFileLockFactory("target/droolsassert/lock");
+		public static final ReentrantFileLockFactory instance = newReentrantFileLockFactory(Path.of(workDir, "lock").toString());
 	}
 	
 	private DroolsAssertUtils() {
@@ -199,5 +207,15 @@ public final class DroolsAssertUtils {
 	
 	public static String getSimpleName(Class<?> clazz) {
 		return defaultIfEmpty(clazz.getSimpleName(), getShortCanonicalName(clazz));
+	}
+	
+	public static String getWorkDir() {
+		if (systemPropertyWorkDir != null)
+			return systemPropertyWorkDir;
+		if (exists(Path.of("target/classes")))
+			return "target/droolsassert";
+		if (exists(Path.of("build/classes")))
+			return "build/droolsassert";
+		return "droolsassert";
 	}
 }
