@@ -11,6 +11,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.droolsassert.DroolsAssertUtils.COUNT_OF_RULES;
 import static org.droolsassert.DroolsAssertUtils.directory;
+import static org.droolsassert.DroolsAssertUtils.LazyWorkDirectory.workDir;
 import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 
 import java.io.File;
@@ -18,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -107,7 +109,7 @@ public class ActivationReportBuilder implements DroolsassertListener {
 		if ("true".equals(systemProperty))
 			systemProperty = EMPTY;
 		String[] params = systemProperty.split(pathSeparator);
-		reportsDirectory = directory(new File(defaultIfEmpty(params[0], "target/droolsassert/activationReport")));
+		reportsDirectory = directory(new File(defaultIfEmpty(params[0], Path.of(workDir, "activationReport").toString())));
 		consolidatedReport = new File(params.length > 1 ? params[1] : reportsDirectory + ".txt");
 		consolidatedReportLock = LazyConsolidatedReportLock.instance;
 		
