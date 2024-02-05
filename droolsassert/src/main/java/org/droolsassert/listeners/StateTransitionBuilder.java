@@ -15,6 +15,7 @@ import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToStrin
 import static org.apache.commons.lang3.builder.ToStringStyle.MULTI_LINE_STYLE;
 import static org.droolsassert.DroolsAssertUtils.directory;
 import static org.droolsassert.DroolsAssertUtils.getSimpleName;
+import static org.droolsassert.DroolsAssertUtils.LazyWorkDirectory.workDir;
 import static org.droolsassert.ui.CellType.DeletedFact;
 import static org.droolsassert.ui.CellType.InsertedFact;
 import static org.droolsassert.ui.CellType.UpdatedFact;
@@ -23,12 +24,13 @@ import static org.droolsassert.util.JsonUtils.toYaml;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.JPanel;
 
-import org.drools.core.common.InternalFactHandle;
 import org.drools.base.definitions.rule.impl.RuleImpl;
+import org.drools.core.common.InternalFactHandle;
 import org.droolsassert.DroolsAssert;
 import org.droolsassert.DroolsAssertException;
 import org.droolsassert.DroolsSession;
@@ -127,7 +129,7 @@ public class StateTransitionBuilder extends DefaultAgendaEventListener implement
 			systemProperty = EMPTY;
 		String[] params = trimToEmpty(systemProperty).split(pathSeparator);
 		format = defaultIfEmpty(params[0], "png");
-		reportsDirectory = directory(new File(params.length > 1 ? params[1] : "target/droolsassert/stateTransitionReport"));
+		reportsDirectory = directory(new File(params.length > 1 ? params[1] : Path.of(workDir, "stateTransitionReport").toString()));
 	}
 	
 	@Override
