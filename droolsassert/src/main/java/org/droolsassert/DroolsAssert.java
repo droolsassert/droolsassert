@@ -174,6 +174,7 @@ import org.springframework.util.PathMatcher;
  * @see <a href=https://github.com/droolsassert>Documentation on GitHub</a>
  */
 public class DroolsAssert implements TestRule {
+	private static final String parameterizedScenarioNameRegex = "(.*?)\\[(\\d+).*";
 	protected static final PathMatcher nameMatcher = new AntPathMatcher("\n");
 	protected static Map<DroolsSession, KieBase> kieBases = new WeakHashMap<>();
 	
@@ -836,7 +837,10 @@ public class DroolsAssert implements TestRule {
 	@Override
 	public Statement apply(Statement base, Description description) {
 		init(description.getTestClass().getAnnotation(DroolsSession.class), description.getAnnotation(TestRules.class));
-		listeners.forEach(l -> l.beforeScenario(description.getClassName(), description.getMethodName()));
+		String scenario = description.getMethodName().matches(parameterizedScenarioNameRegex)
+				? description.getMethodName().replaceAll(parameterizedScenarioNameRegex, "$1[$2]")
+				: description.getMethodName();
+		listeners.forEach(l -> l.beforeScenario(description.getClassName(), scenario));
 		
 		return new Statement() {
 			@Override
