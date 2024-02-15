@@ -30,6 +30,7 @@ public final class StatImpl implements Stat {
 	
 	public StatImpl(String type, String name) {
 		this.type = type;
+		this.name = name;
 	}
 	
 	@Override
