@@ -35,6 +35,7 @@ public class SpringIntegrationTest {
 	public void testWeatherInLongon() {
 		drools.advanceTime(1, HOURS);
 		assertEquals(81, drools.getObject(Weather.class).humidity);
+		drools.printPerformanceStatistic();
 	}
 	
 	public static class AppConfig {
