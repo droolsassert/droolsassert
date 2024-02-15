@@ -15,12 +15,7 @@ Unit test is about taking minimum piece of code and test all possible usecases d
 Specify any combination of rules you want to test in single session using `@DroolsSession`, `logResources` to see what was actually included.  
 Spring ant-like [PathMatchingResourcePatternResolver](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/core/io/support/PathMatchingResourcePatternResolver.html) gives you robust tool to include functionality you want to test together or segregate.  
 
-    @DroolsSession(resources = {
-        "classpath*:/org/droolsassert/rules.drl",
-        "classpath*:/com/company/project/*/{regex:.*.(drl|dsl|xlsx|gdst)}",
-        "classpath*:/com/company/project/*/ruleUnderTest.rdslr" },
-        builderProperties = "drools.dump.dir = target/dump",
-        logResources = true)
+    @DroolsSession("**/project/rules/ruleUnderTest.drl")
 
 Declare JUnit5 [extension](https://junit.org/junit5/docs/current/user-guide/#extensions) for the test ([rule](https://www.baeldung.com/junit-4-rules) for JUnit4)
 
@@ -51,18 +46,22 @@ Specify list of rules expected to be activated for a scenario with `@TestRules` 
 [Jbehave extention](https://github.com/droolsassert/droolsassert/wiki/Jbehave-extention)  
 [JUnit vs jbehave](https://github.com/droolsassert/droolsassert/wiki/JUnit-vs-jbehave)  
 
-## Latest maven build (JUnit5)
+## Maven dependency
     <dependency>
         <groupId>org.droolsassert</groupId>
         <artifactId>droolsassert</artifactId>
-        <version>3.0.10</version>
+        <version>x.x.x</version>
         <scope>test</scope>
     </dependency>
 
-## JUnit4
-    <dependency>
-        <groupId>org.droolsassert</groupId>
-        <artifactId>droolsassert</artifactId>
-        <version>2.5.10</version>
-        <scope>test</scope>
-    </dependency>
+## Compatibility matrix
+<table style="border-spacing: 10px;">
+    <tr><td><b>Drools</b></td><td><b>Junit5</b></td><td><b>Junit4</b></td><td><b>Java</b></td></tr>
+    <tr><td><b>9.x.x</b></td><td>3.2.4</td><td>2.7.4</td><td>11+</td></tr>
+    <tr><td><b>8.x.x</b></td><td>3.1.6</td><td>2.6.6</td><td>11+</td></tr>
+    <tr><td><b>7.x.x</b></td><td>3.0.15</td><td>2.5.15</td><td>1.8+</td></tr>
+    <tr><td><b>6.4+</b></td><td>2.4.12</td><td>2.3.13</td><td>1.8+</td></tr>
+</table>
+
+## Support
+[Buy me a coffee](https://www.buymeacoffee.com/droolsassert)
