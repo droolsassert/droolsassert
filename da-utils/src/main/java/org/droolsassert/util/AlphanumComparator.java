@@ -45,13 +45,16 @@ public class AlphanumComparator implements Comparator<String> {
 					i1++;
 				while (i2 < len2 && s2.charAt(i2) == '0')
 					i2++;
+				// leading zeros go first
+				if (i1 != i2)
+					return i2 - i1;
 				
 				// find the ends of the numbers
 				int end1 = i1;
 				int end2 = i2;
 				while (end1 < len1 && isDigit(s1.charAt(end1)))
 					end1++;
-				while (end2 != len2 && isDigit(s2.charAt(end2)))
+				while (end2 < len2 && isDigit(s2.charAt(end2)))
 					end2++;
 				
 				// if the lengths are different, then the longer number is bigger
