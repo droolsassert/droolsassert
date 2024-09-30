@@ -6,6 +6,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+import java.time.Instant;
 
 import org.springframework.util.AntPathMatcher;
 
@@ -78,4 +79,12 @@ public @interface TestRules {
 	 * Default - false (do not check)
 	 */
 	boolean checkScheduled() default false;
+	
+	/**
+	 * Given initial clock instant time, like 2024-09-15T00:00:00Z<br>
+	 * <br>
+	 * Default - EMPTY - 1970-01-01T00:00:00Z<br>
+	 * @see Instant#toEpochMilli()
+	 */
+	String givenTime() default EMPTY;
 }
