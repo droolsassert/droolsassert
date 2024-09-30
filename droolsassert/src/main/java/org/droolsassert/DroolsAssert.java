@@ -21,7 +21,6 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.commons.lang3.StringUtils.join;
-import static org.apache.commons.lang3.StringUtils.joinWith;
 import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
@@ -934,13 +933,13 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	
 	protected Properties loadProperties(Supplier<String[]> defaultProperties, Supplier<String[]> propertySource, Supplier<String[]> propertyOverrides) throws IOException {
 		Properties properties = new Properties();
-		properties.load(new StringReader(joinWith(LF, defaultProperties.get())));
+		properties.load(new StringReader(join(defaultProperties.get(), LF)));
 		for (Resource resource : getResources(false, droolsSessionMeta.logResources(), propertySource.get())) {
 			try (Reader reader = new InputStreamReader(resource.getInputStream())) {
 				properties.load(reader);
 			}
 		}
-		properties.load(new StringReader(joinWith(LF, propertyOverrides.get())));
+		properties.load(new StringReader(join(propertyOverrides.get(), LF)));
 		return properties;
 	}
 	
