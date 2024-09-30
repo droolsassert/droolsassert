@@ -1,0 +1,15 @@
+package org.droolsassert;
+
+import org.droolsassert.issue.DateEffectiveTest.Policy;
+
+rule "Simple"
+
+enabled true
+date-effective "15-Sep-2024"
+date-expires "31-Dec-2999"
+
+when
+    $policy : Policy(policyNumber == "1234")
+then
+    $policy.stateCode = "OH";
+end
