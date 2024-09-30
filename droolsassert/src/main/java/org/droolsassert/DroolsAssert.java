@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -216,8 +217,10 @@ public class DroolsAssert implements TestRule {
 		listeners.stream().filter(AgendaEventListener.class::isInstance).forEach(r -> session.addEventListener((AgendaEventListener) r));
 		listeners.stream().filter(RuleRuntimeEventListener.class::isInstance).forEach(r -> session.addEventListener((RuleRuntimeEventListener) r));
 		listeners.stream().filter(ProcessEventListener.class::isInstance).forEach(r -> session.addEventListener((ProcessEventListener) r));
-		
 		session.addEventListener(rulesChrono);
+		
+		if (testRulesMeta != null && !testRulesMeta.givenTime().equals(EMPTY))
+			advanceTimeTo(Instant.parse(testRulesMeta.givenTime()));
 	}
 	
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
@@ -368,6 +371,16 @@ public class DroolsAssert implements TestRule {
 	public void advanceTime(TimeUnit unit, long amount) {
 		for (int i = 0; i < amount; i++)
 			tickTime(1, unit);
+	}
+	
+	public void advanceTimeTo(Instant instant) {
+		long current = clock.getCurrentTime();
+		long target = instant.toEpochMilli();
+		if (target > current) {
+			clock.advanceTime(target - current, MILLISECONDS);
+			// https://issues.jboss.org/browse/DROOLS-2240
+			session.fireAllRules();
+		}
 	}
 	
 	/**
