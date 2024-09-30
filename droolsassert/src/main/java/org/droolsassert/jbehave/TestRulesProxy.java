@@ -21,6 +21,7 @@ public class TestRulesProxy implements InvocationHandler {
 	String[] ignore = new String[0];
 	String ignoreSource = EMPTY;
 	boolean checkScheduled;
+	String givenTime = EMPTY;
 	
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -29,6 +30,10 @@ public class TestRulesProxy implements InvocationHandler {
 			return ignore;
 		case "ignoreSource":
 			return ignoreSource;
+		case "checkScheduled":
+			return checkScheduled;
+		case "givenTime":
+			return givenTime;
 		case "hashCode":
 			return hashCode();
 		case "equals":
