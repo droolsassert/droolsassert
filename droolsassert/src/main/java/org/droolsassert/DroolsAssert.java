@@ -32,6 +32,7 @@ import static org.droolsassert.DroolsAssertUtils.getResources;
 import static org.droolsassert.DroolsAssertUtils.getRulesCountFromSource;
 import static org.droolsassert.DroolsAssertUtils.getRulesFromSource;
 import static org.droolsassert.DroolsAssertUtils.getSimpleName;
+import static org.droolsassert.DroolsAssertUtils.parseLocalDateTime;
 import static org.droolsassert.jbehave.DroolsSessionProxy.newDroolsSessionProxy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -47,7 +48,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Method;
-import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -223,8 +226,10 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 		listeners.stream().filter(ProcessEventListener.class::isInstance).forEach(r -> session.addEventListener((ProcessEventListener) r));
 		session.addEventListener(rulesChrono);
 		
-		if (testRulesMeta != null && !testRulesMeta.givenTime().equals(EMPTY))
-			advanceTimeTo(Instant.parse(testRulesMeta.givenTime()));
+		LocalDateTime localDateTime = testRulesMeta != null && !testRulesMeta.givenTime().equals(EMPTY)
+				? parseLocalDateTime(testRulesMeta.givenTime())
+				: LocalDate.now().atStartOfDay();
+		clock.advanceTime(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), MILLISECONDS);
 	}
 	
 	protected KieSession newSession(DroolsSession droolsSessionMeta) {
@@ -377,9 +382,22 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 			tickTime(1, unit);
 	}
 	
-	public void advanceTimeTo(Instant instant) {
+	/**
+	 * Move clock forward and trigger any scheduled activations.
+	 * @see TestRules#givenTime()
+	 * @see DroolsAssertUtils#parseLocalDateTime(String)
+	 */
+	public void advanceTimeTo(String localDateTime) {
+		advanceTimeTo(parseLocalDateTime(localDateTime));
+	}
+	
+	/**
+	 * Move clock forward and trigger any scheduled activations.
+	 * @see TestRules#givenTime()
+	 */
+	public void advanceTimeTo(LocalDateTime localDateTime) {
 		long current = clock.getCurrentTime();
-		long target = instant.toEpochMilli();
+		long target = localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 		if (target > current) {
 			clock.advanceTime(target - current, MILLISECONDS);
 			// https://issues.jboss.org/browse/DROOLS-2240
@@ -560,9 +578,10 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	 * @see #assertNoScheduledActivations()
 	 */
 	public final void triggerAllScheduledActivations() {
-		clock.advanceTime(MAX_VALUE, MILLISECONDS);
+		long time = clock.getCurrentTime();
+		clock.advanceTime(MAX_VALUE - time, MILLISECONDS);
 		session.fireAllRules();
-		clock.advanceTime(-MAX_VALUE, MILLISECONDS);
+		clock.advanceTime(-MAX_VALUE + time, MILLISECONDS);
 	}
 	
 	protected final void deleteExpiredEvents() {

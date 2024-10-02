@@ -7,7 +7,13 @@ import static java.lang.System.getProperty;
 import static java.lang.System.out;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.file.Files.exists;
-import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoField.HOUR_OF_DAY;
+import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
+import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
+import static java.time.temporal.ChronoField.OFFSET_SECONDS;
+import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
+import static java.time.temporal.ChronoField.YEAR;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.concurrent.TimeUnit.DAYS;
@@ -27,8 +33,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -147,7 +157,7 @@ public final class DroolsAssertUtils {
 		checkArgument(params.length % 2 == 0, "Cannot create expected count out of odd number of parameters");
 		Map<String, Integer> map = new LinkedHashMap<>();
 		for (int i = 0; i < params.length; i = i + 2)
-			map.put("" + params[i + 1], new Integer("" + params[i]));
+			map.put("" + params[i + 1], parseInt("" + params[i]));
 		return map;
 	}
 	
@@ -197,11 +207,45 @@ public final class DroolsAssertUtils {
 	
 	public static String formatTime(SessionPseudoClock clock) {
 		synchronized (clock) {
-			return LocalDateTime.ofInstant(Instant.ofEpochMilli(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()), UTC)
+			return LocalDateTime.ofInstant(Instant.ofEpochMilli(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()), ZoneId.systemDefault())
 					.format(clock.getCurrentTime() == MAX_VALUE ? DDD_HH_MM_SS_SSS : clock.getCurrentTime() % 1000 == 0
 							? (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS : DDD_HH_MM_SS)
 							: (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS_SSS : DDD_HH_MM_SS_SSS));
 		}
+	}
+	
+	/**
+	 * Parse date time with different separators and optional fields.<br>
+	 * <br>
+	 * 2007-12-03 10:15<br>
+	 * 2007-12-03 10:15:30<br>
+	 * 2007-12-03 10:15:30.999<br>
+	 * 2007-12-03 10:15:30+02:00<br>
+	 * 2007-12-03T10:15:30+01:00<br>
+	 * 2007-12-03 T 10:15:30<br>
+	 * 2007-12-03<br>
+	 * 2007/12/03<br>
+	 * 2007.12.03<br>
+	 * T 10:15<br>
+	 * T10:15:30<br>
+	 * <br>
+	 * Use current date fields by default if not specified<br>
+	 * Use zero time fields by default if not specified<br>
+	 * Use system default time zone if not specified<br>
+	 */
+	public static LocalDateTime parseLocalDateTime(String dateTimeString) {
+		LocalDate localDate = LocalDate.now();
+		DateTimeFormatter dtf = new DateTimeFormatterBuilder().appendPattern("[uuuu]['/']['-']['.'][MM]['/']['-']['.'][dd][' ']['T'][' '][HH][:mm][:ss][.SSS][X]")
+				.parseDefaulting(YEAR, localDate.get(YEAR))
+				.parseDefaulting(MONTH_OF_YEAR, localDate.get(MONTH_OF_YEAR))
+				.parseDefaulting(DAY_OF_MONTH, localDate.get(DAY_OF_MONTH))
+				.parseDefaulting(HOUR_OF_DAY, 0)
+				.parseDefaulting(MINUTE_OF_HOUR, 0)
+				.parseDefaulting(SECOND_OF_MINUTE, 0)
+				.parseDefaulting(OFFSET_SECONDS, ZoneId.systemDefault().getRules().getOffset(Instant.now()).getTotalSeconds())
+                .toFormatter();
+		ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTimeString, dtf);
+		return zonedDateTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
 	}
 	
 	public static String getSimpleName(Class<?> clazz) {
