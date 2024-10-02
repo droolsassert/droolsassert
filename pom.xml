@@ -235,13 +235,16 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.6.3</version>
+				<version>3.10.1</version>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
 						<goals>
 							<goal>jar</goal>
 						</goals>
+						<configuration>
+							<doclint>none</doclint>
+						</configuration>						
 					</execution>
 				</executions>
 			</plugin>
@@ -250,16 +253,15 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.12.1</version>
 			</plugin>
-			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.13</version>
+        	<plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.6.0</version>
 				<extensions>true</extensions>
 				<configuration>
-					<serverId>ossrh</serverId>
-					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
-					<stagingProgressTimeoutMinutes>15</stagingProgressTimeoutMinutes>
+					<publishingServerId>central</publishingServerId>
+					<autoPublish>true</autoPublish>
+					<waitUntil>published</waitUntil>
 				</configuration>
 			</plugin>
 			<plugin>
