@@ -7,6 +7,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.time.Instant;
+import java.time.LocalDate;
 
 import org.springframework.util.AntPathMatcher;
 
@@ -81,9 +82,14 @@ public @interface TestRules {
 	boolean checkScheduled() default false;
 	
 	/**
-	 * Given initial clock instant time, like 2024-09-15T00:00:00Z<br>
+	 * Given initial clock local date-time, like {@code 2024-09-15} or {@code 2024-09-15 20:05:00}<br>
+	 * Local date time notation was taken to mimic drools DRL parser, for example {@code date-effective} parsing.<br>
+	 * Local date time is converted to instant using system time zone to feed internal {@see SessionPseudoClock}.<br>
 	 * <br>
-	 * Default - EMPTY - 1970-01-01T00:00:00Z<br>
+	 * Default - {@code LocalDate.now().atStartOfDay()}<br>
+	 * 
+	 * @see DroolsAssertUtils#parseLocalDateTime(String)
+	 * @see LocalDate#atStartOfDay()
 	 * @see Instant#toEpochMilli()
 	 */
 	String givenTime() default EMPTY;
