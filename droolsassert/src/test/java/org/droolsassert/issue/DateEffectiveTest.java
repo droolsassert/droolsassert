@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.droolsassert.DroolsAssert;
 import org.droolsassert.DroolsSession;
 import org.droolsassert.TestRules;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -18,10 +19,22 @@ public class DateEffectiveTest {
 
 	@RegisterExtension
 	public DroolsAssert drools = new DroolsAssert();
+	
+	@Test
+	@Disabled("https://issues.redhat.com/browse/DROOLS-7637")
+	@TestRules(givenTime = "2024-09-15", expected = "Simple")
+	public void testGivenTime20240915_fail() {
+		Policy policy = new Policy();
+		policy.policyNumber = "1234";
+		
+		drools.insertAndFire(policy);
+		
+		assertEquals("OH", policy.stateCode);
+	}
 
 	@Test
 	@TestRules(givenTime = "2024-09-15 00:00:01", expected = "Simple")
-	public void testGivenTime20240915() {
+	public void testGivenTime20240915_success() {
 		Policy policy = new Policy();
 		policy.policyNumber = "1234";
 
