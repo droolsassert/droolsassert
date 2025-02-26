@@ -1,11 +1,13 @@
 package org.droolsassert;
 
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -147,5 +149,15 @@ public class DroolsAssertTest {
 		assertEquals(1, drools.getFactHandles(AtomicLong.class).size());
 		drools.delete(atomicLong);
 		assertEquals(0, drools.getFactHandles(AtomicLong.class).size());
+	}
+	
+	@Test
+	public void testToString() {
+		drools.insertAndFire("string");
+		drools.insertAndFire(asList("string1", "string2"));
+		drools.insertAndFire(new LinkedHashMap<String, Object>() {{
+			put("key1", "value1");
+			put("key2", "value2");
+		}});
 	}
 }
