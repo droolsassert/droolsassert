@@ -1,16 +1,16 @@
 package org.droolsassert.issue;
 
 import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.droolsassert.DroolsAssert;
 import org.droolsassert.DroolsSession;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.kie.api.runtime.rule.FactHandle;
 
 @DroolsSession("org/droolsassert/issue/DeletionTest.drl")
@@ -24,10 +24,10 @@ public class DeletionTest {
 		}
 	}
 
-	@RegisterExtension
-	private DroolsAssert drools = new DroolsAssert();
+	@Rule
+	public DroolsAssert drools = new DroolsAssert();
 
-	@BeforeEach
+	@Before
 	public void beforeEach() {
 		drools.setGlobal("maxCount", new AtomicLong(3));
 	}

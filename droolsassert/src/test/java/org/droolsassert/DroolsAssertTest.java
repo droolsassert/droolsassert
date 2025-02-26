@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
+import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.junit.Rule;
 import org.junit.Test;
 import org.kie.api.runtime.rule.FactHandle;
@@ -148,6 +148,15 @@ public class DroolsAssertTest {
 		assertEquals(1, drools.getFactHandles(AtomicLong.class).size());
 		drools.delete(atomicLong);
 		assertEquals(0, drools.getFactHandles(AtomicLong.class).size());
+	}
+	
+	@Test
+	public void testActivationMeta() {
+		drools.insertAndFire(new AtomicInteger());
+		drools.assertActivated("atomic int rule");
+		RuleImpl rule = drools.getActivationMeta("atomic int rule");
+		assertEquals("MAIN", rule.getAgendaGroup());
+		assertEquals(0, rule.getSalience().getValue());
 	}
 	
 	@Test
