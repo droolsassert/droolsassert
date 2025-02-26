@@ -1,0 +1,25 @@
+package org.droolsassert;
+
+import java.util.concurrent.atomic.AtomicLong
+import org.droolsassert.issue.DeletionTest.CountedModel
+
+global AtomicLong maxCount
+
+rule "maxCount"
+    salience -1
+when
+    $new: CountedModel()
+    $old: CountedModel()
+    not CountedModel(ordinal < $old.ordinal && ordinal > $new.ordinal)
+then
+	if ($new.ordinal - $old.ordinal >= maxCount.get()) {
+		delete($old);
+	}
+end
+
+rule "insert"
+when
+    $obj: CountedModel()
+then
+    System.out.println($obj.ordinal);
+end
