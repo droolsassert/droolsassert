@@ -66,8 +66,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
 import org.drools.core.common.InternalFactHandle;
+import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.droolsassert.jbehave.DroolsAssertSteps;
 import org.droolsassert.jbehave.DroolsSessionProxy;
 import org.droolsassert.listeners.ActivationReportBuilder;
@@ -191,6 +191,7 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	protected SessionPseudoClock clock;
 	protected Map<String, Integer> activations;
 	protected Map<String, Integer> activationsSnapshot;
+	protected Map<String, RuleImpl> activationsMeta;
 	protected Set<String> ignored;
 	protected Map<Object, Integer> factsHistory;
 	protected RulesChronoAgendaEventListener rulesChrono;
@@ -216,6 +217,7 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 		rulesChrono = rulesChrono();
 		activations = new LinkedHashMap<>();
 		activationsSnapshot = new LinkedHashMap<>();
+		activationsMeta = new LinkedHashMap<>();
 		initializeIgnoredActivations();
 		factsHistory = new IdentityHashMap<>();
 		
@@ -362,6 +364,10 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 		return getObjects(filter).stream()
 				.map(this::getFactHandle)
 				.collect(toList());
+	}
+	
+	public RuleImpl getActivationMeta(String ruleName) {
+		return activationsMeta.get(ruleName);
 	}
 	
 	/**
@@ -1040,8 +1046,9 @@ public class DroolsAssert implements BeforeEachCallback, AfterEachCallback, Test
 	private class ActivationsTracker extends DefaultAgendaEventListener {
 		@Override
 		public void beforeMatchFired(BeforeMatchFiredEvent event) {
-			String ruleName = event.getMatch().getRule().getName();
-			activations.put(ruleName, firstNonNull(activations.get(ruleName), INTEGER_ZERO) + 1);
+			RuleImpl rule = (RuleImpl) event.getMatch().getRule();
+			activations.put(rule.getName(), firstNonNull(activations.get(rule.getName()), INTEGER_ZERO) + 1);
+			activationsMeta.put(rule.getName(), rule);
 		}
 	}
 	
