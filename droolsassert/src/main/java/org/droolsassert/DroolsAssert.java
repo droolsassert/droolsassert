@@ -21,8 +21,6 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.LF;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 import static org.apache.commons.lang3.StringUtils.join;
-import static org.apache.commons.lang3.builder.ToStringBuilder.reflectionToString;
-import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 import static org.apache.commons.lang3.math.NumberUtils.INTEGER_ZERO;
 import static org.droolsassert.DroolsAssertUtils.firstNonEmpty;
 import static org.droolsassert.DroolsAssertUtils.formatTime;
@@ -33,6 +31,7 @@ import static org.droolsassert.DroolsAssertUtils.getRulesFromSource;
 import static org.droolsassert.DroolsAssertUtils.getSimpleName;
 import static org.droolsassert.DroolsAssertUtils.parseLocalDateTime;
 import static org.droolsassert.jbehave.DroolsSessionProxy.newDroolsSessionProxy;
+import static org.droolsassert.util.JsonUtils.toYaml;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -1013,7 +1012,7 @@ public class DroolsAssert implements TestRule {
 	}
 	
 	public String factToString(Object fact) {
-		return fact instanceof String ? (String) fact : reflectionToString(fact, SHORT_PREFIX_STYLE);
+		return toYaml(fact);
 	}
 	
 	protected final String formatUnexpectedCollection(String entityName, String message, Collection<String> entities) {
