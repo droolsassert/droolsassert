@@ -6,7 +6,7 @@ import static java.util.Collections.sort;
 import static org.droolsassert.util.AlphanumComparator.ALPHANUM_COMPARATOR;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -59,9 +59,14 @@ public class AlphanumComparatorTest {
 
 	@Test
 	public void logicTest() {
-		List<String> bkp = new ArrayList<>(list);
+		LinkedList<String> bkp = new LinkedList<>(list);
 		shuffle(list);
 		sort(list, ALPHANUM_COMPARATOR);
+		assertArrayEquals(bkp.toArray(), list.toArray());
+		
+		shuffle(list);
+		sort(list, new AlphanumComparator(true));
+		bkp.addFirst(bkp.removeLast());
 		assertArrayEquals(bkp.toArray(), list.toArray());
 	}
 }
