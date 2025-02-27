@@ -207,12 +207,10 @@ public final class DroolsAssertUtils {
 	}
 	
 	public static String formatTime(SessionPseudoClock clock) {
-		synchronized (clock) {
-			return LocalDateTime.ofInstant(Instant.ofEpochMilli(clock.getCurrentTime() == MAX_VALUE ? -1 : clock.getCurrentTime()), ZoneId.systemDefault())
-					.format(clock.getCurrentTime() == MAX_VALUE ? DDD_HH_MM_SS_SSS : clock.getCurrentTime() % 1000 == 0
-							? (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS : DDD_HH_MM_SS)
-							: (clock.getCurrentTime() < DAY_MILLISECONDS ? HH_MM_SS_SSS : DDD_HH_MM_SS_SSS));
-		}
+		if (clock.getCurrentTime() == MAX_VALUE)
+			return "365 23:59:59";
+		return LocalDateTime.ofInstant(Instant.ofEpochMilli(clock.getCurrentTime()), ZoneId.systemDefault())
+				.format(clock.getCurrentTime() % 1000 == 0 ? DDD_HH_MM_SS : DDD_HH_MM_SS_SSS);
 	}
 	
 	/**
@@ -244,7 +242,7 @@ public final class DroolsAssertUtils {
 				.parseDefaulting(MINUTE_OF_HOUR, 0)
 				.parseDefaulting(SECOND_OF_MINUTE, 0)
 				.parseDefaulting(OFFSET_SECONDS, ZoneId.systemDefault().getRules().getOffset(Instant.now()).getTotalSeconds())
-                .toFormatter();
+				.toFormatter();
 		ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateTimeString, dtf);
 		return zonedDateTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
 	}
