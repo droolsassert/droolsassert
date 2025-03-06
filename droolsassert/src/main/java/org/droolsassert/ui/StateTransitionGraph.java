@@ -222,7 +222,7 @@ public class StateTransitionGraph extends JGraph {
 
 		sb.append(format(US, "<table style='border: 0; border-spacing: 0; margin-top: -%1$.1f; margin-bottom: -%1$.1f; width:100%%;'>", 3 * sqrt(scaling)));
 		sb.append("<tr>");
-		sb.append(format(US, "<td style='padding: 0; font-family:verdana; font-size:%.1fpx; font-weight: normal;'>", scale(7)));
+		sb.append(format(US, "<td style='padding: 0 %.1f 0 0; font-family:verdana; font-size:%.1fpx; font-weight: normal;'>", scale(3), scale(7)));
 		sb.append(format("<span style='color: %s'>", cellType.background));
 		sb.append(flags);
 		sb.append("</span>");
@@ -230,7 +230,7 @@ public class StateTransitionGraph extends JGraph {
 		sb.append(format(US, "<td style='padding: 0; text-align: center; font-family:verdana; font-size:%.1fpx; font-weight: lighter; width: 100%%;'>", scale(7)));
 		sb.append(line3);
 		sb.append("</td>");
-		sb.append(format(US, "<td style='padding: 0; font-family:verdana; font-size:%.1fpx; font-weight: normal; color: red'>", scale(7)));
+		sb.append(format(US, "<td style='padding: 0 0 0 %.1f; font-family:verdana; font-size:%.1fpx; font-weight: normal; color: red'>", scale(3), scale(7)));
 		sb.append(flags);
 		sb.append("</td>");
 		sb.append("</tr>");
