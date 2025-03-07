@@ -3,7 +3,7 @@
 
 	<groupId>org.droolsassert</groupId>
 	<artifactId>droolsassert-bom</artifactId>
-	<version>3.0.18</version>
+	<version>3.0.19</version>
 	<packaging>pom</packaging>
 
 	<name>DroolsAssert BOM</name>
