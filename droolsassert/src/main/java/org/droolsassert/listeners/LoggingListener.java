@@ -61,12 +61,11 @@ public class LoggingListener extends DefaultAgendaEventListener implements Drool
 	}
 	
 	protected void log(String action, Object fact) {
-		if (!droolsSessionMeta.logFacts() || action.contains("deleted"))
-			droolsassert.log(format("%s %s#%s", action, getSimpleName(fact.getClass()), identityHashCode(fact)));
-		else
-			droolsassert.log(format("%s %s#%s: %s", action, getSimpleName(fact.getClass()), identityHashCode(fact), droolsassert.factToString(fact)));
+		droolsassert.log(!droolsSessionMeta.logFacts() || action.contains("deleted")
+				? format("%s %s#%s", action, getSimpleName(fact.getClass()), identityHashCode(fact))
+				: format("%s %s#%s: %s", action, getSimpleName(fact.getClass()), identityHashCode(fact), droolsassert.factToString(fact)));
 	}
-	
+
 	protected String tupleToString(List<Object> tuple) {
 		return "" + tuple.stream().map(o -> format("%s#%s", getSimpleName(o.getClass()), identityHashCode(o))).collect(toList());
 	}
