@@ -2,7 +2,7 @@ package org.droolsassert;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.drools.core.impl.KnowledgeBaseFactory.newKnowledgeSessionConfiguration;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import org.droolsassert.SpringIntegration2Test.AppConfig;
 import org.droolsassert.SpringIntegrationTest.Weather;
@@ -46,7 +46,7 @@ public class SpringIntegration2Test {
 	
 	@Before
 	public void before() {
-		drools.setGlobal("weatherUrl", "https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22");
+		drools.setGlobal("weatherUrl", "https://api.agromonitoring.com/agro/1.0/weather?lat=35&lon=139&appid=f4bacddfb3de281a5b88f8fb4c6c4237");
 		drools.setGlobal("restTemplate", restTemplate);
 	}
 	
@@ -54,7 +54,7 @@ public class SpringIntegration2Test {
 	@TestRules(expected = { "Check weather", "Humidity is high" })
 	public void testWeatherInLongon() {
 		drools.advanceTime(1, HOURS);
-		assertEquals(81, drools.getObject(Weather.class).humidity);
+		assertNotEquals(0, drools.getObject(Weather.class).humidity);
 	}
 	
 	public static class AppConfig {
