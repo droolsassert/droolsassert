@@ -35,16 +35,19 @@ public final class StatImpl implements Stat {
 	
 	@Override
 	public synchronized void reset() {
+		leapsCount = 0;
+		leapsCountSample = 0;
+		failedLeapsCount = 0;
 		totalTimeNs = 0;
 		totalTimeSampleNs = 0;
-		maxTimeMs = 0;
-		maxTimeSampleMs = 0;
-		maxTimeThresholdMs = 0;
+		avgTimeSampleMs = 0;
+		leapTimeMs = 0;
 		minTimeMs = 0;
 		minTimeSampleMs = 0;
 		minTimeThresholdMs = 0;
-		leapsCount = 0;
-		leapsCountSample = 0;
+		maxTimeMs = 0;
+		maxTimeSampleMs = 0;
+		maxTimeThresholdMs = 0;
 	}
 	
 	@Override
