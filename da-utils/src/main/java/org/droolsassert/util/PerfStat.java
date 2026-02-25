@@ -210,21 +210,6 @@ public class PerfStat {
 				stat.failedLeapsCount += 1;
 			}
 		}
-		long currentTimeMillis = currentTimeMillis();
-		if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationPeriodMs) {
-			synchronized (stat) {
-				if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationPeriodMs) {
-					lastAggregationTimeMs = currentTimeMillis;
-					stat.avgTimeSampleMs = round(stat.totalTimeSampleNs / stat.leapsCountSample);
-					stat.leapsCountSample = 0;
-					stat.totalTimeSampleNs = 0;
-					stat.maxTimeSampleMs = stat.maxTimeThresholdMs;
-					stat.maxTimeThresholdMs = 0;
-					stat.minTimeSampleMs = stat.minTimeThresholdMs;
-					stat.minTimeThresholdMs = 0;
-				}
-			}
-		}
 		stopWatch.get().reset();
 		stopWatch.get().start();
 		return this;
@@ -252,6 +237,21 @@ public class PerfStat {
 				stat.minTimeThresholdMs = timeMs;
 			stat.leapsCount += 1;
 			stat.leapsCountSample += 1;
+		}
+		long currentTimeMillis = currentTimeMillis();
+		if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationPeriodMs) {
+			synchronized (stat) {
+				if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationPeriodMs) {
+					lastAggregationTimeMs = currentTimeMillis;
+					stat.avgTimeSampleMs = round(stat.totalTimeSampleNs / stat.leapsCountSample);
+					stat.leapsCountSample = 0;
+					stat.totalTimeSampleNs = 0;
+					stat.maxTimeSampleMs = stat.maxTimeThresholdMs;
+					stat.maxTimeThresholdMs = 0;
+					stat.minTimeSampleMs = stat.minTimeThresholdMs;
+					stat.minTimeThresholdMs = 0;
+				}
+			}
 		}
 		return timeNs;
 	}
