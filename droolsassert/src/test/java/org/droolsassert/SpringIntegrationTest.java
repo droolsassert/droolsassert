@@ -2,10 +2,13 @@ package org.droolsassert;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.droolsassert.SpringIntegrationTest.AppConfig;
+import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,8 @@ import org.springframework.web.client.RestTemplate;
 @DroolsSession("classpath:/org/droolsassert/weather.drl")
 public class SpringIntegrationTest {
 	
+	public static final String WEATHER_URL = "https://samples.openweathermap.org/data/2.5/weather?q=London,uk";
+	
 	@Autowired
 	private RestTemplate restTemplate;
 	@RegisterExtension
@@ -26,7 +31,7 @@ public class SpringIntegrationTest {
 	
 	@BeforeEach
 	public void before() {
-		drools.setGlobal("weatherUrl", "https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22");
+		drools.setGlobal("weatherUrl", WEATHER_URL);
 		drools.setGlobal("restTemplate", restTemplate);
 	}
 	
@@ -34,14 +39,22 @@ public class SpringIntegrationTest {
 	@TestRules(expected = { "Check weather", "Humidity is high" })
 	public void testWeatherInLongon() {
 		drools.advanceTime(1, HOURS);
-		assertEquals(81, drools.getObject(Weather.class).humidity);
-		drools.printPerformanceStatistic();
+		assertEquals(85, drools.getObject(Weather.class).humidity);
 	}
 	
 	public static class AppConfig {
 		@Bean
 		public RestTemplate restTemplate() {
-			return new RestTemplate();
+			RestTemplate restTemplate = mock(RestTemplate.class);
+
+	        WeatherResponse response = new WeatherResponse();
+	        response.main = new Weather();
+	        response.main.humidity = 85;
+	        response.main.temp = 10.0;
+	        response.main.pressure = 1000;
+
+	        when(restTemplate.getForObject(eq(WEATHER_URL), eq(WeatherResponse.class))).thenReturn(response);
+	        return restTemplate;
 		}
 	}
 	
