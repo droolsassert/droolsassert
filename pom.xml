@@ -64,6 +64,11 @@
 				<version>4.12</version>
 			</dependency>
 			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>5.11.0</version>
+			</dependency>			
+			<dependency>
 				<groupId>org.kie</groupId>
 				<artifactId>kie-api</artifactId>
 				<version>${drools.version}</version>
@@ -165,8 +170,8 @@
 				<version>${jackson.version}</version>
 			</dependency>
 			<dependency>
-			    <groupId>com.fasterxml.jackson.datatype</groupId>
-			    <artifactId>jackson-datatype-jsr310</artifactId>
+				<groupId>com.fasterxml.jackson.datatype</groupId>
+				<artifactId>jackson-datatype-jsr310</artifactId>
 				<version>${jackson.version}</version>
 			</dependency>
 			<dependency>
@@ -253,7 +258,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.12.1</version>
 			</plugin>
-        	<plugin>
+			<plugin>
 				<groupId>org.sonatype.central</groupId>
 				<artifactId>central-publishing-maven-plugin</artifactId>
 				<version>0.6.0</version>
@@ -287,8 +292,8 @@
 					<useUnlimitedThreads>true</useUnlimitedThreads>
 					<forkCount>5</forkCount>
 					<argLine>
-					    --add-opens java.base/java.lang=ALL-UNNAMED
-					    --add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED
+						--add-opens java.base/java.lang=ALL-UNNAMED
+						--add-opens java.base/java.util.concurrent.atomic=ALL-UNNAMED
 					</argLine>			
 				</configuration>
 			</plugin>
