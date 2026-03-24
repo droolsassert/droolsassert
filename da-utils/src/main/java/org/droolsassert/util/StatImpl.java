@@ -1,6 +1,7 @@
 package org.droolsassert.util;
 
 import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -23,6 +24,7 @@ public final class StatImpl implements Stat {
 	volatile double maxTimeSampleMs;
 	volatile double maxTimeThresholdMs;
 	final AtomicLong peersCount = new AtomicLong();
+	volatile long lastAggregationTimeMs = currentTimeMillis();
 	
 	public StatImpl() {
 		// for deserialization
