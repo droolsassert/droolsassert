@@ -72,10 +72,30 @@ public class PerfStat {
 	/**
 	 * Performance statistic for type and name
 	 * 
+	 * @param type
 	 * @param name
 	 */
 	public static Stat getPerfStat(String type, String name) {
 		return stats.get(type).get(name);
+	}
+	
+	/**
+	 * Remove performance statistic for type and name
+	 * 
+	 * @param type
+	 * @param name
+	 */
+	public static void removePerfStat(String type, String name) {
+		stats.get(type).remove(name);
+	}
+	
+	/**
+	 * Remove performance statistic for type
+	 * 
+	 * @param type
+	 */
+	public static void removePerfStat(String type) {
+		stats.remove(type);
 	}
 	
 	/**
