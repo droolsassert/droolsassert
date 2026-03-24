@@ -131,7 +131,6 @@ public class PerfStat {
 	
 	private ThreadLocal<StopWatch> stopWatch = ThreadLocal.withInitial(() -> new StopWatch());
 	private StatImpl stat;
-	private long lastAggregationTimeMs = currentTimeMillis();
 	private long aggregationPeriodMs;
 	
 	public PerfStat(String name) {
@@ -239,10 +238,10 @@ public class PerfStat {
 			stat.leapsCountSample += 1;
 		}
 		long currentTimeMillis = currentTimeMillis();
-		if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationPeriodMs) {
+		if (stat.leapsCountSample > 0 && currentTimeMillis > stat.lastAggregationTimeMs + aggregationPeriodMs) {
 			synchronized (stat) {
-				if (stat.leapsCountSample > 0 && currentTimeMillis > lastAggregationTimeMs + aggregationPeriodMs) {
-					lastAggregationTimeMs = currentTimeMillis;
+				if (stat.leapsCountSample > 0 && currentTimeMillis > stat.lastAggregationTimeMs + aggregationPeriodMs) {
+					stat.lastAggregationTimeMs = currentTimeMillis;
 					stat.avgTimeSampleMs = round(stat.totalTimeSampleNs / stat.leapsCountSample);
 					stat.leapsCountSample = 0;
 					stat.totalTimeSampleNs = 0;
