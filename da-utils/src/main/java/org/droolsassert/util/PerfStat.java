@@ -3,6 +3,7 @@ package org.droolsassert.util;
 import static java.lang.Long.parseLong;
 import static java.lang.System.currentTimeMillis;
 import static java.lang.System.getProperty;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static javax.management.ObjectName.quote;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.containsAny;
@@ -130,11 +131,12 @@ public class PerfStat {
 						continue;
 					}
 					lhs.leapsCount += rhs.leapsCount;
+					lhs.failedLeapsCount += rhs.failedLeapsCount;
 					lhs.totalTimeNs += rhs.totalTimeNs;
-					if (rhs.minTimeMs < lhs.minTimeMs)
-						lhs.minTimeMs = rhs.minTimeMs;
-					if (rhs.maxTimeMs > lhs.maxTimeMs)
-						lhs.maxTimeMs = rhs.maxTimeMs;
+					if (rhs.minTimeNs < lhs.minTimeNs)
+						lhs.minTimeNs = rhs.minTimeNs;
+					if (rhs.maxTimeNs > lhs.maxTimeNs)
+						lhs.maxTimeNs = rhs.maxTimeNs;
 				}
 			}
 		}
@@ -151,7 +153,7 @@ public class PerfStat {
 	
 	private ThreadLocal<StopWatch> stopWatch = ThreadLocal.withInitial(() -> new StopWatch());
 	private StatImpl stat;
-	private long aggregationPeriodMs;
+	private long aggregationPeriodNs;
 	
 	public PerfStat(String name) {
 		this(EMPTY, name, defaultAggregationPeriodMs);
@@ -166,7 +168,7 @@ public class PerfStat {
 	}
 	
 	public PerfStat(String type, String name, long aggregationPeriodMs) {
-		this.aggregationPeriodMs = aggregationPeriodMs;
+		aggregationPeriodNs = MILLISECONDS.toNanos(aggregationPeriodMs);
 		if (type == null)
 			type = EMPTY;
 		
@@ -241,34 +243,33 @@ public class PerfStat {
 	public long stop() {
 		stopWatch.get().stop();
 		long timeNs = stopWatch.get().getNanoTime();
-		double timeMs = round(timeNs);
 		synchronized (stat) {
-			stat.leapTimeMs = timeMs;
+			stat.leapTimeNs = timeNs;
 			stat.totalTimeNs += timeNs;
 			stat.totalTimeSampleNs += timeNs;
-			if (timeMs > stat.maxTimeMs)
-				stat.maxTimeMs = timeMs;
-			if (timeMs > stat.maxTimeThresholdMs)
-				stat.maxTimeThresholdMs = timeMs;
-			if (timeMs < stat.minTimeMs || stat.minTimeMs == 0)
-				stat.minTimeMs = timeMs;
-			if (timeMs < stat.minTimeThresholdMs || stat.minTimeThresholdMs == 0)
-				stat.minTimeThresholdMs = timeMs;
+			if (timeNs > stat.maxTimeNs)
+				stat.maxTimeNs = timeNs;
+			if (timeNs > stat.maxTimeThresholdNs)
+				stat.maxTimeThresholdNs = timeNs;
+			if (timeNs < stat.minTimeNs || stat.minTimeNs == 0)
+				stat.minTimeNs = timeNs;
+			if (timeNs < stat.minTimeThresholdNs || stat.minTimeThresholdNs == 0)
+				stat.minTimeThresholdNs = timeNs;
 			stat.leapsCount += 1;
 			stat.leapsCountSample += 1;
 		}
-		long currentTimeMillis = currentTimeMillis();
-		if (stat.leapsCountSample > 0 && currentTimeMillis > stat.lastAggregationTimeMs + aggregationPeriodMs) {
+		long currentTimeNs = MILLISECONDS.toNanos(currentTimeMillis());
+		if (currentTimeNs > stat.lastAggregationTimeNs + aggregationPeriodNs && stat.leapsCountSample > 0) {
 			synchronized (stat) {
-				if (stat.leapsCountSample > 0 && currentTimeMillis > stat.lastAggregationTimeMs + aggregationPeriodMs) {
-					stat.lastAggregationTimeMs = currentTimeMillis;
-					stat.avgTimeSampleMs = round(stat.totalTimeSampleNs / stat.leapsCountSample);
+				if (currentTimeNs > stat.lastAggregationTimeNs + aggregationPeriodNs && stat.leapsCountSample > 0) {
+					stat.avgTimeSampleNs = stat.totalTimeSampleNs / stat.leapsCountSample;
 					stat.leapsCountSample = 0;
 					stat.totalTimeSampleNs = 0;
-					stat.maxTimeSampleMs = stat.maxTimeThresholdMs;
-					stat.maxTimeThresholdMs = 0;
-					stat.minTimeSampleMs = stat.minTimeThresholdMs;
-					stat.minTimeThresholdMs = 0;
+					stat.maxTimeSampleNs = stat.maxTimeThresholdNs;
+					stat.maxTimeThresholdNs = 0;
+					stat.minTimeSampleNs = stat.minTimeThresholdNs;
+					stat.minTimeThresholdNs = 0;
+					stat.lastAggregationTimeNs = currentTimeNs;
 				}
 			}
 		}
